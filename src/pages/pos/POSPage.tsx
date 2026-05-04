@@ -98,6 +98,30 @@ export const POSPage = () => {
     retry: false,
   });
 
+  // Get current shift
+  const { data: currentShift, refetch: refetchCurrentShift } = useQuery({
+    queryKey: queryKeys.shifts.current({
+      branchId: getBranchId(selectedBranch),
+      cashierId: user?.id,
+      terminalId,
+    }),
+    queryFn: async () => {
+      const branchId = getBranchId(selectedBranch);
+      const cashierId = user?.id;
+      
+      if (!branchId || !cashierId) {
+        throw new Error('Missing required parameters: branchId and cashierId');
+      }
+      
+      const response = await apiClient.get('/shifts/current', {
+        params: { branchId, cashierId, terminalId },
+      });
+      return response.data.data as Shift;
+    },
+    enabled: !!getBranchId(selectedBranch) && !!user?.id,
+    retry: false,
+  });
+
   // Handle a barcode value from the continuous scanner
   const handleBarcodeScan = useCallback(async (barcode: string) => {
     const branchId = getBranchId(selectedBranch);
@@ -126,13 +150,26 @@ export const POSPage = () => {
     } else if (found.stock <= 0) {
       setScanFeedback({ message: `${found.name} — out of stock`, ok: false });
     } else {
-      handleAddToCart(found);
-      setScanFeedback({ message: `Added: ${found.name}`, ok: true });
+      if (!currentShift || currentShift.status !== 'open') {
+        setShowShiftModal(true);
+        setScanFeedback({ message: 'Open a shift before adding scanned products', ok: false });
+      } else {
+        addItem({
+          productId: found._id,
+          productName: found.name,
+          sku: found.sku,
+          barcode: found.barcode || '',
+          quantity: 1,
+          unitPrice: found.price,
+          requiresPrescription: found.requiresPrescription,
+        });
+        setScanFeedback({ message: `Added: ${found.name}`, ok: true });
+      }
     }
 
     if (scanFeedbackTimeout.current) clearTimeout(scanFeedbackTimeout.current);
     scanFeedbackTimeout.current = setTimeout(() => setScanFeedback(null), 2500);
-  }, [products, selectedBranch]);
+  }, [addItem, currentShift, products, selectedBranch]);
 
   const toggleScanMode = useCallback(async () => {
     if (scanMode) {
@@ -192,30 +229,6 @@ export const POSPage = () => {
       updateQuantity(productId, qty);
     }
   };
-
-  // Get current shift
-  const { data: currentShift, refetch: refetchCurrentShift } = useQuery({
-    queryKey: queryKeys.shifts.current({
-      branchId: getBranchId(selectedBranch),
-      cashierId: user?.id,
-      terminalId,
-    }),
-    queryFn: async () => {
-      const branchId = getBranchId(selectedBranch);
-      const cashierId = user?.id;
-      
-      if (!branchId || !cashierId) {
-        throw new Error('Missing required parameters: branchId and cashierId');
-      }
-      
-      const response = await apiClient.get('/shifts/current', {
-        params: { branchId, cashierId, terminalId },
-      });
-      return response.data.data as Shift;
-    },
-    enabled: !!getBranchId(selectedBranch) && !!user?.id,
-    retry: false,
-  });
 
   // Open shift mutation
   const openShiftMutation = useMutation({

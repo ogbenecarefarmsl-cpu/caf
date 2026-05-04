@@ -4,7 +4,8 @@ import { useAuthStore } from '../stores/auth-store';
 import { useBranchStore } from '../stores/branch-store';
 import { SyncService } from '../services/sync-service';
 
-const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:3000/inventory';
+const DEFAULT_WS_URL = 'wss://carefam-00c1641bcdf9.herokuapp.com/inventory';
+const WS_URL = import.meta.env.VITE_WS_URL?.trim() || DEFAULT_WS_URL;
 
 interface InventoryUpdate {
   batchId: string;
@@ -48,6 +49,7 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
   
   const { accessToken, isAuthenticated } = useAuthStore();
   const { selectedBranch } = useBranchStore();
+  const selectedBranchId = selectedBranch?._id;
 
   useEffect(() => {
     optionsRef.current = options;
@@ -85,8 +87,8 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
       );
 
       // Join branch-specific room if branch is selected
-      if (selectedBranch) {
-        socket.emit('join-branch', selectedBranch._id);
+      if (selectedBranchId) {
+        socket.emit('join-branch', selectedBranchId);
       }
 
       optionsRef.current.onConnect?.();
@@ -122,8 +124,7 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
         socket.disconnect();
       }
     };
-  }, [isAuthenticated, accessToken, selectedBranch?._id, 
-      selectedBranch?._id]);
+  }, [isAuthenticated, accessToken, selectedBranchId]);
 
   // Join a specific branch room
   const joinBranch = (branchId: string) => {
