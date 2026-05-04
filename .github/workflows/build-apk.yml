@@ -19,8 +19,14 @@ on:
         default: false
         type: boolean
 
+permissions:
+  contents: write
+
 env:
   BUILD_TYPE: ${{ github.event.inputs.build_type || 'release' }}
+  ANDROID_VERSION_CODE: ${{ github.run_number }}
+  ANDROID_VERSION_NAME: 1.0.${{ github.run_number }}
+  APK_MANIFEST_URL: https://github.com/${{ github.repository }}/releases/download/android-latest/apk-update.json
 
 jobs:
   build:
@@ -88,6 +94,9 @@ jobs:
           VITE_ENABLE_OFFLINE: ${{ secrets.VITE_ENABLE_OFFLINE || 'true' }}
           VITE_ENABLE_LIVE_UPDATES: ${{ secrets.VITE_ENABLE_LIVE_UPDATES || 'false' }}
           VITE_LIVE_UPDATE_CHANNEL: ${{ secrets.VITE_LIVE_UPDATE_CHANNEL || 'production' }}
+          VITE_ANDROID_VERSION_CODE: ${{ env.ANDROID_VERSION_CODE }}
+          VITE_ANDROID_VERSION_NAME: ${{ env.ANDROID_VERSION_NAME }}
+          VITE_APK_UPDATE_MANIFEST_URL: ${{ secrets.VITE_APK_UPDATE_MANIFEST_URL || env.APK_MANIFEST_URL }}
 
       - name: Sync Capacitor to Android
         run: pnpm exec cap sync android
@@ -116,11 +125,32 @@ jobs:
         if: env.BUILD_TYPE == 'release'
         working-directory: android
         run: ./gradlew assembleRelease --no-daemon
+        env:
+          ANDROID_VERSION_CODE: ${{ env.ANDROID_VERSION_CODE }}
+          ANDROID_VERSION_NAME: ${{ env.ANDROID_VERSION_NAME }}
 
       - name: Build debug APK
         if: env.BUILD_TYPE == 'debug'
         working-directory: android
         run: ./gradlew assembleDebug --no-daemon
+        env:
+          ANDROID_VERSION_CODE: ${{ env.ANDROID_VERSION_CODE }}
+          ANDROID_VERSION_NAME: ${{ env.ANDROID_VERSION_NAME }}
+
+      - name: Prepare public APK release files
+        if: env.BUILD_TYPE == 'release'
+        run: |
+          cp android/app/build/outputs/apk/release/app-release.apk android/app/build/outputs/apk/release/caf-pharmacy-release.apk
+
+          cat > android/app/build/outputs/apk/release/apk-update.json << EOF
+          {
+            "versionCode": $ANDROID_VERSION_CODE,
+            "versionName": "$ANDROID_VERSION_NAME",
+            "downloadUrl": "https://github.com/${{ github.repository }}/releases/download/android-latest/caf-pharmacy-release.apk",
+            "releaseNotes": "A new CAREFARM POS Android APK is available. Download it, then confirm the install when Android prompts you.",
+            "mandatory": false
+          }
+          EOF
 
       # ── Artifacts ─────────────────────────────────────────────────────────
       - name: Upload signed release APK
@@ -128,8 +158,24 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: CAF-Pharmacy-release-${{ github.run_number }}
-          path: android/app/build/outputs/apk/release/app-release.apk
+          path: |
+            android/app/build/outputs/apk/release/caf-pharmacy-release.apk
+            android/app/build/outputs/apk/release/apk-update.json
           retention-days: 30
+
+      - name: Publish public APK release
+        if: env.BUILD_TYPE == 'release' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete android-latest --yes --cleanup-tag || true
+          gh release create android-latest \
+            android/app/build/outputs/apk/release/caf-pharmacy-release.apk \
+            android/app/build/outputs/apk/release/apk-update.json \
+            --target "$GITHUB_SHA" \
+            --title "CAREFARM POS Android $ANDROID_VERSION_NAME" \
+            --notes "Release APK build $ANDROID_VERSION_CODE from $GITHUB_SHA." \
+            --latest
 
       - name: Upload debug APK
         if: env.BUILD_TYPE == 'debug'

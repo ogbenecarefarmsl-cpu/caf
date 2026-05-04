@@ -4,24 +4,46 @@ import { AuthProvider } from './contexts/AuthContext';
 import { UpdatePrompt } from './components/UpdatePrompt';
 import { ToastProvider } from './components/ui/Toast';
 import {
+  checkForApkUpdate,
+  openApkDownload,
+  type ApkUpdate,
+} from './lib/apk-updates';
+import {
   applyLiveUpdate,
   checkForLiveUpdate,
   type DownloadedUpdate,
 } from './lib/live-updates';
 import { router } from './routes';
 
+type PendingUpdate =
+  | { type: 'apk'; update: ApkUpdate }
+  | { type: 'live'; update: DownloadedUpdate };
+
 function App() {
-  const [availableUpdate, setAvailableUpdate] = useState<DownloadedUpdate | null>(null);
+  const [availableUpdate, setAvailableUpdate] = useState<PendingUpdate | null>(null);
   const [isApplyingUpdate, setIsApplyingUpdate] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
 
-    checkForLiveUpdate().then((update) => {
-      if (isMounted && update) {
-        setAvailableUpdate(update);
+    const checkForUpdates = async () => {
+      const apkUpdate = await checkForApkUpdate();
+      if (!isMounted) {
+        return;
       }
-    });
+
+      if (apkUpdate) {
+        setAvailableUpdate({ type: 'apk', update: apkUpdate });
+        return;
+      }
+
+      const liveUpdate = await checkForLiveUpdate();
+      if (isMounted && liveUpdate) {
+        setAvailableUpdate({ type: 'live', update: liveUpdate });
+      }
+    };
+
+    void checkForUpdates();
 
     return () => {
       isMounted = false;
@@ -36,12 +58,21 @@ function App() {
     setIsApplyingUpdate(true);
 
     try {
-      await applyLiveUpdate(availableUpdate.id);
+      if (availableUpdate.type === 'apk') {
+        openApkDownload(availableUpdate.update.downloadUrl);
+        setIsApplyingUpdate(false);
+        return;
+      }
+
+      await applyLiveUpdate(availableUpdate.update.id);
     } catch (error) {
-      console.warn('Failed to apply live update:', error);
+      console.warn('Failed to apply update:', error);
       setIsApplyingUpdate(false);
     }
   };
+
+  const isApkUpdate = availableUpdate?.type === 'apk';
+  const apkUpdate = isApkUpdate ? availableUpdate.update : null;
 
   return (
     <AuthProvider>
@@ -50,6 +81,21 @@ function App() {
         <UpdatePrompt
           isOpen={!!availableUpdate}
           isApplying={isApplyingUpdate}
+          title={isApkUpdate ? 'APK update available' : 'Update ready'}
+          description={
+            isApkUpdate
+              ? `Version ${apkUpdate?.versionName} is ready to download.`
+              : 'A new CAREFARM POS update has been downloaded.'
+          }
+          body={
+            isApkUpdate
+              ? apkUpdate?.releaseNotes ||
+                'This update includes native Android changes. Download the APK, then Android will ask you to confirm the install.'
+              : 'Apply it now to restart the app with the latest version, or continue working and update later.'
+          }
+          actionLabel={isApkUpdate ? 'Download APK' : 'Update now'}
+          pendingLabel={isApkUpdate ? 'Opening...' : 'Updating...'}
+          canDismiss={!apkUpdate?.mandatory}
           onUpdate={handleApplyUpdate}
           onDismiss={() => setAvailableUpdate(null)}
         />

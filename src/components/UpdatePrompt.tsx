@@ -3,6 +3,13 @@ import { Download, RefreshCw, X } from 'lucide-react'
 interface UpdatePromptProps {
   isOpen: boolean
   isApplying: boolean
+  title?: string
+  description?: string
+  body?: string
+  actionLabel?: string
+  pendingLabel?: string
+  dismissLabel?: string
+  canDismiss?: boolean
   onUpdate: () => void
   onDismiss: () => void
 }
@@ -10,6 +17,13 @@ interface UpdatePromptProps {
 export const UpdatePrompt = ({
   isOpen,
   isApplying,
+  title = 'Update ready',
+  description = 'A new CAREFARM POS update has been downloaded.',
+  body = 'Apply it now to restart the app with the latest version, or continue working and update later.',
+  actionLabel = 'Update now',
+  pendingLabel = 'Updating...',
+  dismissLabel = 'Later',
+  canDismiss = true,
   onUpdate,
   onDismiss,
 }: UpdatePromptProps) => {
@@ -26,16 +40,16 @@ export const UpdatePrompt = ({
               <Download className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-white">Update ready</h2>
+              <h2 className="text-lg font-bold text-white">{title}</h2>
               <p className="mt-1 text-sm text-gray-400">
-                A new CAREFARM POS update has been downloaded.
+                {description}
               </p>
             </div>
           </div>
           <button
             type="button"
             onClick={onDismiss}
-            disabled={isApplying}
+            disabled={isApplying || !canDismiss}
             className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-white/5 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
             aria-label="Dismiss update"
           >
@@ -45,18 +59,20 @@ export const UpdatePrompt = ({
 
         <div className="space-y-4 p-5">
           <p className="text-sm leading-6 text-gray-300">
-            Apply it now to restart the app with the latest version, or continue working and update later.
+            {body}
           </p>
 
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-            <button
-              type="button"
-              onClick={onDismiss}
-              disabled={isApplying}
-              className="rounded-lg border border-gray-700 px-4 py-2.5 text-sm font-semibold text-gray-300 transition-colors hover:border-gray-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Later
-            </button>
+            {canDismiss && (
+              <button
+                type="button"
+                onClick={onDismiss}
+                disabled={isApplying}
+                className="rounded-lg border border-gray-700 px-4 py-2.5 text-sm font-semibold text-gray-300 transition-colors hover:border-gray-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {dismissLabel}
+              </button>
+            )}
             <button
               type="button"
               onClick={onUpdate}
@@ -68,7 +84,7 @@ export const UpdatePrompt = ({
               ) : (
                 <Download className="h-4 w-4" />
               )}
-              {isApplying ? 'Updating...' : 'Update now'}
+              {isApplying ? pendingLabel : actionLabel}
             </button>
           </div>
         </div>
