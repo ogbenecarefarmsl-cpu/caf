@@ -1,7 +1,8 @@
 import axios, { type AxiosError, type AxiosInstance, type InternalAxiosRequestConfig } from 'axios';
 import { SyncService } from '../services/sync-service';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const DEFAULT_API_BASE_URL = 'https://carefam-00c1641bcdf9.herokuapp.com/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL?.trim() || DEFAULT_API_BASE_URL;
 
 // Simple UUID v4 generator (no external dependency needed)
 function generateUUID(): string {

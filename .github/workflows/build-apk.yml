@@ -55,14 +55,39 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Validate mobile backend configuration
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_WS_URL: ${{ secrets.VITE_WS_URL }}
+        run: |
+          if [ -z "$VITE_API_URL" ]; then
+            echo "VITE_API_URL secret is missing. Set it to your production backend API URL, for example https://carefam-00c1641bcdf9.herokuapp.com/api"
+            exit 1
+          fi
+
+          if echo "$VITE_API_URL" | grep -Eiq 'localhost|127\.0\.0\.1|10\.0\.2\.2'; then
+            echo "VITE_API_URL points to a local address. Release APKs must use a public backend URL."
+            exit 1
+          fi
+
+          if [ -z "$VITE_WS_URL" ]; then
+            echo "VITE_WS_URL secret is missing. Set it to your production websocket URL, for example wss://carefam-00c1641bcdf9.herokuapp.com/inventory"
+            exit 1
+          fi
+
+          if echo "$VITE_WS_URL" | grep -Eiq 'localhost|127\.0\.0\.1|10\.0\.2\.2'; then
+            echo "VITE_WS_URL points to a local address. Release APKs must use a public websocket URL."
+            exit 1
+          fi
+
       - name: Build web assets
         run: pnpm run build
         env:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
           VITE_WS_URL: ${{ secrets.VITE_WS_URL }}
-          VITE_ENABLE_OFFLINE: ${{ secrets.VITE_ENABLE_OFFLINE }}
-          VITE_ENABLE_LIVE_UPDATES: ${{ secrets.VITE_ENABLE_LIVE_UPDATES }}
-          VITE_LIVE_UPDATE_CHANNEL: ${{ secrets.VITE_LIVE_UPDATE_CHANNEL }}
+          VITE_ENABLE_OFFLINE: ${{ secrets.VITE_ENABLE_OFFLINE || 'true' }}
+          VITE_ENABLE_LIVE_UPDATES: ${{ secrets.VITE_ENABLE_LIVE_UPDATES || 'false' }}
+          VITE_LIVE_UPDATE_CHANNEL: ${{ secrets.VITE_LIVE_UPDATE_CHANNEL || 'production' }}
 
       - name: Sync Capacitor to Android
         run: pnpm exec cap sync android

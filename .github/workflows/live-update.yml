@@ -4,7 +4,13 @@ on:
   push:
     branches: [main]
     paths:
-      - 'caf-frontend/**'
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'vite.config.ts'
+      - 'capacitor.config.ts'
+      - '.github/workflows/live-update.yml'
 
 jobs:
   deploy-live-update:
@@ -19,7 +25,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'npm'
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -27,15 +34,43 @@ jobs:
           version: 10
 
       - name: Install dependencies
-        working-directory: ./caf-frontend
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate mobile backend configuration
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_WS_URL: ${{ secrets.VITE_WS_URL }}
+        run: |
+          if [ -z "$VITE_API_URL" ]; then
+            echo "VITE_API_URL secret is missing. Set it to your production backend API URL, for example https://carefam-00c1641bcdf9.herokuapp.com/api"
+            exit 1
+          fi
+
+          if echo "$VITE_API_URL" | grep -Eiq 'localhost|127\.0\.0\.1|10\.0\.2\.2'; then
+            echo "VITE_API_URL points to a local address. Mobile bundles must use a public backend URL."
+            exit 1
+          fi
+
+          if [ -z "$VITE_WS_URL" ]; then
+            echo "VITE_WS_URL secret is missing. Set it to your production websocket URL, for example wss://carefam-00c1641bcdf9.herokuapp.com/inventory"
+            exit 1
+          fi
+
+          if echo "$VITE_WS_URL" | grep -Eiq 'localhost|127\.0\.0\.1|10\.0\.2\.2'; then
+            echo "VITE_WS_URL points to a local address. Mobile bundles must use a public websocket URL."
+            exit 1
+          fi
 
       - name: Build web assets
-        working-directory: ./caf-frontend
         run: pnpm run build
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_WS_URL: ${{ secrets.VITE_WS_URL }}
+          VITE_ENABLE_OFFLINE: ${{ secrets.VITE_ENABLE_OFFLINE || 'true' }}
+          VITE_ENABLE_LIVE_UPDATES: ${{ secrets.VITE_ENABLE_LIVE_UPDATES || 'false' }}
+          VITE_LIVE_UPDATE_CHANNEL: ${{ secrets.VITE_LIVE_UPDATE_CHANNEL || 'production' }}
 
       - name: Deploy to Capgo
-        working-directory: ./caf-frontend
         run: |
           npx @capgo/cli bundle upload \
             --appId com.caf.pharmacy \
