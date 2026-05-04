@@ -11,12 +11,6 @@ import { queryKeys } from '../../lib/query-keys';
 import { useAuthStore } from '../../stores/auth-store';
 import { useBranchStore } from '../../stores/branch-store';
 
-interface Branch {
-  id?: string;
-  _id?: string;
-  name: string;
-}
-
 interface MarketerUser {
   id?: string;
   _id?: string;
@@ -53,6 +47,39 @@ interface AssignmentResponse {
   count: number;
 }
 
+const asArray = <T,>(payload: unknown): T[] => {
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+
+  if (
+    payload &&
+    typeof payload === 'object' &&
+    Array.isArray((payload as { data?: unknown }).data)
+  ) {
+    return (payload as { data: T[] }).data;
+  }
+
+  return [];
+};
+
+const asAssignmentResponse = (payload: unknown): AssignmentResponse => {
+  if (
+    payload &&
+    typeof payload === 'object' &&
+    Array.isArray((payload as { data?: unknown }).data)
+  ) {
+    const data = (payload as { data: Assignment[]; count?: number; total?: number }).data;
+    return {
+      data,
+      count: (payload as { count?: number; total?: number }).count ?? (payload as { total?: number }).total ?? data.length,
+    };
+  }
+
+  const data = asArray<Assignment>(payload);
+  return { data, count: data.length };
+};
+
 export const MarketerAssignmentsPage = () => {
   const queryClient = useQueryClient();
   const user = useAuthStore((s) => s.user);
@@ -73,7 +100,7 @@ export const MarketerAssignmentsPage = () => {
       const response = await apiClient.get('/marketer/assignments', {
         params: { branchId, activeOnly: true },
       });
-      return response.data as AssignmentResponse;
+      return asAssignmentResponse(response.data);
     },
     enabled: !!branchId,
   });
@@ -82,7 +109,7 @@ export const MarketerAssignmentsPage = () => {
     queryKey: queryKeys.users.list({ role: 'marketer' }),
     queryFn: async () => {
       const response = await apiClient.get('/users', { params: { role: 'marketer' } });
-      return response.data as MarketerUser[];
+      return asArray<MarketerUser>(response.data);
     },
   });
 
@@ -90,7 +117,7 @@ export const MarketerAssignmentsPage = () => {
     queryKey: queryKeys.products.list({ branchId }),
     queryFn: async () => {
       const response = await apiClient.get('/products', { params: { branchId } });
-      return response.data.data as Product[];
+      return asArray<Product>(response.data);
     },
     enabled: !!branchId,
   });
