@@ -36,6 +36,11 @@ Your CAF Pharmacy POS system uses:
 | `ANDROID_KEY_ALIAS` | Key alias |
 | `ANDROID_KEY_PASSWORD` | Key password |
 | `CAPGO_API_KEY` | Capgo API key (for live updates) |
+| `CLOUDFLARE_ACCOUNT_ID` | Optional: Cloudflare account ID for R2 APK uploads |
+| `CLOUDFLARE_API_TOKEN` | Optional: Cloudflare API token with R2 object write access |
+| `APK_R2_BUCKET` | Optional: R2 bucket used for public APK downloads |
+| `APK_PUBLIC_BASE_URL` | Optional: public R2/custom-domain base URL |
+| `VITE_APK_UPDATE_MANIFEST_URL` | Optional: public manifest URL checked by the app |
 
 ---
 
@@ -134,6 +139,23 @@ Add to GitHub secrets:
 - `ANDROID_KEYSTORE_PASSWORD`: Your keystore password
 - `ANDROID_KEY_ALIAS`: `caf-pharmacy`
 - `ANDROID_KEY_PASSWORD`: Your key password
+
+### 3. Public APK Hosting with Cloudflare R2
+
+Create an R2 bucket and attach a public custom domain or public bucket URL.
+
+Add these GitHub secrets:
+- `CLOUDFLARE_ACCOUNT_ID`
+- `CLOUDFLARE_API_TOKEN`
+- `APK_R2_BUCKET`
+- `APK_PUBLIC_BASE_URL`, for example `https://downloads.example.com`
+- `VITE_APK_UPDATE_MANIFEST_URL`, for example `https://downloads.example.com/android/latest/apk-update.json`
+
+The workflow uploads:
+- `android/latest/caf-pharmacy-release.apk`
+- `android/latest/apk-update.json`
+
+The app checks `VITE_APK_UPDATE_MANIFEST_URL` and shows an APK update popup when the manifest `versionCode` is newer than the installed app.
 
 ---
 

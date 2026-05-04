@@ -27,6 +27,11 @@ env:
   ANDROID_VERSION_CODE: ${{ github.run_number }}
   ANDROID_VERSION_NAME: 1.0.${{ github.run_number }}
   APK_MANIFEST_URL: https://github.com/${{ github.repository }}/releases/download/android-latest/apk-update.json
+  R2_APK_KEY_PREFIX: android/latest
+  APK_PUBLIC_BASE_URL: ${{ secrets.APK_PUBLIC_BASE_URL }}
+  APK_R2_BUCKET: ${{ secrets.APK_R2_BUCKET }}
+  CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
 jobs:
   build:
@@ -142,15 +147,36 @@ jobs:
         run: |
           cp android/app/build/outputs/apk/release/app-release.apk android/app/build/outputs/apk/release/caf-pharmacy-release.apk
 
+          if [ -n "$APK_PUBLIC_BASE_URL" ]; then
+            APK_DOWNLOAD_URL="${APK_PUBLIC_BASE_URL%/}/$R2_APK_KEY_PREFIX/caf-pharmacy-release.apk"
+          else
+            APK_DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/android-latest/caf-pharmacy-release.apk"
+          fi
+
           cat > android/app/build/outputs/apk/release/apk-update.json << EOF
           {
             "versionCode": $ANDROID_VERSION_CODE,
             "versionName": "$ANDROID_VERSION_NAME",
-            "downloadUrl": "https://github.com/${{ github.repository }}/releases/download/android-latest/caf-pharmacy-release.apk",
+            "downloadUrl": "$APK_DOWNLOAD_URL",
             "releaseNotes": "A new CAREFARM POS Android APK is available. Download it, then confirm the install when Android prompts you.",
             "mandatory": false
           }
           EOF
+
+      - name: Publish APK to Cloudflare R2
+        if: env.BUILD_TYPE == 'release' && env.CLOUDFLARE_ACCOUNT_ID != '' && env.CLOUDFLARE_API_TOKEN != '' && env.APK_R2_BUCKET != ''
+        run: |
+          pnpm exec wrangler r2 object put "$APK_R2_BUCKET/$R2_APK_KEY_PREFIX/caf-pharmacy-release.apk" \
+            --file android/app/build/outputs/apk/release/caf-pharmacy-release.apk \
+            --content-type application/vnd.android.package-archive \
+            --cache-control "public, max-age=31536000, immutable" \
+            --remote
+
+          pnpm exec wrangler r2 object put "$APK_R2_BUCKET/$R2_APK_KEY_PREFIX/apk-update.json" \
+            --file android/app/build/outputs/apk/release/apk-update.json \
+            --content-type application/json \
+            --cache-control "no-store" \
+            --remote
 
       # ── Artifacts ─────────────────────────────────────────────────────────
       - name: Upload signed release APK
