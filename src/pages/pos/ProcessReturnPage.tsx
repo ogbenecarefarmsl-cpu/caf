@@ -1,26 +1,42 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../../lib/api-client';
 import { useBranchStore, getBranchId } from '../../stores/branch-store';
+import { useAuthStore } from '../../stores/auth-store';
 import { useAlertReplacement } from '../../hooks/useAlertReplacement';
+import { useToast } from '../../hooks/useToast';
 import { QRScannerModal } from '../../components/pos/QRScannerModal';
 import { queryKeys } from '../../lib/query-keys';
 import { useCurrency } from '../../hooks/useCurrency';
+
+interface SaleItem {
+  productId: string;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  subtotal: number;
+  returnedQuantity?: number;
+}
 
 interface Sale {
   _id: string;
   receiptNumber: string;
   customerName?: string;
-  items: Array<{
-    productId: string;
-    productName: string;
-    quantity: number;
-    unitPrice: number;
-  }>;
+  items: SaleItem[];
   total: number;
   createdAt: string;
   status: string;
+  returnedAmount?: number;
+}
+
+interface ReturnItem {
+  productId: string;
+  productName: string;
+  quantity: number;
+  maxQuantity: number;
+  unitPrice: number;
+  selected: boolean;
 }
 
 type SearchMode = 'receipt' | 'product';
@@ -28,12 +44,18 @@ type SearchMode = 'receipt' | 'product';
 export const ProcessReturnPage = () => {
   const navigate = useNavigate();
   const selectedBranch = useBranchStore((state) => state.selectedBranch);
-  const { alertInfo } = useAlertReplacement();
+  const user = useAuthStore((state) => state.user);
+  const { alertInfo, alertWarning } = useAlertReplacement();
+  const { showSuccess, showError } = useToast();
   const { format } = useCurrency();
+  const queryClient = useQueryClient();
   const [searchMode, setSearchMode] = useState<SearchMode>('receipt');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [showScanner, setShowScanner] = useState(false);
+  const [returnItems, setReturnItems] = useState<ReturnItem[]>([]);
+  const [returnReason, setReturnReason] = useState('');
+  const [showReturnForm, setShowReturnForm] = useState(false);
 
   const { data: recentSales, isLoading } = useQuery({
     queryKey: queryKeys.sales.recent({
@@ -59,6 +81,87 @@ export const ProcessReturnPage = () => {
     retry: false,
   });
 
+  const returnMutation = useMutation({
+    mutationFn: async (data: { saleId: string; items: Array<{ productId: string; quantity: number }>; reason: string }) => {
+      const response = await apiClient.post(`/sales/${data.saleId}/return`, {
+        items: data.items,
+        reason: data.reason,
+      });
+      return response.data;
+    },
+    onSuccess: (data) => {
+      showSuccess(`Return processed successfully. Refund: ${format(data.data?.returnedAmount || 0)}`);
+      queryClient.invalidateQueries({ queryKey: queryKeys.sales.all(), exact: false });
+      setSelectedSale(null);
+      setReturnItems([]);
+      setReturnReason('');
+      setShowReturnForm(false);
+    },
+    onError: (error: any) => {
+      showError(error?.response?.data?.message || 'Failed to process return');
+    },
+  });
+
+  const handleSelectSale = (sale: Sale) => {
+    if (sale.status === 'returned') {
+      alertWarning('This sale has already been fully returned.');
+      return;
+    }
+
+    setSelectedSale(sale);
+    const items: ReturnItem[] = sale.items.map((item) => ({
+      productId: item.productId,
+      productName: item.productName || item.productId,
+      quantity: 1,
+      maxQuantity: item.quantity - (item.returnedQuantity || 0),
+      unitPrice: item.unitPrice,
+      selected: false,
+    })).filter((item) => item.maxQuantity > 0);
+
+    setReturnItems(items);
+    setShowReturnForm(true);
+  };
+
+  const handleToggleItem = (productId: string) => {
+    setReturnItems((prev) =>
+      prev.map((item) =>
+        item.productId === productId ? { ...item, selected: !item.selected } : item
+      )
+    );
+  };
+
+  const handleUpdateQuantity = (productId: string, quantity: number) => {
+    setReturnItems((prev) =>
+      prev.map((item) =>
+        item.productId === productId
+          ? { ...item, quantity: Math.max(1, Math.min(quantity, item.maxQuantity)) }
+          : item
+      )
+    );
+  };
+
+  const handleProcessReturn = () => {
+    if (!selectedSale) return;
+
+    const itemsToReturn = returnItems
+      .filter((item) => item.selected && item.quantity > 0)
+      .map((item) => ({
+        productId: item.productId,
+        quantity: item.quantity,
+      }));
+
+    if (itemsToReturn.length === 0) {
+      alertWarning('Please select at least one item to return.');
+      return;
+    }
+
+    returnMutation.mutate({
+      saleId: selectedSale._id,
+      items: itemsToReturn,
+      reason: returnReason || 'Customer return',
+    });
+  };
+
   const handleBarcodeScan = (barcode: string) => {
     setSearchQuery(barcode);
     setSearchMode('receipt');
@@ -68,6 +171,118 @@ export const ProcessReturnPage = () => {
     const date = new Date(dateStr);
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
+
+  const selectedItems = returnItems.filter((item) => item.selected);
+  const returnTotal = selectedItems.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
+
+  if (showReturnForm && selectedSale) {
+    return (
+      <div className="min-h-screen bg-secondary-dark flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-4 border-b border-gray-800">
+          <button onClick={() => { setShowReturnForm(false); setSelectedSale(null); }} className="text-white">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <h1 className="text-xl font-bold text-white">Return Items</h1>
+          <div className="w-6" />
+        </div>
+
+        <div className="flex-1 p-4 space-y-4 overflow-y-auto">
+          {/* Sale Info */}
+          <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
+            <p className="text-white font-semibold">Receipt #{selectedSale.receiptNumber}</p>
+            <p className="text-gray-400 text-sm">{formatDate(selectedSale.createdAt)}</p>
+            <p className="text-gray-400 text-sm">Original Total: {format(selectedSale.total)}</p>
+          </div>
+
+          {/* Items to Return */}
+          <div>
+            <h2 className="text-lg font-semibold text-white mb-3">Select Items to Return</h2>
+            <div className="space-y-3">
+              {returnItems.map((item) => (
+                <div
+                  key={item.productId}
+                  onClick={() => handleToggleItem(item.productId)}
+                  className={`p-4 rounded-xl border cursor-pointer transition-colors ${
+                    item.selected
+                      ? 'bg-cyan-500/10 border-cyan-500'
+                      : 'bg-gray-800/50 border-gray-700 hover:border-gray-600'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-5 h-5 rounded border flex items-center justify-center ${
+                        item.selected ? 'bg-cyan-500 border-cyan-500' : 'border-gray-500'
+                      }`}>
+                        {item.selected && (
+                          <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </div>
+                      <p className="text-white font-medium">{item.productName}</p>
+                    </div>
+                    <p className="text-white font-semibold">{format(item.unitPrice * item.quantity)}</p>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-gray-400 text-sm">Max: {item.maxQuantity} available for return</p>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleUpdateQuantity(item.productId, item.quantity - 1); }}
+                        className="w-8 h-8 rounded-lg bg-gray-700 text-white flex items-center justify-center hover:bg-gray-600"
+                      >
+                        -
+                      </button>
+                      <span className="text-white font-semibold w-8 text-center">{item.quantity}</span>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleUpdateQuantity(item.productId, item.quantity + 1); }}
+                        className="w-8 h-8 rounded-lg bg-gray-700 text-white flex items-center justify-center hover:bg-gray-600"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Return Reason */}
+          <div>
+            <label className="block text-gray-400 text-sm mb-2">Return Reason</label>
+            <input
+              type="text"
+              value={returnReason}
+              onChange={(e) => setReturnReason(e.target.value)}
+              placeholder="e.g. Customer changed mind, Defective product..."
+              className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+            />
+          </div>
+        </div>
+
+        {/* Return Summary */}
+        <div className="p-4 border-t border-gray-800 space-y-3">
+          <div className="flex justify-between text-lg">
+            <span className="text-gray-400">Refund Amount</span>
+            <span className="text-accent-green font-bold">{format(returnTotal)}</span>
+          </div>
+          <button
+            onClick={handleProcessReturn}
+            disabled={selectedItems.length === 0 || returnMutation.isPending}
+            className={`w-full py-4 rounded-xl font-semibold transition-colors ${
+              selectedItems.length > 0
+                ? 'bg-cyan-500 text-white hover:bg-cyan-600'
+                : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+            }`}
+          >
+            {returnMutation.isPending ? 'Processing...' : `Process Return (${selectedItems.length} item${selectedItems.length !== 1 ? 's' : ''})`}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-secondary-dark flex flex-col">
@@ -135,7 +350,7 @@ export const ProcessReturnPage = () => {
               recentSales.map((sale) => (
                 <div
                   key={sale._id}
-                  onClick={() => setSelectedSale(sale)}
+                  onClick={() => handleSelectSale(sale)}
                   className={`flex items-center p-4 rounded-xl border transition-colors cursor-pointer ${
                     selectedSale?._id === sale._id
                       ? 'bg-cyan-500/10 border-cyan-500'
@@ -154,7 +369,15 @@ export const ProcessReturnPage = () => {
                     </p>
                     <p className="text-gray-500 text-sm">Customer: {sale.customerName || 'Walk-in'}</p>
                   </div>
-                  <span className="text-gray-400 text-sm">{formatDate(sale.createdAt)}</span>
+                  <div className="text-right">
+                    <span className="text-gray-400 text-sm">{formatDate(sale.createdAt)}</span>
+                    {sale.status === 'partially_returned' && (
+                      <p className="text-yellow-400 text-xs mt-1">Partially Returned</p>
+                    )}
+                    {sale.status === 'returned' && (
+                      <p className="text-orange-400 text-xs mt-1">Fully Returned</p>
+                    )}
+                  </div>
                 </div>
               ))
             ) : (
@@ -162,21 +385,6 @@ export const ProcessReturnPage = () => {
             )}
           </div>
         </div>
-      </div>
-
-      {/* Continue Button */}
-      <div className="p-4 border-t border-gray-800">
-        <button
-          onClick={() => selectedSale && navigate(`/pos/receipt/${selectedSale._id}`)}
-          disabled={!selectedSale}
-          className={`w-full py-4 rounded-xl font-semibold transition-colors ${
-            selectedSale
-              ? 'bg-cyan-500 text-white hover:bg-cyan-600'
-              : 'bg-gray-700 text-gray-400 cursor-not-allowed'
-          }`}
-        >
-          Continue
-        </button>
       </div>
 
       <QRScannerModal

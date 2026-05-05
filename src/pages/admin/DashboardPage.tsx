@@ -37,9 +37,6 @@ const StatCard = ({ title, value, icon, colorClass, subtitle }: StatCardProps) =
     </div>
     <h3 className="text-gray-400 text-xs sm:text-sm font-medium mb-1">{title}</h3>
     <p className="text-white text-xl sm:text-3xl font-bold tracking-tight">{value}</p>
-    <div className="mt-3 h-1 w-full rounded bg-white/5">
-      <div className="h-full w-2/3 rounded bg-blue-500"></div>
-    </div>
     {subtitle ? <p className="text-gray-500 text-xs sm:text-sm mt-2">{subtitle}</p> : null}
   </div>
 );

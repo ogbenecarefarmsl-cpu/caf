@@ -168,7 +168,8 @@ export default function HQDashboardPage() {
       let users: User[] = [];
       try {
         const usersResponse = await apiClient.get('/users');
-        users = usersResponse.data as User[];
+        const usersData = (usersResponse.data as any)?.data ?? usersResponse.data;
+        users = Array.isArray(usersData) ? usersData : [];
       } catch {
         users = [];
       }
