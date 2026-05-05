@@ -50,17 +50,17 @@ export const TransferReportsPage = () => {
   const [dateTo, setDateTo] = useState(() => new Date().toISOString().split('T')[0]);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const selectedBranch = useBranchStore((state) => state.selectedBranch);
+  const branchId = getBranchId(selectedBranch);
 
   // Fetch transfer reports
   const { data: reportData, isLoading, error } = useQuery({
     queryKey: queryKeys.reports.transfer({
-      branchId: getBranchId(selectedBranch),
+      branchId,
       startDate: dateFrom,
       endDate: dateTo,
       status: statusFilter,
     }),
     queryFn: async () => {
-      const branchId = getBranchId(selectedBranch);
       const response = await apiClient.get(buildApiUrl('/reports/transfers', {
         startDate: dateFrom,
         endDate: dateTo,
@@ -69,12 +69,11 @@ export const TransferReportsPage = () => {
       }));
       return response.data as TransferReportData;
     },
-    enabled: !!dateFrom && !!dateTo,
+    enabled: !!dateFrom && !!dateTo && !!branchId,
   });
 
   const handleExport = async () => {
     try {
-      const branchId = getBranchId(selectedBranch);
       const response = await apiClient.get(buildApiUrl('/reports/transfers', {
         startDate: dateFrom,
         endDate: dateTo,
@@ -96,6 +95,19 @@ export const TransferReportsPage = () => {
       console.error('Export failed:', err);
     }
   };
+
+  if (!branchId) {
+    return (
+      <AdminLayout>
+        <div className="rounded-2xl border border-white/10 bg-primary-dark/60 p-8 text-center">
+          <h2 className="text-xl font-semibold text-white">Select a Branch First</h2>
+          <p className="mt-2 text-gray-400">
+            Transfer reports are branch-scoped. Choose a branch to continue.
+          </p>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   if (isLoading) return <AdminLayout><Loading /></AdminLayout>;
   if (error) return <AdminLayout><Error message="Failed to load transfer reports" /></AdminLayout>;

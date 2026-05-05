@@ -15,14 +15,14 @@ export function InventoryPage() {
       title: 'Products',
       description: 'Manage product catalog, categories, and pricing',
       icon: Package,
-      path: '/products',
+      path: '/admin/products',
       color: 'bg-blue-500'
     },
     {
       title: 'Batches',
       description: 'Track batch numbers, expiry dates, and quantities',
       icon: FileText,
-      path: '/batches',
+      path: '/admin/batches',
       color: 'bg-green-500'
     },
     {

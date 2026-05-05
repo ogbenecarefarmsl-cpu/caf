@@ -11,7 +11,7 @@ import { Loading } from '../../components/ui/Loading';
 import { Error } from '../../components/ui/Error';
 import { useToast } from '../../hooks/useToast';
 import { useCurrency } from '../../hooks/useCurrency';
-import { useBranchStore } from '../../stores/branch-store';
+import { useBranchStore, getBranchId } from '../../stores/branch-store';
 import { queryKeys } from '../../lib/query-keys';
 import { buildApiUrl } from '../../lib/api-utils';
 
@@ -52,25 +52,29 @@ export const PricingManagementPage = () => {
   const { format } = useCurrency();
   const { selectedBranch } = useBranchStore();
   const { showSuccess, showError } = useToast();
+  const branchId = getBranchId(selectedBranch);
 
   const { register, handleSubmit, formState: { errors }, reset } = useForm<BulkPriceUpdate>();
 
   // Fetch products for selection
   const { data: products, isLoading: productsLoading } = useQuery({
-    queryKey: queryKeys.products.list(),
+    queryKey: queryKeys.products.list({ branchId }),
     queryFn: async () => {
-      const response = await apiClient.get('/products');
+      const response = await apiClient.get('/products', {
+        params: branchId ? { branchId } : {},
+      });
       return response.data.data;
     },
+    enabled: !!branchId,
   });
 
   // Fetch pricing data for selected product
   const { data: productPricing, isLoading: pricingLoading, error: pricingError } = useQuery({
-    queryKey: queryKeys.pricing.product(selectedProductId, selectedBranch?._id),
+    queryKey: queryKeys.pricing.product(selectedProductId, branchId),
     queryFn: async () => {
       if (!selectedProductId) return null;
       const response = await apiClient.get(buildApiUrl(`/products/${selectedProductId}/pricing`, {
-        branchId: selectedBranch?._id,
+        branchId,
       }));
       console.log('Product pricing data:', response.data);
       
@@ -87,18 +91,19 @@ export const PricingManagementPage = () => {
         batchPrices: data.batchPrices || [],
       } as ProductPricing;
     },
-    enabled: !!selectedProductId,
+    enabled: !!selectedProductId && !!branchId,
   });
 
   // Fetch pricing analytics
   const { data: analytics } = useQuery({
-    queryKey: queryKeys.pricing.analytics(selectedBranch?._id),
+    queryKey: queryKeys.pricing.analytics(branchId),
     queryFn: async () => {
       const response = await apiClient.get(buildApiUrl('/products/pricing-analytics', {
-        branchId: selectedBranch?._id,
+        branchId,
       }));
       return response.data;
     },
+    enabled: !!branchId,
   });
 
   // Bulk price update mutation
@@ -121,7 +126,7 @@ export const PricingManagementPage = () => {
   const syncBatchPricesMutation = useMutation({
     mutationFn: async (productId: string) => {
       const response = await apiClient.post(buildApiUrl(`/products/${productId}/sync-batch-prices`, {
-        branchId: selectedBranch?._id,
+        branchId,
       }));
       return response.data;
     },
@@ -135,9 +140,22 @@ export const PricingManagementPage = () => {
   const handleBulkUpdate = (data: BulkPriceUpdate) => {
     bulkUpdateMutation.mutate({
       ...data,
-      applyToBranches: selectedBranch?._id ? [selectedBranch._id] : undefined,
+      applyToBranches: branchId ? [branchId] : undefined,
     });
   };
+
+  if (!branchId) {
+    return (
+      <AdminLayout title="Pricing Management">
+        <div className="text-center py-12">
+          <h2 className="text-xl font-semibold text-white">Select a Branch First</h2>
+          <p className="mt-2 text-gray-400">
+            Pricing is branch-scoped. Choose a branch before reviewing product prices or running updates.
+          </p>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   if (productsLoading) return <AdminLayout><Loading /></AdminLayout>;
 

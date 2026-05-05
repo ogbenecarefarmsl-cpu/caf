@@ -11,7 +11,7 @@ import { Select } from '../../components/ui/Select';
 import { Loading } from '../../components/ui/Loading';
 import { Error } from '../../components/ui/Error';
 import { useToast } from '../../hooks/useToast';
-import { useBranchStore } from '../../stores/branch-store';
+import { useBranchStore, getBranchId } from '../../stores/branch-store';
 import { queryKeys } from '../../lib/query-keys';
 import { useCurrency } from '../../hooks/useCurrency';
 
@@ -75,6 +75,8 @@ export const BatchManagementPage = () => {
   const { selectedBranch } = useBranchStore();
   const { showSuccess, showError } = useToast();
   const { format, symbol } = useCurrency();
+  const branchId = getBranchId(selectedBranch);
+  const activeBranchId = filterBranch || branchId || '';
 
   const {
     register,
@@ -86,27 +88,31 @@ export const BatchManagementPage = () => {
   // Fetch batches with filters
   const { data: batches, isLoading, error } = useQuery({
     queryKey: queryKeys.batches.list({
-      branchId: filterBranch,
+      branchId: activeBranchId,
       productId: filterProduct,
       expiring: showExpiring,
     }),
     queryFn: async () => {
       const params: Record<string, string> = {};
-      if (filterBranch) params.branchId = filterBranch;
+      if (activeBranchId) params.branchId = activeBranchId;
       if (filterProduct) params.productId = filterProduct;
       if (showExpiring) params.expiring = '90'; // Show batches expiring in 90 days
       const response = await apiClient.get<Batch[]>('/batches', { params });
       return response.data;
     },
+    enabled: !!branchId,
   });
 
   // Fetch products for dropdown
   const { data: products } = useQuery({
-    queryKey: queryKeys.products.list(),
+    queryKey: queryKeys.products.list({ branchId }),
     queryFn: async () => {
-      const response = await apiClient.get('/products');
+      const response = await apiClient.get('/products', {
+        params: branchId ? { branchId } : {},
+      });
       return response.data.data as Product[];
     },
+    enabled: !!branchId,
   });
 
   // Fetch suppliers for dropdown
@@ -176,7 +182,7 @@ export const BatchManagementPage = () => {
       setEditingBatch(null);
       reset({
         productId: '',
-        branchId: selectedBranch?._id || '',
+        branchId: branchId || '',
         lotNumber: '',
         expiryDate: '',
         quantity: 0,
@@ -220,6 +226,19 @@ export const BatchManagementPage = () => {
     if (days <= 90) return { color: 'text-yellow-400', label: `${days}d` };
     return { color: 'text-green-400', label: `${days}d` };
   };
+
+  if (!branchId) {
+    return (
+      <AdminLayout title="Batch Management">
+        <div className="text-center py-12">
+          <h2 className="text-xl font-semibold text-white">Select a Branch First</h2>
+          <p className="mt-2 text-gray-400">
+            Batches are branch-scoped. Choose a branch before viewing or managing stock lots.
+          </p>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   if (isLoading) return <Loading />;
   if (error) return <Error message="Failed to load batches" />;
@@ -327,10 +346,9 @@ export const BatchManagementPage = () => {
         <div className="mb-6 grid grid-cols-4 gap-4">
           <Select
             label="Filter by Branch"
-            value={filterBranch}
+            value={activeBranchId}
             onChange={(e) => setFilterBranch(e.target.value)}
             options={[
-              { value: '', label: 'All Branches' },
               ...(branches || []).map(branch => ({
                 value: branch._id || branch.id,
                 label: `${branch.name} (${branch.code})`,

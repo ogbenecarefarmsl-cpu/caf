@@ -121,6 +121,26 @@ export const router = createBrowserRouter([
     ),
   },
   {
+    path: '/pos/transctions',
+    element: <Navigate to="/pos/transactions" replace />,
+  },
+  {
+    path: '/admin/transactions',
+    element: (
+      <ProtectedRoute allowedRoles={['cashier', 'pharmacist', 'branch_manager', 'super_admin', 'auditor']}>
+        <TransactionHistoryPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/admin/shifts',
+    element: (
+      <ProtectedRoute allowedRoles={['cashier', 'pharmacist', 'branch_manager', 'super_admin', 'auditor']}>
+        <ShiftLogsPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
     path: '/pos/customers',
     element: (
       <ProtectedRoute allowedRoles={['cashier', 'pharmacist', 'branch_manager', 'super_admin', 'auditor']}>

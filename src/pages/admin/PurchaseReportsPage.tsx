@@ -44,18 +44,18 @@ export const PurchaseReportsPage = () => {
   const [dateTo, setDateTo] = useState(() => new Date().toISOString().split('T')[0]);
   const [groupBy, setGroupBy] = useState<'day' | 'week' | 'month'>('day');
   const selectedBranch = useBranchStore((state) => state.selectedBranch);
+  const branchId = getBranchId(selectedBranch);
   const { format } = useCurrency();
 
   // Fetch purchase reports
   const { data: reportData, isLoading, error } = useQuery({
     queryKey: queryKeys.reports.purchase({
-      branchId: getBranchId(selectedBranch),
+      branchId,
       startDate: dateFrom,
       endDate: dateTo,
       groupBy,
     }),
     queryFn: async () => {
-      const branchId = getBranchId(selectedBranch);
       const response = await apiClient.get(buildApiUrl('/reports/purchases', {
         from: dateFrom,
         to: dateTo,
@@ -64,12 +64,11 @@ export const PurchaseReportsPage = () => {
       }));
       return response.data as PurchaseReportData;
     },
-    enabled: !!dateFrom && !!dateTo,
+    enabled: !!dateFrom && !!dateTo && !!branchId,
   });
 
   const handleExport = async () => {
     try {
-      const branchId = getBranchId(selectedBranch);
       const response = await apiClient.get(buildApiUrl('/reports/purchases/export', {
         from: dateFrom,
         to: dateTo,
@@ -91,6 +90,19 @@ export const PurchaseReportsPage = () => {
       console.error('Export failed:', err);
     }
   };
+
+  if (!branchId) {
+    return (
+      <AdminLayout>
+        <div className="rounded-2xl border border-white/10 bg-primary-dark/60 p-8 text-center">
+          <h2 className="text-xl font-semibold text-white">Select a Branch First</h2>
+          <p className="mt-2 text-gray-400">
+            Purchase reports are branch-scoped. Choose a branch to continue.
+          </p>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   if (isLoading) return <AdminLayout><Loading /></AdminLayout>;
   if (error) return <AdminLayout><Error message="Failed to load purchase reports" /></AdminLayout>;

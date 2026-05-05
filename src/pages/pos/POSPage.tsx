@@ -23,6 +23,16 @@ interface Shift {
   totalSales?: number;
 }
 
+interface Expense {
+  _id: string;
+  amount: number;
+}
+
+interface ShiftSale {
+  _id: string;
+  total: number;
+}
+
 interface Product {
   _id: string;
   name: string;
@@ -119,6 +129,33 @@ export const POSPage = () => {
       return response.data.data as Shift;
     },
     enabled: !!getBranchId(selectedBranch) && !!user?.id,
+    retry: false,
+  });
+
+  const { data: shiftExpenses } = useQuery({
+    queryKey: queryKeys.expenses.shift(currentShift?._id),
+    queryFn: async () => {
+      if (!currentShift?._id) return [] as Expense[];
+      const response = await apiClient.get(`/expenses/shift/${currentShift._id}`);
+      const payload = response.data?.data ?? response.data;
+      return (Array.isArray(payload) ? payload : []) as Expense[];
+    },
+    enabled: !!currentShift?._id && currentShift?.status === 'open',
+    retry: false,
+  });
+
+  const { data: shiftSales } = useQuery({
+    queryKey: ['sales', 'shift', currentShift?._id, getBranchId(selectedBranch)],
+    queryFn: async () => {
+      const branchId = getBranchId(selectedBranch);
+      if (!currentShift?._id || !branchId) return [] as ShiftSale[];
+      const response = await apiClient.get('/sales', {
+        params: { shiftId: currentShift._id, branchId, limit: 500 },
+      });
+      const payload = response.data?.data ?? response.data;
+      return (Array.isArray(payload) ? payload : []) as ShiftSale[];
+    },
+    enabled: !!currentShift?._id && currentShift?.status === 'open' && !!getBranchId(selectedBranch),
     retry: false,
   });
 
@@ -281,7 +318,7 @@ export const POSPage = () => {
       const response = await apiClient.post(`/shifts/${data.shiftId}/close`, {
         closingCash: data.closingCash,
         notes: data.notes,
-        totalSales: currentShift?.totalSales || 0,
+        totalSales,
       });
       return response.data.data as Shift;
     },
@@ -413,6 +450,15 @@ export const POSPage = () => {
   ];
 
   const cartItemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+  const totalSales = (shiftSales || []).reduce(
+    (sum, sale) => sum + (Number(sale.total) || 0),
+    0,
+  );
+  const totalExpenses = (shiftExpenses || []).reduce(
+    (sum, expense) => sum + (Number(expense.amount) || 0),
+    0,
+  );
+  const expectedCash = (currentShift?.openingCash || 0) + totalSales - totalExpenses;
 
   // Guard: Redirect to branch selection if no branch is selected
   if (!selectedBranch) {
@@ -945,11 +991,15 @@ export const POSPage = () => {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-400">Total Sales</span>
-                <span className="text-white">{format(currentShift.totalSales || 0)}</span>
+                <span className="text-white">{format(totalSales)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-400">Expenses</span>
+                <span className="text-red-300">- {format(totalExpenses)}</span>
               </div>
               <div className="flex justify-between text-base pt-2 border-t border-gray-700">
                 <span className="text-white font-medium">Expected Cash</span>
-                <span className="text-accent-green font-bold">{format(currentShift.expectedCash || currentShift.openingCash)}</span>
+                <span className="text-accent-green font-bold">{format(expectedCash)}</span>
               </div>
             </div>
 

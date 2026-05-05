@@ -3,10 +3,16 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../../lib/api-client';
 import { useBranchStore, getBranchId } from '../../stores/branch-store';
+import { useAuthStore } from '../../stores/auth-store';
 import { useCurrency } from '../../hooks/useCurrency';
 import { useToast } from '../../hooks/useToast';
 import { getPaymentMethodLabel } from '../../config/payment-methods';
 import { queryKeys } from '../../lib/query-keys';
+
+interface Branch {
+  _id: string;
+  name: string;
+}
 
 interface Sale {
   _id: string;
@@ -26,18 +32,37 @@ interface Sale {
 export const TransactionHistoryPage = () => {
   const navigate = useNavigate();
   const selectedBranch = useBranchStore((state) => state.selectedBranch);
+  const user = useAuthStore((state) => state.user);
+  const isSuperAdmin = user?.role === 'super_admin';
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<string>('all');
   const [status, setStatus] = useState<string>('all');
+  const [branchFilter, setBranchFilter] = useState<string>(
+    isSuperAdmin ? 'all' : getBranchId(selectedBranch) || '',
+  );
   const { format } = useCurrency();
   const { showInfo } = useToast();
+  const selectedBranchId = getBranchId(selectedBranch);
+  const effectiveBranchId = isSuperAdmin
+    ? (branchFilter !== 'all' ? branchFilter : undefined)
+    : selectedBranchId;
+
+  const { data: branches } = useQuery({
+    queryKey: queryKeys.branches.list(),
+    queryFn: async () => {
+      const response = await apiClient.get('/branches');
+      const payload = response.data?.data ?? response.data;
+      return (Array.isArray(payload) ? payload : []) as Branch[];
+    },
+    enabled: isSuperAdmin,
+  });
 
   const { data: sales, isLoading } = useQuery({
     queryKey: queryKeys.sales.history({
-      branchId: getBranchId(selectedBranch),
+      branchId: effectiveBranchId,
       search: searchQuery,
       startDate: dateFrom,
       endDate: dateTo,
@@ -46,9 +71,8 @@ export const TransactionHistoryPage = () => {
       limit: 50,
     }),
     queryFn: async () => {
-      const branchId = getBranchId(selectedBranch);
-      if (!branchId) throw new Error('Branch ID is required');
-      const params: Record<string, string | number> = { branchId, limit: 50 };
+      const params: Record<string, string | number> = { limit: 50 };
+      if (effectiveBranchId) params.branchId = effectiveBranchId;
       if (searchQuery) params.search = searchQuery;
       if (dateFrom) params.startDate = dateFrom;
       if (dateTo) params.endDate = dateTo;
@@ -57,16 +81,23 @@ export const TransactionHistoryPage = () => {
       const response = await apiClient.get('/sales', { params });
       return response.data.data as Sale[];
     },
-    enabled: !!getBranchId(selectedBranch),
+    enabled: isSuperAdmin || !!selectedBranchId,
   });
 
-  const activeFiltersCount = [dateFrom, dateTo, paymentMethod !== 'all', status !== 'all'].filter(Boolean).length;
+  const activeFiltersCount = [
+    dateFrom,
+    dateTo,
+    paymentMethod !== 'all',
+    status !== 'all',
+    isSuperAdmin && branchFilter !== 'all',
+  ].filter(Boolean).length;
 
   const clearFilters = () => {
     setDateFrom('');
     setDateTo('');
     setPaymentMethod('all');
     setStatus('all');
+    if (isSuperAdmin) setBranchFilter('all');
   };
 
   const getStatusBadge = (status: Sale['status']) => {
@@ -193,6 +224,25 @@ export const TransactionHistoryPage = () => {
                 </svg>
               </button>
             </div>
+
+            {/* Date Range */}
+            {isSuperAdmin && (
+              <div>
+                <label className="block text-gray-400 text-sm mb-2">Branch</label>
+                <select
+                  value={branchFilter}
+                  onChange={(e) => setBranchFilter(e.target.value)}
+                  className="w-full px-4 py-3 bg-primary-darker border border-gray-600 rounded-xl text-white focus:outline-none focus:border-accent-green"
+                >
+                  <option value="all">All Branches</option>
+                  {(branches || []).map((branch) => (
+                    <option key={branch._id} value={branch._id}>
+                      {branch.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {/* Date Range */}
             <div>

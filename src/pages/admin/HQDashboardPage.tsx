@@ -156,11 +156,14 @@ export default function HQDashboardPage() {
           apiClient.get('/transfers', { params: { status: 'pending' } }),
         ]);
 
-      const branches = (branchesResponse.data as Branch[]).filter(
+      const branchesRaw = branchesResponse.data?.data ?? branchesResponse.data;
+      const branches = (Array.isArray(branchesRaw) ? branchesRaw : []).filter(
         (branch) => branch.isActive !== false,
       );
-      const products = productsResponse.data.data as Product[];
-      const pendingTransfersRaw = transfersResponse.data as PendingTransferRaw[];
+      const productsRaw = productsResponse.data?.data ?? productsResponse.data;
+      const products = Array.isArray(productsRaw) ? productsRaw : [];
+      const pendingTransfersRaw = transfersResponse.data?.data ?? transfersResponse.data;
+      const pendingTransfers = Array.isArray(pendingTransfersRaw) ? pendingTransfersRaw : [];
 
       let users: User[] = [];
       try {

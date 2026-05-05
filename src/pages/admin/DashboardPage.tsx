@@ -66,7 +66,7 @@ export const DashboardPage = () => {
         totalProducts: raw?.totalProducts ?? 0,
         totalCustomers: raw?.totalCustomers ?? 0,
         lowStockProducts: raw?.lowStockProducts ?? raw?.lowStockCount ?? 0,
-        expiringSoon: raw?.expiringSoon ?? raw?.expiredCount ?? 0,
+        expiringSoon: raw?.expiringSoon ?? 0,
         lowStockItems: Array.isArray(raw?.lowStockItems) ? raw.lowStockItems : [],
       };
     },
@@ -75,6 +75,30 @@ export const DashboardPage = () => {
 
   const lowStockItems = stats?.lowStockItems ?? [];
   const lowStockProducts = stats?.lowStockProducts ?? 0;
+
+  if (!branchId) {
+    return (
+      <AdminLayout title="Dashboard">
+        <div className="flex min-h-[60vh] items-center justify-center">
+          <div className="max-w-md text-center">
+            <h2 className="text-xl font-semibold text-white">Select a Branch First</h2>
+            <p className="mt-2 text-gray-400">
+              Dashboard data is branch-scoped. Choose a branch before viewing sales,
+              stock alerts, and branch activity.
+            </p>
+            <div className="mt-6">
+              <Link
+                to="/branches"
+                className="inline-flex rounded-xl bg-accent-green px-4 py-2 font-medium text-primary-dark transition-all duration-200 hover:bg-accent-light"
+              >
+                Select Branch
+              </Link>
+            </div>
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout title="Dashboard">

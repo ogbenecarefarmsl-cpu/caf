@@ -10,6 +10,7 @@ import { Select } from '../../components/ui/Select';
 import { Loading } from '../../components/ui/Loading';
 import { Error } from '../../components/ui/Error';
 import { useCurrency } from '../../hooks/useCurrency';
+import { useBranchStore, getBranchId } from '../../stores/branch-store';
 import { queryKeys } from '../../lib/query-keys';
 import { buildApiUrl } from '../../lib/api-utils';
 
@@ -84,6 +85,8 @@ const defaultFilters: SalesReportFilters = {
 
 export default function SalesReportsPage() {
   const { format } = useCurrency();
+  const selectedBranch = useBranchStore((state) => state.selectedBranch);
+  const selectedBranchId = getBranchId(selectedBranch);
   
   const [filters, setFilters] = useState<SalesReportFilters>(defaultFilters);
 
@@ -96,7 +99,8 @@ export default function SalesReportsPage() {
     queryKey: queryKeys.branches.list(),
     queryFn: async () => {
       const response = await apiClient.get('/branches');
-      return response.data as Branch[];
+      const payload = response.data?.data ?? response.data;
+      return (Array.isArray(payload) ? payload : []) as Branch[];
     },
   });
 
@@ -105,7 +109,8 @@ export default function SalesReportsPage() {
     queryKey: queryKeys.users.list({ role: 'cashier' }),
     queryFn: async () => {
       const response = await apiClient.get(buildApiUrl('/users', { role: 'cashier' }));
-      return response.data as User[];
+      const payload = response.data?.data ?? response.data;
+      return (Array.isArray(payload) ? payload : []) as User[];
     },
   });
 
@@ -114,7 +119,8 @@ export default function SalesReportsPage() {
     queryKey: queryKeys.products.list(),
     queryFn: async () => {
       const response = await apiClient.get('/products');
-      return response.data.data as Product[];
+      const payload = response.data?.data ?? response.data;
+      return (Array.isArray(payload) ? payload : []) as Product[];
     },
   });
 
@@ -215,6 +221,19 @@ export default function SalesReportsPage() {
       )
     },
   ];
+
+  if (!selectedBranchId) {
+    return (
+      <AdminLayout>
+        <div className="rounded-2xl border border-white/10 bg-primary-dark/60 p-8 text-center">
+          <h2 className="text-xl font-semibold text-white">Select a Branch First</h2>
+          <p className="mt-2 text-gray-400">
+            Sales reports are branch-scoped. Choose a branch to continue.
+          </p>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>

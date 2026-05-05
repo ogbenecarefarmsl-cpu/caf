@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
 import apiClient from '../../lib/api-client';
 import { AdminLayout } from '../../components/AdminLayout';
 import { Button } from '../../components/ui/Button';
@@ -78,6 +79,7 @@ interface Supplier {
 }
 
 export const ProductManagementPage = () => {
+  const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [wizardStep, setWizardStep] = useState<1 | 2>(1);
@@ -324,6 +326,22 @@ export const ProductManagementPage = () => {
       handleCreateProduct(data);
     }
   };
+
+  if (!branchId) {
+    return (
+      <AdminLayout>
+        <div className="rounded-2xl border border-white/10 bg-primary-dark/60 p-8 text-center">
+          <h2 className="text-xl font-semibold text-white">Select a Branch First</h2>
+          <p className="mt-2 text-gray-400">
+            Products are branch-scoped. Choose a branch before viewing or managing products.
+          </p>
+          <div className="mt-6">
+            <Button onClick={() => navigate('/branches')}>Select Branch</Button>
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   if (isLoading) return <AdminLayout><Loading /></AdminLayout>;
   if (error) return <AdminLayout><ErrorDisplay message="Failed to load products" /></AdminLayout>;

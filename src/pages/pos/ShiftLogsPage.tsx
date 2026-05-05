@@ -38,10 +38,13 @@ export const ShiftLogsPage = () => {
   const [closingCash, setClosingCash] = useState('');
   const queryClient = useQueryClient();
 
+  const terminalId = 'TERMINAL-01';
+
   const { data: currentShift } = useQuery({
     queryKey: queryKeys.shifts.current({
       branchId: getBranchId(selectedBranch),
       cashierId: user?.id,
+      terminalId,
     }),
     queryFn: async () => {
       const branchId = getBranchId(selectedBranch);
@@ -52,7 +55,7 @@ export const ShiftLogsPage = () => {
       }
       
       const response = await apiClient.get('/shifts/current', {
-        params: { branchId, cashierId },
+        params: { branchId, cashierId, terminalId },
       });
       return response.data.data as Shift;
     },
