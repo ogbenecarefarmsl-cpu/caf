@@ -18,6 +18,14 @@ interface Shift {
   status: 'open' | 'closed';
 }
 
+interface RecentSale {
+  _id: string;
+  total: number;
+  createdAt: string;
+  paymentMethod?: string;
+  items?: Array<unknown>;
+}
+
 export const PaymentPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -124,8 +132,8 @@ export const PaymentPage = () => {
         mobile: 'orange_money',
         split: 'bank_transfer',
       };
-      
-      const response = await apiClient.post('/sales/checkout', {
+
+      const payload = {
         branchId,
         shiftId: currentShift._id,
         terminalId,
@@ -136,8 +144,47 @@ export const PaymentPage = () => {
         })),
         discount,
         paymentMethod: paymentMethodMap[paymentMethod],
-      });
-      return response.data;
+      };
+
+      try {
+        const response = await apiClient.post('/sales/checkout', payload);
+        return response.data;
+      } catch (error) {
+        // Temporary resilience: if backend throws 500 after commit, recover by
+        // scanning most recent sales and redirecting to the created receipt.
+        const axiosError = error as {
+          response?: { status?: number };
+        };
+        if (axiosError?.response?.status === 500) {
+          const recentResponse = await apiClient.get('/sales', {
+            params: { branchId, limit: 10 },
+          });
+
+          const sales = (recentResponse.data?.data || []) as RecentSale[];
+          const now = Date.now();
+          const targetPaymentMethod = paymentMethodMap[paymentMethod];
+          const candidate = sales.find((sale) => {
+            const createdAtMs = new Date(sale.createdAt).getTime();
+            const isFresh = Number.isFinite(createdAtMs) && now - createdAtMs < 2 * 60 * 1000;
+            const sameTotal = Math.abs((sale.total || 0) - total) < 0.01;
+            const sameItemCount = (sale.items?.length || 0) === items.length;
+            const samePaymentMethod = sale.paymentMethod === targetPaymentMethod;
+            return isFresh && sameTotal && sameItemCount && samePaymentMethod;
+          });
+
+          if (candidate?._id) {
+            return {
+              success: true,
+              message: 'Checkout recovered from server error',
+              data: {
+                saleId: candidate._id,
+              },
+            };
+          }
+        }
+
+        throw error;
+      }
     },
     onSuccess: (data) => {
       const saleId = data?.data?.saleId;
