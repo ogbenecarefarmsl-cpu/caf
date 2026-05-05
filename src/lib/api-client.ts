@@ -13,35 +13,6 @@ function generateUUID(): string {
   });
 }
 
-// SessionStorage-based cache to map request fingerprints to idempotency keys
-// Persists across page reloads (unlike Map which is cleared)
-// Key: JSON.stringify({ method, url, payload }) -> Value: UUID
-const IDEMPOTENCY_KEY_PREFIX = 'idempotency_key_';
-
-function getStoredKey(fingerprint: string): string | null {
-  try {
-    return sessionStorage.getItem(IDEMPOTENCY_KEY_PREFIX + fingerprint);
-  } catch {
-    return null;
-  }
-}
-
-function storeKey(fingerprint: string, key: string): void {
-  try {
-    sessionStorage.setItem(IDEMPOTENCY_KEY_PREFIX + fingerprint, key);
-  } catch {
-    // sessionStorage might be unavailable (e.g., SSR)
-  }
-}
-
-function removeStoredKey(fingerprint: string): void {
-  try {
-    sessionStorage.removeItem(IDEMPOTENCY_KEY_PREFIX + fingerprint);
-  } catch {
-    // sessionStorage might be unavailable
-  }
-}
-
 // Create axios instance
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -76,21 +47,8 @@ apiClient.interceptors.request.use(
     // 2. Handle Idempotency for write operations
     const writeMethods = ['post', 'put', 'patch', 'delete'];
     if (config.method && writeMethods.includes(config.method.toLowerCase())) {
-      const fingerprint = JSON.stringify({
-        method: config.method,
-        url: config.url,
-        data: config.data,
-      });
-
-      // Check sessionStorage for existing key (persists across page reloads)
-      let idempotencyKey = getStoredKey(fingerprint);
-      if (!idempotencyKey) {
-        idempotencyKey = generateUUID();
-        storeKey(fingerprint, idempotencyKey);
-      }
-
       if (config.headers) {
-        config.headers['X-Idempotency-Key'] = idempotencyKey;
+        config.headers['X-Idempotency-Key'] = generateUUID();
       }
     }
 
@@ -104,16 +62,6 @@ apiClient.interceptors.request.use(
 // Response interceptor to handle token refresh and offline queuing
 apiClient.interceptors.response.use(
   (response) => {
-    // Clear idempotency key on successful write operation to allow future identical requests
-    const config = response.config;
-    if (config && config.method && ['post', 'put', 'patch', 'delete'].includes(config.method.toLowerCase())) {
-      const fingerprint = JSON.stringify({
-        method: config.method,
-        url: config.url,
-        data: config.data,
-      });
-      removeStoredKey(fingerprint);
-    }
     return response;
   },
   async (error: AxiosError) => {
