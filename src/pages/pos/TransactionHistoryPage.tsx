@@ -214,7 +214,7 @@ export const TransactionHistoryPage = () => {
 
       {/* Filter Modal */}
       {showFilters && (
-        <div className="fixed inset-0 bg-black/50 flex items-end z-50" onClick={() => setShowFilters(false)}>
+        <div className="fixed inset-0 bg-black/75 flex items-end z-50" onClick={() => setShowFilters(false)}>
           <div className="bg-primary-dark w-full rounded-t-3xl p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-white">Filter Transactions</h2>

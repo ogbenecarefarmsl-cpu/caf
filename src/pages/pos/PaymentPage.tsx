@@ -322,7 +322,7 @@ export const PaymentPage = () => {
 
       {/* Email Modal */}
       {showEmailModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowEmailModal(false)}>
+        <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50" onClick={() => setShowEmailModal(false)}>
           <div className="bg-primary-dark rounded-2xl p-6 w-[90%] max-w-md" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-white">Email Receipt</h2>
