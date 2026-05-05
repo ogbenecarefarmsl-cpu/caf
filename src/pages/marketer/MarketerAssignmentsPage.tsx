@@ -10,6 +10,7 @@ import { Table } from '../../components/ui/Table';
 import { queryKeys } from '../../lib/query-keys';
 import { useAuthStore } from '../../stores/auth-store';
 import { useBranchStore } from '../../stores/branch-store';
+import { useCurrency } from '../../hooks/useCurrency';
 
 interface MarketerUser {
   id?: string;
@@ -84,6 +85,7 @@ export const MarketerAssignmentsPage = () => {
   const queryClient = useQueryClient();
   const user = useAuthStore((s) => s.user);
   const selectedBranch = useBranchStore((s) => s.selectedBranch);
+  const { format } = useCurrency();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [marketerId, setMarketerId] = useState('');
@@ -169,7 +171,7 @@ export const MarketerAssignmentsPage = () => {
     {
       key: 'price',
       header: 'Unit Price',
-      render: (item: Assignment) => <span>₦{item.assignedUnitPrice.toFixed(2)}</span>,
+      render: (item: Assignment) => <span>{format(item.assignedUnitPrice)}</span>,
     },
     {
       key: 'status',

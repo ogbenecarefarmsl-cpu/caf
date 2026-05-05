@@ -15,6 +15,7 @@ import { useBranchStore, getBranchId } from '../../stores/branch-store';
 import { useAuth } from '../../contexts/AuthContext';
 import { queryKeys } from '../../lib/query-keys';
 import { buildApiUrl } from '../../lib/api-utils';
+import { useCurrency } from '../../hooks/useCurrency';
 
 interface Supplier {
   _id: string;
@@ -75,6 +76,7 @@ interface ReceiveFormData {
 }
 
 export default function PurchaseOrderPage() {
+  const { symbol } = useCurrency();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isReceiveModalOpen, setIsReceiveModalOpen] = useState(false);
   const [selectedPO, setSelectedPO] = useState<PurchaseOrder | null>(null);
@@ -356,7 +358,7 @@ export default function PurchaseOrderPage() {
                     type="number"
                     step="0.01"
                     min="0"
-                    placeholder="₦0.00"
+                    placeholder={`${symbol} 0.00`}
                     {...registerCreate(`items.${index}.unitPrice`, { 
                       required: 'Price is required',
                       min: { value: 0, message: 'Min 0' }

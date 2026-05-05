@@ -4,6 +4,7 @@ import apiClient from '../../lib/api-client';
 import { Input } from '../ui/Input';
 import { useCartStore } from '../../stores/cart-store';
 import { useAlertReplacement } from '../../hooks/useAlertReplacement';
+import { useCurrency } from '../../hooks/useCurrency';
 import { queryKeys } from '../../lib/query-keys';
 
 interface Product {
@@ -31,6 +32,7 @@ export const ProductSearch = ({ branchId }: ProductSearchProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const addItem = useCartStore((state) => state.addItem);
   const { alertWarning, alertError } = useAlertReplacement();
+  const { format } = useCurrency();
 
   // Handle product selection
   const handleProductSelect = useCallback((product: Product) => {
@@ -231,7 +233,7 @@ export const ProductSearch = ({ branchId }: ProductSearchProps) => {
                       </div>
                       <div className="text-right ml-4 shrink-0">
                         <p className="text-base font-bold text-accent-green">
-                          ₦{product.sellingPrice.toFixed(2)}
+                          {format(product.sellingPrice)}
                         </p>
                         <p
                           className={`text-xs mt-1 font-medium ${

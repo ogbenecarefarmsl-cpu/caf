@@ -154,7 +154,7 @@ export const SystemSettingsPage = () => {
                   <option value="USD" className="bg-primary-dark text-white">USD - US Dollar</option>
                   <option value="EUR" className="bg-primary-dark text-white">EUR - Euro</option>
                   <option value="GBP" className="bg-primary-dark text-white">GBP - British Pound</option>
-                  <option value="NGN" className="bg-primary-dark text-white">NGN - Nigerian Naira</option>
+                  <option value="SLE" className="bg-primary-dark text-white">SLE - Sierra Leonean Leone</option>
                   <option value="GHS" className="bg-primary-dark text-white">GHS - Ghanaian Cedi</option>
                   <option value="KES" className="bg-primary-dark text-white">KES - Kenyan Shilling</option>
                 </Select>
@@ -170,6 +170,7 @@ export const SystemSettingsPage = () => {
                   <option value="America/Denver" className="bg-primary-dark text-white">Mountain Time</option>
                   <option value="America/Los_Angeles" className="bg-primary-dark text-white">Pacific Time</option>
                   <option value="Europe/London" className="bg-primary-dark text-white">London</option>
+                  <option value="Africa/Freetown" className="bg-primary-dark text-white">Freetown</option>
                   <option value="Africa/Lagos" className="bg-primary-dark text-white">Lagos</option>
                   <option value="Africa/Nairobi" className="bg-primary-dark text-white">Nairobi</option>
                 </Select>

@@ -6,6 +6,7 @@ import { useBranchStore, getBranchId } from '../../stores/branch-store';
 import { useAlertReplacement } from '../../hooks/useAlertReplacement';
 import { QRScannerModal } from '../../components/pos/QRScannerModal';
 import { queryKeys } from '../../lib/query-keys';
+import { useCurrency } from '../../hooks/useCurrency';
 
 interface Sale {
   _id: string;
@@ -28,6 +29,7 @@ export const ProcessReturnPage = () => {
   const navigate = useNavigate();
   const selectedBranch = useBranchStore((state) => state.selectedBranch);
   const { alertInfo } = useAlertReplacement();
+  const { format } = useCurrency();
   const [searchMode, setSearchMode] = useState<SearchMode>('receipt');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
@@ -148,7 +150,7 @@ export const ProcessReturnPage = () => {
                   <div className="flex-1">
                     <p className="text-white font-semibold">Receipt #{sale.receiptNumber}</p>
                     <p className="text-gray-400 text-sm">
-                      {sale.items.length} {sale.items.length === 1 ? 'Item' : 'Items'} - ₦{sale.total.toFixed(2)}
+                      {sale.items.length} {sale.items.length === 1 ? 'Item' : 'Items'} - {format(sale.total)}
                     </p>
                     <p className="text-gray-500 text-sm">Customer: {sale.customerName || 'Walk-in'}</p>
                   </div>

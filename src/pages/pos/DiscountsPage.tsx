@@ -5,6 +5,7 @@ import apiClient from '../../lib/api-client';
 import { useCartStore } from '../../stores/cart-store';
 import { useBranchStore, getBranchId } from '../../stores/branch-store';
 import { queryKeys } from '../../lib/query-keys';
+import { useCurrency } from '../../hooks/useCurrency';
 
 interface Promotion {
   _id: string;
@@ -23,6 +24,7 @@ export const DiscountsPage = () => {
   const navigate = useNavigate();
   const selectedBranch = useBranchStore((state) => state.selectedBranch);
   const { subtotal, setDiscount } = useCartStore();
+  const { format, symbol } = useCurrency();
   
   const [discountScope, setDiscountScope] = useState<DiscountScope>('entire');
   const [percentageDiscount, setPercentageDiscount] = useState('');
@@ -155,10 +157,10 @@ export const DiscountsPage = () => {
                   type="number"
                   value={fixedDiscount}
                   onChange={(e) => setFixedDiscount(e.target.value)}
-                  placeholder="₦0.00"
+                  placeholder={`${symbol} 0.00`}
                   className="w-full px-4 py-3 bg-primary-dark border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-accent-green"
                 />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">₦</span>
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">{symbol}</span>
               </div>
             </div>
           </div>
@@ -228,15 +230,15 @@ export const DiscountsPage = () => {
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
             <span className="text-gray-400">Subtotal</span>
-            <span className="text-white">₦{subtotal.toFixed(2)}</span>
+            <span className="text-white">{format(subtotal)}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-gray-400">Total Discount</span>
-            <span className="text-red-400">-₦{totalDiscount.toFixed(2)}</span>
+            <span className="text-red-400">-{format(totalDiscount)}</span>
           </div>
           <div className="flex justify-between text-lg font-bold pt-2 border-t border-gray-700">
             <span className="text-white">New Total</span>
-            <span className="text-white">₦{newTotal.toFixed(2)}</span>
+            <span className="text-white">{format(newTotal)}</span>
           </div>
         </div>
 

@@ -5,6 +5,7 @@ import { useCartStore } from '../../stores/cart-store';
 import { useBranchStore, getBranchId } from '../../stores/branch-store';
 import { useAlertReplacement } from '../../hooks/useAlertReplacement';
 import { useToast } from '../../hooks/useToast';
+import { useCurrency } from '../../hooks/useCurrency';
 import apiClient from '../../lib/api-client';
 import { getErrorMessage } from '../../lib/error-utils';
 import { useAuthStore } from '../../stores/auth-store';
@@ -25,6 +26,7 @@ export const PaymentPage = () => {
   const user = useAuthStore((state) => state.user);
   const { alertInfo } = useAlertReplacement();
   const { showSuccess, showError } = useToast();
+  const { format, symbol } = useCurrency();
 
   const terminalId = 'TERMINAL-01';
   
@@ -193,7 +195,7 @@ export const PaymentPage = () => {
         {/* Total Amount */}
         <div className="text-center py-4">
           <p className="text-gray-400 text-sm">Total Amount Due</p>
-          <p className="text-5xl font-bold text-white mt-2">₦{total.toFixed(2)}</p>
+          <p className="text-5xl font-bold text-white mt-2">{format(total)}</p>
         </div>
 
         {/* Payment Methods */}
@@ -224,17 +226,17 @@ export const PaymentPage = () => {
           <div>
             <h2 className="text-white font-semibold mb-3">Amount Received</h2>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-accent-green text-xl font-bold">₦</span>
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-accent-green text-xl font-bold">{symbol}</span>
               <input
                 type="number"
                 value={amountReceived}
                 onChange={(e) => setAmountReceived(e.target.value)}
-                className="w-full pl-10 pr-4 py-4 bg-primary-dark border border-gray-700 rounded-xl text-white text-xl font-medium focus:outline-none focus:border-accent-green"
+                className="w-full pl-14 pr-4 py-4 bg-primary-dark border border-gray-700 rounded-xl text-white text-xl font-medium focus:outline-none focus:border-accent-green"
               />
             </div>
             <div className="flex justify-end mt-2">
               <span className="text-gray-400">Change Due: </span>
-              <span className="text-accent-green font-bold ml-2">₦{changeDue.toFixed(2)}</span>
+              <span className="text-accent-green font-bold ml-2">{format(changeDue)}</span>
             </div>
           </div>
         )}

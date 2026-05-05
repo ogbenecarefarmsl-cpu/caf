@@ -13,6 +13,7 @@ import { Error } from '../../components/ui/Error';
 import { useToast } from '../../hooks/useToast';
 import { useBranchStore } from '../../stores/branch-store';
 import { queryKeys } from '../../lib/query-keys';
+import { useCurrency } from '../../hooks/useCurrency';
 
 interface Batch {
   id: string;
@@ -73,6 +74,7 @@ export const BatchManagementPage = () => {
   const queryClient = useQueryClient();
   const { selectedBranch } = useBranchStore();
   const { showSuccess, showError } = useToast();
+  const { format, symbol } = useCurrency();
 
   const {
     register,
@@ -262,8 +264,8 @@ export const BatchManagementPage = () => {
       header: 'Pricing',
       render: (batch: Batch) => (
         <div className="text-sm">
-          <div>Buy: ₦{batch.purchasePrice.toFixed(2)}</div>
-          <div className="text-accent-green">Sell: ₦{batch.sellingPrice.toFixed(2)}</div>
+          <div>Buy: {format(batch.purchasePrice)}</div>
+          <div className="text-accent-green">Sell: {format(batch.sellingPrice)}</div>
         </div>
       ),
     },
@@ -438,7 +440,7 @@ export const BatchManagementPage = () => {
             {/* Pricing */}
             <div className="grid grid-cols-2 gap-4">
               <Input
-                label="Purchase Price (₦)"
+                label={`Purchase Price (${symbol})`}
                 type="number"
                 step="0.01"
                 {...register('purchasePrice', {
@@ -446,10 +448,10 @@ export const BatchManagementPage = () => {
                   min: { value: 0, message: 'Must be 0 or greater' },
                 })}
                 error={errors.purchasePrice?.message}
-                placeholder="₦0.00"
+                placeholder={`${symbol} 0.00`}
               />
               <Input
-                label="Selling Price (₦)"
+                label={`Selling Price (${symbol})`}
                 type="number"
                 step="0.01"
                 {...register('sellingPrice', {
@@ -457,7 +459,7 @@ export const BatchManagementPage = () => {
                   min: { value: 0, message: 'Must be 0 or greater' },
                 })}
                 error={errors.sellingPrice?.message}
-                placeholder="₦0.00"
+                placeholder={`${symbol} 0.00`}
               />
             </div>
 

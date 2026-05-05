@@ -6,6 +6,7 @@ import { Input } from '../ui/Input';
 import apiClient from '../../lib/api-client';
 import { useAuthStore } from '../../stores/auth-store';
 import { useToast } from '../../hooks/useToast';
+import { useCurrency } from '../../hooks/useCurrency';
 import { queryKeys } from '../../lib/query-keys';
 
 interface Shift {
@@ -37,6 +38,7 @@ export const ShiftManagement = ({
   const queryClient = useQueryClient();
   const user = useAuthStore((state) => state.user);
   const { showError } = useToast();
+  const { format, symbol } = useCurrency();
   
   const [showOpenModal, setShowOpenModal] = useState(false);
   const [showCloseModal, setShowCloseModal] = useState(false);
@@ -160,7 +162,7 @@ export const ShiftManagement = ({
               <div>
                 <p className="text-gray-400">Opening Cash:</p>
                 <p className="text-white font-medium">
-                  ₦{currentShift.openingCash.toFixed(2)}
+                  {format(currentShift.openingCash)}
                 </p>
               </div>
               <div>
@@ -207,7 +209,7 @@ export const ShiftManagement = ({
           <Input
             type="number"
             label="Opening Cash Amount"
-            placeholder="₦0.00"
+            placeholder={`${symbol} 0.00`}
             value={openingCash}
             onChange={(e) => setOpeningCash(e.target.value)}
             min="0"
@@ -260,12 +262,12 @@ export const ShiftManagement = ({
             <div className="bg-[--color-primary-darker] rounded-lg p-4 space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-gray-400">Opening Cash:</span>
-                <span className="text-white">₦{currentShift.openingCash.toFixed(2)}</span>
+                <span className="text-white">{format(currentShift.openingCash)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-400">Expected Cash:</span>
                 <span className="text-white">
-                  ₦{(currentShift.expectedCash || currentShift.openingCash).toFixed(2)}
+                  {format(currentShift.expectedCash || currentShift.openingCash)}
                 </span>
               </div>
             </div>
@@ -274,7 +276,7 @@ export const ShiftManagement = ({
           <Input
             type="number"
             label="Closing Cash Amount"
-            placeholder="₦0.00"
+            placeholder={`${symbol} 0.00`}
             value={closingCash}
             onChange={(e) => setClosingCash(e.target.value)}
             min="0"
@@ -295,7 +297,7 @@ export const ShiftManagement = ({
                       : 'text-red-500'
                   }`}
                 >
-                  ₦{(parseFloat(closingCash) - (currentShift.expectedCash || currentShift.openingCash)).toFixed(2)}
+                  {format(parseFloat(closingCash) - (currentShift.expectedCash || currentShift.openingCash))}
                 </span>
               </div>
             </div>
