@@ -676,12 +676,6 @@ export const POSPage = () => {
                     </button>
                   </div>
 
-                  {item.requiresPrescription && (
-                    <span className="inline-block mb-2 px-2 py-0.5 text-xs bg-orange-500/20 text-orange-400 rounded border border-orange-500/30">
-                      🔒 Prescription Required
-                    </span>
-                  )}
-
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2 bg-primary-dark rounded-lg p-1">
                       <button
@@ -804,12 +798,6 @@ export const POSPage = () => {
                     </svg>
                   </button>
                 </div>
-
-                {item.requiresPrescription && (
-                  <span className="inline-block mb-3 px-2.5 py-1 text-xs bg-orange-500/20 text-orange-400 rounded-lg border border-orange-500/30">
-                    🔒 Prescription Required
-                  </span>
-                )}
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2 bg-primary-darker rounded-lg p-1.5">

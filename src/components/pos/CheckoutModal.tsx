@@ -43,19 +43,13 @@ export const CheckoutModal = ({
   shiftId,
   terminalId,
 }: CheckoutModalProps) => {
-  const { items, subtotal, discount, total, setDiscount, prescriptionUrl, setPrescription } =
-    useCartStore();
-  const { alertError, alertWarning } = useAlertReplacement();
+  const { items, subtotal, discount, total, setDiscount } = useCartStore();
+  const { alertError } = useAlertReplacement();
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
   const [paymentReference, setPaymentReference] = useState('');
   const [discountInput, setDiscountInput] = useState(discount.toString());
-  const [prescriptionFile, setPrescriptionFile] = useState<File | null>(null);
-  const [prescriptionPreview, setPrescriptionPreview] = useState<string | null>(
-    prescriptionUrl || null
-  );
 
-  const requiresPrescription = items.some((item) => item.requiresPrescription);
   const isMobileMoney = isMobileMoneyMethod(paymentMethod);
 
   interface CheckoutData {
@@ -95,51 +89,7 @@ export const CheckoutModal = ({
     setDiscount(Math.max(0, Math.min(discountValue, subtotal)));
   };
 
-  const handlePrescriptionUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setPrescriptionFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPrescriptionPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   const handleCheckout = async () => {
-    // Validate prescription if required
-    if (requiresPrescription && !prescriptionPreview) {
-      alertWarning('Please upload a prescription for controlled items');
-      return;
-    }
-
-    // Upload prescription if provided
-    let uploadedPrescriptionUrl = prescriptionUrl;
-    if (prescriptionFile) {
-      try {
-        const formData = new FormData();
-        formData.append('prescription', prescriptionFile);
-
-        const uploadResponse = await apiClient.post(
-          '/prescriptions/upload',
-          formData,
-          {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
-          }
-        );
-        uploadedPrescriptionUrl = uploadResponse.data.url;
-        if (uploadedPrescriptionUrl) {
-          setPrescription(uploadedPrescriptionUrl);
-        }
-      } catch {
-        alertError('Failed to upload prescription. Please try again.');
-        return;
-      }
-    }
-
     // Prepare checkout data
     const checkoutData = {
       branchId,
@@ -153,7 +103,6 @@ export const CheckoutModal = ({
       discount,
       paymentMethod,
       paymentReference: paymentReference.trim() || undefined, // Optional mobile money reference
-      prescriptionUrl: uploadedPrescriptionUrl,
     };
 
     checkoutMutation.mutate(checkoutData);
@@ -244,60 +193,6 @@ export const CheckoutModal = ({
               onChange={(e) => setPaymentReference(e.target.value)}
               helperText="Optional: Enter the mobile money transaction reference for record keeping"
             />
-          </div>
-        )}
-
-        {/* Prescription Upload */}
-        {requiresPrescription && (
-          <div>
-            <label className="block text-sm font-medium text-white mb-2">
-              Prescription <span className="text-red-500">*</span>
-            </label>
-            <div className="space-y-3">
-              <input
-                type="file"
-                accept="image/*,.pdf"
-                onChange={handlePrescriptionUpload}
-                className="block w-full text-sm text-gray-400
-                  file:mr-4 file:py-2 file:px-4
-                  file:rounded-lg file:border-0
-                  file:text-sm file:font-medium
-                  file:bg-[--color-accent-green] file:text-[--color-primary-dark]
-                  hover:file:bg-[--color-accent-light]
-                  file:cursor-pointer cursor-pointer"
-              />
-              {prescriptionPreview && (
-                <div className="relative">
-                  <img
-                    src={prescriptionPreview}
-                    alt="Prescription preview"
-                    className="w-full h-48 object-cover rounded-lg"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setPrescriptionFile(null);
-                      setPrescriptionPreview(null);
-                    }}
-                    className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
-                  >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                  </button>
-                </div>
-              )}
-            </div>
           </div>
         )}
 

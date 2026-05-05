@@ -28,7 +28,6 @@ export const ShoppingCart = ({ onCheckout }: ShoppingCartProps) => {
   };
 
   const hasItems = items.length > 0;
-  const requiresPrescription = items.some((item) => item.requiresPrescription);
 
   return (
     <div className="flex flex-col h-full">
@@ -75,11 +74,6 @@ export const ShoppingCart = ({ onCheckout }: ShoppingCartProps) => {
                     <p className="text-xs text-gray-400 mt-1">
                       SKU: {item.sku}
                     </p>
-                    {item.requiresPrescription && (
-                      <span className="inline-block mt-1 px-2 py-0.5 text-xs bg-orange-500 text-white rounded">
-                        Rx Required
-                      </span>
-                    )}
                   </div>
                   <button
                     onClick={() => removeItem(item.productId)}
@@ -173,14 +167,6 @@ export const ShoppingCart = ({ onCheckout }: ShoppingCartProps) => {
       {/* Cart Summary */}
       {hasItems && (
         <div className="border-t border-gray-700 px-4 py-4 bg-[--color-primary-darker]">
-          {/* Prescription Warning */}
-          {requiresPrescription && (
-            <div className="mb-3 p-2 bg-orange-500 bg-opacity-20 border border-orange-500 rounded-lg">
-              <p className="text-xs text-orange-400 text-center">
-                ⚠️ This cart contains prescription items
-              </p>
-            </div>
-          )}
 
           {/* Totals */}
           <div className="space-y-2 mb-4">

@@ -246,13 +246,6 @@ export const ProductSearch = ({ branchId }: ProductSearchProps) => {
                         </p>
                       </div>
                     </div>
-                    {product.requiresPrescription && (
-                      <div className="mt-2">
-                        <span className="inline-block px-2.5 py-1 text-xs bg-orange-500/20 text-orange-400 rounded border border-orange-500/30">
-                          🔒 Rx Required
-                        </span>
-                      </div>
-                    )}
                   </button>
                 </li>
               ))}
