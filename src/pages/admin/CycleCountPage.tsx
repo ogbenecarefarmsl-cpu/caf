@@ -68,7 +68,8 @@ export function CycleCountPage() {
     queryKey: queryKeys.cycleCounts.list({ branchId }),
     queryFn: async () => {
       const response = await apiClient.get(buildApiUrl('/cycle-counts', { branchId }));
-      return response.data as CycleCount[];
+      const payload = response.data?.data ?? response.data;
+      return (Array.isArray(payload) ? payload : []) as CycleCount[];
     },
     enabled: !!selectedBranch,
   });
@@ -77,7 +78,7 @@ export function CycleCountPage() {
     queryKey: queryKeys.cycleCounts.detail(selectedCount?._id ?? ''),
     queryFn: async () => {
       const response = await apiClient.get(`/cycle-counts/${selectedCount!._id}`);
-      return response.data as CycleCount;
+      return (response.data?.data ?? response.data) as CycleCount;
     },
     enabled: !!selectedCount,
   });

@@ -85,7 +85,8 @@ export function FinanceTransactionsPage() {
       const response = await apiClient.get('/finance/transactions', {
         params: { branchId },
       });
-      return response.data as FinanceTransaction[];
+      const payload = response.data?.data ?? response.data;
+      return (Array.isArray(payload) ? payload : []) as FinanceTransaction[];
     },
     enabled: !!branchId,
   });
