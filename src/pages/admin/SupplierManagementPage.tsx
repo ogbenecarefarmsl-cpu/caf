@@ -33,6 +33,12 @@ interface SupplierFormData {
   paymentTerms: string;
 }
 
+const unwrapArray = <T,>(value: unknown): T[] => {
+  if (Array.isArray(value)) return value as T[];
+  const data = (value as { data?: unknown })?.data;
+  return Array.isArray(data) ? data as T[] : [];
+};
+
 export default function SupplierManagementPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
@@ -46,7 +52,7 @@ export default function SupplierManagementPage() {
     queryKey: queryKeys.suppliers.list(),
     queryFn: async () => {
       const response = await apiClient.get('/suppliers');
-      return response.data as Supplier[];
+      return unwrapArray<Supplier>(response.data);
     },
   });
 

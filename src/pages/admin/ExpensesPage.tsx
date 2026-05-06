@@ -60,6 +60,12 @@ interface ExpenseFormData {
   receiptNumber?: string;
 }
 
+const unwrapArray = <T,>(value: unknown): T[] => {
+  if (Array.isArray(value)) return value as T[];
+  const data = (value as { data?: unknown })?.data;
+  return Array.isArray(data) ? data as T[] : [];
+};
+
 export function ExpensesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { selectedBranch } = useBranchStore();
@@ -75,7 +81,7 @@ export function ExpensesPage() {
     queryKey: [...queryKeys.expenses.all(), 'branch', branchId],
     queryFn: async () => {
       const response = await apiClient.get(buildApiUrl(`/expenses/branch/${branchId}`));
-      return response.data as Expense[];
+      return unwrapArray<Expense>(response.data);
     },
     enabled: !!branchId,
   });
@@ -84,7 +90,7 @@ export function ExpensesPage() {
     queryKey: [...queryKeys.expenses.all(), 'by-category', branchId],
     queryFn: async () => {
       const response = await apiClient.get(buildApiUrl(`/expenses/branch/${branchId}/by-category`));
-      return response.data as ByCategoryItem[];
+      return unwrapArray<ByCategoryItem>(response.data);
     },
     enabled: !!branchId,
   });

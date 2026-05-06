@@ -75,6 +75,12 @@ interface ReceiveFormData {
   }[];
 }
 
+const unwrapArray = <T,>(value: unknown): T[] => {
+  if (Array.isArray(value)) return value as T[];
+  const data = (value as { data?: unknown })?.data;
+  return Array.isArray(data) ? data as T[] : [];
+};
+
 export default function PurchaseOrderPage() {
   const { symbol } = useCurrency();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -109,7 +115,7 @@ export default function PurchaseOrderPage() {
     queryKey: queryKeys.suppliers.list(),
     queryFn: async () => {
       const response = await apiClient.get(buildApiUrl('/suppliers', { isActive: true }));
-      return response.data as Supplier[];
+      return unwrapArray<Supplier>(response.data);
     },
   });
 
@@ -118,7 +124,7 @@ export default function PurchaseOrderPage() {
     queryKey: queryKeys.products.list(),
     queryFn: async () => {
       const response = await apiClient.get('/products');
-      return response.data.data as Product[];
+      return unwrapArray<Product>(response.data);
     },
   });
 
@@ -128,7 +134,7 @@ export default function PurchaseOrderPage() {
     queryFn: async () => {
       const branchId = getBranchId(selectedBranch);
       const response = await apiClient.get(buildApiUrl('/purchase-orders', { branchId }));
-      return response.data as PurchaseOrder[];
+      return unwrapArray<PurchaseOrder>(response.data);
     },
     enabled: !!selectedBranch,
   });
@@ -244,7 +250,11 @@ export default function PurchaseOrderPage() {
       header: 'Date',
       render: (po: PurchaseOrder) => new Date(po.createdAt).toLocaleDateString()
     },
-    { key: 'supplierId.name', header: 'Supplier' },
+    {
+      key: 'supplier',
+      header: 'Supplier',
+      render: (po: PurchaseOrder) => po.supplierId?.name || '-',
+    },
     { 
       key: 'items', 
       header: 'Items',

@@ -29,6 +29,12 @@ interface PaymentMethodFormData {
   accountDetails?: string;
 }
 
+const unwrapArray = <T,>(value: unknown): T[] => {
+  if (Array.isArray(value)) return value as T[];
+  const data = (value as { data?: unknown })?.data;
+  return Array.isArray(data) ? data as T[] : [];
+};
+
 export const PaymentMethodsPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMethod, setEditingMethod] = useState<PaymentMethod | null>(null);
@@ -41,7 +47,7 @@ export const PaymentMethodsPage = () => {
     queryKey: queryKeys.paymentMethods.list(),
     queryFn: async () => {
       const response = await apiClient.get('/settings/payment-methods');
-      return response.data as PaymentMethod[];
+      return unwrapArray<PaymentMethod>(response.data);
     },
   });
 

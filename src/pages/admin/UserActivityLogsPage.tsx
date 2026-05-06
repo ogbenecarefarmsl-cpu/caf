@@ -24,6 +24,12 @@ interface UserActivityLog {
   timestamp: string;
 }
 
+const unwrapArray = <T,>(value: unknown): T[] => {
+  if (Array.isArray(value)) return value as T[];
+  const data = (value as { data?: unknown })?.data;
+  return Array.isArray(data) ? data as T[] : [];
+};
+
 export const UserActivityLogsPage = () => {
   const [userFilter, setUserFilter] = useState<string>('all');
   const [activityFilter, setActivityFilter] = useState<string>('all');
@@ -45,7 +51,7 @@ export const UserActivityLogsPage = () => {
         from: dateFrom,
         to: dateTo,
       }));
-      return response.data as UserActivityLog[];
+      return unwrapArray<UserActivityLog>(response.data);
     },
   });
 
@@ -54,12 +60,12 @@ export const UserActivityLogsPage = () => {
     queryKey: queryKeys.users.list(),
     queryFn: async () => {
       const response = await apiClient.get('/users');
-      return response.data as Array<{
+      return unwrapArray<{
         _id: string;
         firstName: string;
         lastName: string;
         username?: string;
-      }>;
+      }>(response.data);
     },
   });
 

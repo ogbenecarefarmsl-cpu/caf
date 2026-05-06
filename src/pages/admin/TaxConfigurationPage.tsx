@@ -29,6 +29,12 @@ interface TaxFormData {
   applicableCategories?: string;
 }
 
+const unwrapArray = <T,>(value: unknown): T[] => {
+  if (Array.isArray(value)) return value as T[];
+  const data = (value as { data?: unknown })?.data;
+  return Array.isArray(data) ? data as T[] : [];
+};
+
 export const TaxConfigurationPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTax, setEditingTax] = useState<TaxConfig | null>(null);
@@ -42,7 +48,7 @@ export const TaxConfigurationPage = () => {
     queryKey: queryKeys.taxConfigs.list(),
     queryFn: async () => {
       const response = await apiClient.get('/settings/taxes');
-      return response.data as TaxConfig[];
+      return unwrapArray<TaxConfig>(response.data);
     },
   });
 

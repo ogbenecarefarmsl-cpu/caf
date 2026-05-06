@@ -46,6 +46,12 @@ interface PromotionFormData {
   usageLimit?: number;
 }
 
+const unwrapArray = <T,>(value: unknown): T[] => {
+  if (Array.isArray(value)) return value as T[];
+  const data = (value as { data?: unknown })?.data;
+  return Array.isArray(data) ? data as T[] : [];
+};
+
 export const PromotionsManagementPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPromotion, setEditingPromotion] = useState<Promotion | null>(null);
@@ -67,7 +73,7 @@ export const PromotionsManagementPage = () => {
     queryKey: queryKeys.promotions.list({ search: debouncedSearchQuery }),
     queryFn: async () => {
       const response = await apiClient.get(buildApiUrl('/promotions', { search: debouncedSearchQuery }));
-      return response.data as Promotion[];
+      return unwrapArray<Promotion>(response.data);
     },
   });
 

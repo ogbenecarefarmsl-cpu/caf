@@ -65,6 +65,12 @@ interface BatchFormData {
   supplierId: string;
 }
 
+const unwrapArray = <T,>(value: unknown): T[] => {
+  if (Array.isArray(value)) return value as T[];
+  const data = (value as { data?: unknown })?.data;
+  return Array.isArray(data) ? (data as T[]) : [];
+};
+
 export const BatchManagementPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBatch, setEditingBatch] = useState<Batch | null>(null);
@@ -111,7 +117,7 @@ export const BatchManagementPage = () => {
       const response = await apiClient.get('/products', {
         params: branchId ? { branchId } : {},
       });
-      return response.data.data as Product[];
+      return unwrapArray<Product>(response.data);
     },
     enabled: !!branchId,
   });
@@ -120,8 +126,8 @@ export const BatchManagementPage = () => {
   const { data: suppliers } = useQuery({
     queryKey: queryKeys.suppliers.list(),
     queryFn: async () => {
-      const response = await apiClient.get<Supplier[]>('/suppliers');
-      return response.data;
+      const response = await apiClient.get('/suppliers');
+      return unwrapArray<Supplier>(response.data);
     },
   });
 
@@ -129,8 +135,8 @@ export const BatchManagementPage = () => {
   const { data: branches } = useQuery({
     queryKey: queryKeys.branches.list(),
     queryFn: async () => {
-      const response = await apiClient.get<Branch[]>('/branches');
-      return response.data;
+      const response = await apiClient.get('/branches');
+      return unwrapArray<Branch>(response.data);
     },
   });
 
