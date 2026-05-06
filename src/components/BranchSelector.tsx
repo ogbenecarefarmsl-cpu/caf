@@ -6,6 +6,8 @@ import apiClient from '../lib/api-client';
 import { Select } from './ui/Select';
 import { queryKeys } from '../lib/query-keys';
 
+type BranchesResponse = Branch[] | { data?: Branch[] };
+
 export const BranchSelector = () => {
   const { selectedBranch, branches, setSelectedBranch, setBranches } = useBranchStore();
   const { user } = useAuthStore();
@@ -14,8 +16,8 @@ export const BranchSelector = () => {
   const { data: branchesData, isLoading } = useQuery({
     queryKey: queryKeys.branches.list(),
     queryFn: async () => {
-      const response = await apiClient.get<Branch[]>('/branches');
-      return response.data;
+      const response = await apiClient.get<BranchesResponse>('/branches');
+      return Array.isArray(response.data) ? response.data : response.data?.data || [];
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
@@ -24,16 +26,23 @@ export const BranchSelector = () => {
   useEffect(() => {
     if (branchesData) {
       setBranches(branchesData);
-      
+
+      const availableBranchData = user?.role === 'super_admin'
+        ? branchesData
+        : branchesData.filter((branch) => branch._id === user?.branchId);
+      const selectedBranchIsAvailable = availableBranchData.some(
+        (branch) => branch._id === selectedBranch?._id
+      );
+
       // Auto-select branch based on user role
-      if (!selectedBranch && branchesData.length > 0) {
+      if ((!selectedBranch || !selectedBranchIsAvailable) && availableBranchData.length > 0) {
         if (user?.role === 'super_admin') {
           // Super admin can see all branches, default to HQ if available
-          const hq = branchesData.find(b => b.isHeadquarters);
-          setSelectedBranch(hq || branchesData[0]);
+          const hq = availableBranchData.find(b => b.isHeadquarters);
+          setSelectedBranch(hq || availableBranchData[0]);
         } else if (user?.branchId) {
           // Branch-specific users should see their branch
-          const userBranch = branchesData.find(b => b._id === user.branchId);
+          const userBranch = availableBranchData.find(b => b._id === user.branchId);
           if (userBranch) {
             setSelectedBranch(userBranch);
           }

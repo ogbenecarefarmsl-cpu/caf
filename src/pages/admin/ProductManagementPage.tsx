@@ -1,9 +1,9 @@
 import { useState, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
 import apiClient from '../../lib/api-client';
 import { AdminLayout } from '../../components/AdminLayout';
+import { BranchSelector } from '../../components/BranchSelector';
 import { Button } from '../../components/ui/Button';
 import { Table } from '../../components/ui/Table';
 import { Modal } from '../../components/ui/Modal';
@@ -90,7 +90,6 @@ interface Supplier {
 }
 
 export const ProductManagementPage = () => {
-  const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [wizardStep, setWizardStep] = useState<1 | 2>(1);
@@ -367,8 +366,8 @@ export const ProductManagementPage = () => {
           <p className="mt-2 text-gray-400">
             Products are branch-scoped. Choose a branch before viewing or managing products.
           </p>
-          <div className="mt-6">
-            <Button onClick={() => navigate('/branches')}>Select Branch</Button>
+          <div className="mx-auto mt-6 max-w-xs">
+            <BranchSelector />
           </div>
         </div>
       </AdminLayout>
@@ -455,7 +454,12 @@ export const ProductManagementPage = () => {
             <h1 className="text-2xl font-bold text-white">Products</h1>
             <p className="text-gray-400">{total} products</p>
           </div>
-          <Button onClick={() => handleOpenModal()}>+ Add Product</Button>
+          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-end">
+            <div className="sm:hidden">
+              <BranchSelector />
+            </div>
+            <Button onClick={() => handleOpenModal()}>+ Add Product</Button>
+          </div>
         </div>
 
         <div className="flex gap-4">

@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/auth-store';
 import { useBranchStore } from '../stores/branch-store';
 import apiClient from '../lib/api-client';
+import { BranchSelector } from './BranchSelector';
 import { ConnectionStatus } from './ui/ConnectionStatus';
 import { OfflineNotification } from './ui/OfflineNotification';
 
@@ -282,11 +283,9 @@ export const AdminLayout = ({ children, title = 'Admin' }: AdminLayoutProps) => 
               </button>
               <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight truncate">{title}</h2>
             </div>
-            {selectedBranch ? (
-              <p className="hidden sm:block text-xs sm:text-sm text-gray-400 truncate">
-                {selectedBranch.name}
-              </p>
-            ) : null}
+            <div className="hidden sm:block w-64">
+              <BranchSelector />
+            </div>
           </div>
         </header>
 
