@@ -10,9 +10,19 @@ def releaseStoreFile = keystoreProperties.getProperty('storeFile') ?: System.get
 def releaseStorePassword = keystoreProperties.getProperty('storePassword') ?: System.getenv('ANDROID_KEYSTORE_PASSWORD')
 def releaseKeyAlias = keystoreProperties.getProperty('keyAlias') ?: System.getenv('ANDROID_KEY_ALIAS')
 def releaseKeyPassword = keystoreProperties.getProperty('keyPassword') ?: System.getenv('ANDROID_KEY_PASSWORD')
+def androidVersionCodeValue = (System.getenv('ANDROID_VERSION_CODE') ?: '1').trim()
+def androidVersionNameValue = (System.getenv('ANDROID_VERSION_NAME') ?: '1.0').trim()
 
 def isReleaseTask = gradle.startParameter.taskNames.any { taskName ->
     taskName.toLowerCase().contains('release')
+}
+
+if (!androidVersionCodeValue.isInteger()) {
+    throw new GradleException("ANDROID_VERSION_CODE must be an integer, got '${androidVersionCodeValue}'")
+}
+
+if (!androidVersionNameValue) {
+    androidVersionNameValue = '1.0'
 }
 
 if (isReleaseTask) {
@@ -28,8 +38,8 @@ android {
         applicationId "com.caf.pharmacy"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode (System.getenv("ANDROID_VERSION_CODE") ?: "1").toInteger()
-        versionName System.getenv("ANDROID_VERSION_NAME") ?: "1.0"
+        versionCode androidVersionCodeValue.toInteger()
+        versionName androidVersionNameValue
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
