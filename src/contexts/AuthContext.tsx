@@ -73,10 +73,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       return;
     }
 
-    // Refresh token every 7.5 hours (token expiry is 8h)
+    // Refresh token before the 12 hour session expires.
     const refreshInterval = setInterval(() => {
       refreshAccessToken();
-    }, 7.5 * 60 * 60 * 1000);
+    }, 11.5 * 60 * 60 * 1000);
 
     return () => clearInterval(refreshInterval);
   }, [isAuthenticated, accessToken, refreshAccessToken]);

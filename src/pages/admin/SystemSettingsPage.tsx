@@ -10,6 +10,8 @@ import { Loading } from '../../components/ui/Loading';
 import { Error } from '../../components/ui/Error';
 import { useToast } from '../../hooks/useToast';
 import { queryKeys } from '../../lib/query-keys';
+import { useBiometricAuth } from '../../hooks/useBiometricAuth';
+import { useAuthStore } from '../../stores/auth-store';
 
 interface SystemSettings {
   companyName: string;
@@ -29,8 +31,10 @@ interface SystemSettings {
 
 export const SystemSettingsPage = () => {
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<'general' | 'loyalty' | 'notifications'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'loyalty' | 'notifications' | 'security'>('general');
   const { showSuccess, showError } = useToast();
+  const { user, accessToken } = useAuthStore();
+  const biometric = useBiometricAuth();
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<SystemSettings>();
 
@@ -108,6 +112,16 @@ export const SystemSettingsPage = () => {
               } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
             >
               Notifications
+            </button>
+            <button
+              onClick={() => setActiveTab('security')}
+              className={`${
+                activeTab === 'security'
+                  ? 'border-accent-green text-accent-green'
+                  : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-500'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+            >
+              Security
             </button>
           </nav>
         </div>
@@ -285,6 +299,60 @@ export const SystemSettingsPage = () => {
                   <strong>Note:</strong> Notifications will be sent for important events like low stock alerts,
                   expiry reminders, and order confirmations.
                 </p>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'security' && (
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold text-white">Security</h2>
+
+              <div className="p-4 bg-white/5 border border-white/10 rounded-md space-y-3">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-white">Fingerprint sign in</p>
+                    <p className="text-sm text-gray-400">
+                      {biometric.isAvailable
+                        ? biometric.isEnabled
+                          ? 'Registered on this device'
+                          : 'Available on this device'
+                        : 'Available in the mobile app on devices with fingerprint support'}
+                    </p>
+                  </div>
+
+                  {biometric.isEnabled ? (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={async () => {
+                        await biometric.disable();
+                        showSuccess('Fingerprint removed');
+                      }}
+                    >
+                      Remove
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      disabled={!biometric.isAvailable || !user?.username || !accessToken}
+                      onClick={async () => {
+                        if (!user?.username || !accessToken) return;
+                        const registered = await biometric.promptToEnable(user.username, accessToken);
+                        if (registered) {
+                          showSuccess('Fingerprint registered');
+                        } else {
+                          showError('Fingerprint was not registered');
+                        }
+                      }}
+                    >
+                      Register Fingerprint
+                    </Button>
+                  )}
+                </div>
+
+                {biometric.error && (
+                  <p className="text-sm text-red-400">{biometric.error}</p>
+                )}
               </div>
             </div>
           )}

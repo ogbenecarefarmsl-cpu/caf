@@ -98,7 +98,6 @@ export const ProductManagementPage = () => {
   const [productImage, setProductImage] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [showPackSizeEditor, setShowPackSizeEditor] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<string>('');
   const fileInputRef = useState<HTMLInputElement | null>(null);
   const {
     value: searchQuery,
@@ -203,6 +202,14 @@ export const ProductManagementPage = () => {
   });
 
   const handleCreateProduct = async (data: ProductFormData) => {
+    const initialExpiryDate = data.initialExpiryDate
+      ? new Date(`${data.initialExpiryDate}T00:00:00.000Z`).toISOString()
+      : undefined;
+    const packSizes = (data.packSizes || []).map((pack) => ({
+      ...pack,
+      unit: pack.unit || pack.name.trim().toLowerCase().replace(/\s+/g, '-'),
+      barcode: pack.barcode?.trim() || undefined,
+    })).filter((pack) => pack.name.trim() && pack.unit.trim());
     const payload = {
       name: data.name,
       sku: data.sku,
@@ -218,20 +225,17 @@ export const ProductManagementPage = () => {
       requiresPrescription: data.requiresPrescription,
       isControlled: data.isControlled,
       branchId: data.branchId,
-      packSizes: data.packSizes || [],
+      packSizes,
       initialStock: data.initialStock,
-      initialLotNumber: data.initialLotNumber,
-      initialExpiryDate: data.initialExpiryDate,
-      initialSupplierId: data.initialSupplierId,
+      initialLotNumber: data.initialLotNumber || undefined,
+      initialExpiryDate,
+      initialSupplierId: data.initialSupplierId || undefined,
       initialPurchasePrice: data.initialPurchasePrice,
       initialSellingPrice: data.initialSellingPrice,
       maxStockLevel: data.maxStockLevel,
-      isActive: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
     };
 
-    createMutation.mutate(payload, {
+    createMutation.mutate(payload as unknown as Omit<Product, '_id' | 'id'>, {
       onSuccess: async (response: any) => {
         const productId = response?.data?._id || response?._id;
         if (productId && productImage) {
@@ -818,7 +822,7 @@ export const ProductManagementPage = () => {
                     <div className="flex flex-wrap gap-2">
                       {watch('packSizes').map((pack: PackSize, idx: number) => (
                         <span key={idx} className="px-3 py-1.5 bg-primary-darker rounded-lg text-sm text-gray-300 border border-gray-600">
-                          {pack.name} ({pack.quantityPerPack} × {watch('unit')}) - {format(pack.sellingPrice)}
+                          {pack.name} ({pack.quantityPerPack} x {pack.unit || watch('unit')}) - {format(pack.sellingPrice)}
                         </span>
                       ))}
                     </div>
@@ -826,129 +830,59 @@ export const ProductManagementPage = () => {
 
                   {showPackSizeEditor && (
                     <>
-                      <div className="mb-4">
-                        <label className="block text-gray-400 text-sm mb-2">Quick Templates</label>
-                        <select
-                          value={selectedTemplate}
-                          onChange={(e) => {
-                            setSelectedTemplate(e.target.value);
-                            if (e.target.value) {
-                              const templates: Record<string, PackSize[]> = {
-                                'tablet_100': [
-                                  { name: 'Box', unit: 'box', quantityPerPack: 100, sellingPrice: 0 },
-                                  { name: 'Strip', unit: 'strip', quantityPerPack: 10, sellingPrice: 0 },
-                                ],
-                                'tablet_50': [
-                                  { name: 'Box', unit: 'box', quantityPerPack: 50, sellingPrice: 0 },
-                                  { name: 'Strip', unit: 'strip', quantityPerPack: 10, sellingPrice: 0 },
-                                ],
-                                'tablet_28': [
-                                  { name: 'Pack', unit: 'pack', quantityPerPack: 28, sellingPrice: 0 },
-                                ],
-                                'syrup': [
-                                  { name: 'Bottle', unit: 'bottle', quantityPerPack: 1, sellingPrice: 0 },
-                                ],
-                                'cream': [
-                                  { name: 'Tube', unit: 'tube', quantityPerPack: 1, sellingPrice: 0 },
-                                ],
-                                'injection': [
-                                  { name: 'Vial', unit: 'vial', quantityPerPack: 1, sellingPrice: 0 },
-                                ],
-                                'ampule': [
-                                  { name: 'Box', unit: 'box', quantityPerPack: 50, sellingPrice: 0 },
-                                  { name: 'Pack', unit: 'pack', quantityPerPack: 10, sellingPrice: 0 },
-                                ],
-                                'capsule': [
-                                  { name: 'Box', unit: 'box', quantityPerPack: 100, sellingPrice: 0 },
-                                  { name: 'Blister', unit: 'blister', quantityPerPack: 10, sellingPrice: 0 },
-                                ],
-                                'lab_tube': [
-                                  { name: 'Pack', unit: 'pack', quantityPerPack: 50, sellingPrice: 0 },
-                                  { name: 'Rack', unit: 'rack', quantityPerPack: 10, sellingPrice: 0 },
-                                ],
-                                'lab_reagent': [
-                                  { name: 'Kit', unit: 'kit', quantityPerPack: 1, sellingPrice: 0 },
-                                  { name: 'With Strips', unit: 'kit', quantityPerPack: 25, sellingPrice: 0 },
-                                ],
-                                'lab_testkit': [
-                                  { name: 'Box', unit: 'box', quantityPerPack: 50, sellingPrice: 0 },
-                                  { name: 'Pack', unit: 'pack', quantityPerPack: 10, sellingPrice: 0 },
-                                  { name: 'Strip', unit: 'strip', quantityPerPack: 1, sellingPrice: 0 },
-                                ],
-                                'lab_slide': [
-                                  { name: 'Box', unit: 'box', quantityPerPack: 50, sellingPrice: 0 },
-                                  { name: 'Pack', unit: 'pack', quantityPerPack: 10, sellingPrice: 0 },
-                                ],
-                                'sachet': [
-                                  { name: 'Box', unit: 'box', quantityPerPack: 100, sellingPrice: 0 },
-                                  { name: 'Sachet', unit: 'sachet', quantityPerPack: 10, sellingPrice: 0 },
-                                ],
-                                'nasal': [
-                                  { name: 'Adult', unit: 'adult', quantityPerPack: 1, sellingPrice: 0 },
-                                  { name: 'Children', unit: 'children', quantityPerPack: 1, sellingPrice: 0 },
-                                  { name: 'Neonatal', unit: 'neonatal', quantityPerPack: 1, sellingPrice: 0 },
-                                ],
-                                'oxygen_mask': [
-                                  { name: 'Adult', unit: 'adult', quantityPerPack: 1, sellingPrice: 0 },
-                                  { name: 'Children', unit: 'children', quantityPerPack: 1, sellingPrice: 0 },
-                                  { name: 'Neonatal', unit: 'neonatal', quantityPerPack: 1, sellingPrice: 0 },
-                                ],
-                                'catheter': [
-                                  { name: 'Adult', unit: 'adult', quantityPerPack: 1, sellingPrice: 0 },
-                                  { name: 'Pediatric', unit: 'pediatric', quantityPerPack: 1, sellingPrice: 0 },
-                                  { name: 'Neonatal', unit: 'neonatal', quantityPerPack: 1, sellingPrice: 0 },
-                                ],
-                                'surgical_mask': [
-                                  { name: 'Adult', unit: 'adult', quantityPerPack: 1, sellingPrice: 0 },
-                                  { name: 'Children', unit: 'children', quantityPerPack: 1, sellingPrice: 0 },
-                                ],
-                              };
-                              const templateName = e.target.value;
-                              const template = templates[templateName];
-                              if (template) {
-                                const base = Number(watch('basePrice') || 0);
-                                const withPrices = template.map(t => ({
-                                  ...t,
-                                  sellingPrice: base * t.quantityPerPack,
-                                }));
-                                setValue('packSizes', withPrices as any);
-                              }
-                            }
-                          }}
-                          className="w-full px-3 py-2 bg-primary-darker border border-gray-600 rounded-lg text-white text-sm"
-                        >
-                          <option value="">Select a template...</option>
-                          <option value="tablet_100">Tablets (Box 100, Strip 10)</option>
-                          <option value="tablet_50">Tablets (Box 50, Strip 10)</option>
-                          <option value="tablet_28">Tablets (Pack 28)</option>
-                          <option value="capsule">Capsules (Box 100, Blister 10)</option>
-                          <option value="syrup">Syrup (Bottle)</option>
-                          <option value="cream">Cream (Tube)</option>
-                          <option value="injection">Injection (Vial)</option>
-                          <option value="ampule">Ampules (Box 50, Pack 10)</option>
-                          <option value="lab_tube">Lab Tubes (Pack 50, Rack 10)</option>
-                          <option value="lab_reagent">Lab Reagents (Kit, With Strips)</option>
-                          <option value="lab_testkit">Lab Test Kits (Box/Pack/Strip)</option>
-                          <option value="lab_slide">Lab Slides (Box 50, Pack 10)</option>
-                          <option value="sachet">Sachets (Box 100, Sachet 10)</option>
-                          <option value="nasal">Nasal Drops (Adult, Children, Neonatal)</option>
-                          <option value="oxygen_mask">Oxygen Mask (Adult, Children, Neonatal)</option>
-                          <option value="catheter">Catheter (Adult, Pediatric, Neonatal)</option>
-                          <option value="surgical_mask">Surgical Mask (Adult, Children)</option>
-                        </select>
-                        <p className="text-xs text-gray-500 mt-1">Select to auto-fill, then edit prices</p>
-                      </div>
-
                       <div className="space-y-3">
                         {watch('packSizes').map((pack: PackSize, idx: number) => (
-                          <div key={idx} className="flex items-center gap-2 p-3 bg-primary-darker rounded-lg border border-gray-700">
-                            <div className="flex-1 grid grid-cols-2 gap-2">
-                              <input
-                                placeholder="Name (e.g., Box)"
+                          <div key={idx} className="flex items-start gap-2 p-3 bg-primary-darker rounded-lg border border-gray-700">
+                            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-2">
+                              <select
                                 value={pack.name}
                                 onChange={(e) => {
                                   const updated = [...watch('packSizes')];
-                                  updated[idx] = { ...updated[idx], name: e.target.value };
+                                  const name = e.target.value;
+                                  updated[idx] = {
+                                    ...updated[idx],
+                                    name,
+                                    unit: name ? name.trim().toLowerCase().replace(/\s+/g, '-') : updated[idx].unit,
+                                  };
+                                  setValue('packSizes', updated as any);
+                                }}
+                                className="px-2 py-1.5 bg-primary-dark border border-gray-600 rounded text-white text-sm"
+                              >
+                                <option value="">Package type</option>
+                                <option value="Box">Box</option>
+                                <option value="Pack">Pack</option>
+                                <option value="Strip">Strip</option>
+                                <option value="Blister">Blister</option>
+                                <option value="Bottle">Bottle</option>
+                                <option value="Tube">Tube</option>
+                                <option value="Vial">Vial</option>
+                                <option value="Ampoule">Ampoule</option>
+                                <option value="Sachet">Sachet</option>
+                                <option value="Kit">Kit</option>
+                                <option value="Adult">Adult</option>
+                                <option value="Children">Children</option>
+                                <option value="Neonatal">Neonatal</option>
+                              </select>
+                              <input
+                                placeholder="Custom label"
+                                value={pack.name}
+                                onChange={(e) => {
+                                  const updated = [...watch('packSizes')];
+                                  updated[idx] = {
+                                    ...updated[idx],
+                                    name: e.target.value,
+                                    unit: e.target.value.trim().toLowerCase().replace(/\s+/g, '-'),
+                                  };
+                                  setValue('packSizes', updated as any);
+                                }}
+                                className="px-2 py-1.5 bg-primary-dark border border-gray-600 rounded text-white text-sm"
+                              />
+                              <input
+                                placeholder="Selling unit"
+                                value={pack.unit}
+                                onChange={(e) => {
+                                  const updated = [...watch('packSizes')];
+                                  updated[idx] = { ...updated[idx], unit: e.target.value };
                                   setValue('packSizes', updated as any);
                                 }}
                                 className="px-2 py-1.5 bg-primary-dark border border-gray-600 rounded text-white text-sm"
@@ -965,6 +899,16 @@ export const ProductManagementPage = () => {
                                 className="px-2 py-1.5 bg-primary-dark border border-gray-600 rounded text-white text-sm"
                               />
                               <input
+                                placeholder="Pack barcode (optional)"
+                                value={pack.barcode || ''}
+                                onChange={(e) => {
+                                  const updated = [...watch('packSizes')];
+                                  updated[idx] = { ...updated[idx], barcode: e.target.value };
+                                  setValue('packSizes', updated as any);
+                                }}
+                                className="px-2 py-1.5 bg-primary-dark border border-gray-600 rounded text-white text-sm"
+                              />
+                              <input
                                 type="number"
                                 placeholder="Price"
                                 value={pack.sellingPrice}
@@ -973,7 +917,7 @@ export const ProductManagementPage = () => {
                                   updated[idx] = { ...updated[idx], sellingPrice: Number(e.target.value) };
                                   setValue('packSizes', updated as any);
                                 }}
-                                className="col-span-2 px-2 py-1.5 bg-primary-dark border border-gray-600 rounded text-white text-sm"
+                                className="px-2 py-1.5 bg-primary-dark border border-gray-600 rounded text-white text-sm"
                               />
                             </div>
                             <button
