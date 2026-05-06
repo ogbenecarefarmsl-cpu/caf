@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
@@ -20,6 +20,7 @@ import { useSearchWithDebounce } from '../../hooks/useSearchWithDebounce';
 import { useBarcodeScanner } from '../../hooks/useBarcodeScanner';
 import { usePagination } from '../../hooks/usePagination';
 import { useBranchAwareCRUDMutations } from '../../hooks/useCRUDMutations';
+import { saveProductImage, getProductImage } from '../../services/background-sync.service';
 
 interface Product {
   _id: string;
@@ -83,6 +84,9 @@ export const ProductManagementPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [wizardStep, setWizardStep] = useState<1 | 2>(1);
+  const [productImage, setProductImage] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useState<HTMLInputElement | null>(null);
   const {
     value: searchQuery,
     setValue: setSearchQuery,
@@ -180,11 +184,7 @@ export const ProductManagementPage = () => {
   const paginationMeta = productsResponse?.pagination;
 
   // Create product mutation
-  const handleCreateProduct = (data: ProductFormData) => {
-    if (!data.branchId) {
-      throw new Error('Please select a branch');
-    }
-
+  const handleCreateProduct = async (data: ProductFormData) => {
     const payload = {
       name: data.name,
       sku: data.sku,
@@ -214,6 +214,18 @@ export const ProductManagementPage = () => {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
+
+    createMutation.mutate(payload, {
+      onSuccess: async (response: any) => {
+        const productId = response?.data?._id || response?._id;
+        if (productId && productImage) {
+          await saveProductImage(productId, productImage);
+        }
+        setProductImage(null);
+        setImagePreview(null);
+      },
+    });
+  };
 
     createMutation.mutate(payload);
   };
@@ -297,6 +309,8 @@ export const ProductManagementPage = () => {
     setIsModalOpen(false);
     setEditingProduct(null);
     setWizardStep(1);
+    setProductImage(null);
+    setImagePreview(null);
     reset();
   };
 
@@ -699,6 +713,63 @@ export const ProductManagementPage = () => {
                     <label htmlFor="isControlled" className="ml-3 block text-sm font-medium text-white">
                       Controlled Substance
                     </label>
+                  </div>
+                </div>
+
+                {/* Product Image Capture */}
+                <div className="space-y-3 p-4 bg-white/5 rounded-xl border border-white/5">
+                  <label className="block text-sm font-medium text-white">Product Image</label>
+                  <div className="flex items-start gap-4">
+                    {imagePreview ? (
+                      <div className="relative w-24 h-24 rounded-xl overflow-hidden border border-gray-600">
+                        <img src={imagePreview} alt="Product" className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => { setProductImage(null); setImagePreview(null); }}
+                          className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="w-24 h-24 rounded-xl border-2 border-dashed border-gray-600 flex items-center justify-center">
+                        <svg className="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                    )}
+                    <div className="flex flex-col gap-2">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        className="hidden"
+                        id="product-image-input"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                              const dataUrl = reader.result as string;
+                              setProductImage(dataUrl);
+                              setImagePreview(dataUrl);
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                      />
+                      <label
+                        htmlFor="product-image-input"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-accent-green/10 border border-accent-green/30 rounded-xl text-accent-green hover:bg-accent-green/20 transition-colors cursor-pointer text-sm font-medium"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        {imagePreview ? 'Change Photo' : 'Take Photo / Upload'}
+                      </label>
+                      <p className="text-xs text-gray-400">Camera or gallery, stored locally</p>
+                    </div>
                   </div>
                 </div>
               </>

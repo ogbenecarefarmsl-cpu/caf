@@ -13,6 +13,9 @@ import {
   checkForLiveUpdate,
   type DownloadedUpdate,
 } from './lib/live-updates';
+import { startPeriodicSync, stopPeriodicSync } from './services/background-sync.service';
+import { useBranchStore } from './stores/branch-store';
+import { useAuthStore } from './stores/auth-store';
 import { router } from './routes';
 
 type PendingUpdate =
@@ -22,6 +25,30 @@ type PendingUpdate =
 function App() {
   const [availableUpdate, setAvailableUpdate] = useState<PendingUpdate | null>(null);
   const [isApplyingUpdate, setIsApplyingUpdate] = useState(false);
+
+  // Start periodic sync when authenticated
+  useEffect(() => {
+    const isAuthenticated = useAuthStore.getState().isAuthenticated;
+    if (!isAuthenticated) return;
+
+    const branchId = useBranchStore.getState().selectedBranch?._id;
+    startPeriodicSync(branchId);
+
+    return () => {
+      stopPeriodicSync();
+    };
+  }, []);
+
+  // Watch for branch changes to restart sync
+  useEffect(() => {
+    const unsubscribe = useBranchStore.subscribe((state) => {
+      if (state.selectedBranch?._id && useAuthStore.getState().isAuthenticated) {
+        stopPeriodicSync();
+        startPeriodicSync(state.selectedBranch._id);
+      }
+    });
+    return unsubscribe;
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
