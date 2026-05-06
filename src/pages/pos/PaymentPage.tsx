@@ -133,7 +133,7 @@ export const PaymentPage = () => {
         split: 'bank_transfer',
       };
 
-      const payload = {
+const payload = {
         branchId,
         shiftId: currentShift._id,
         terminalId,
@@ -141,6 +141,12 @@ export const PaymentPage = () => {
           productId: item.productId,
           quantity: item.quantity,
           unitPrice: item.unitPrice,
+          packSize: item.packSize ? {
+            name: item.packSize.name,
+            unit: item.packSize.unit,
+            quantityPerPack: item.packSize.quantityPerPack,
+          } : null,
+          quantityInBaseUnits: item.quantityInBaseUnits,
         })),
         discount,
         paymentMethod: paymentMethodMap[paymentMethod],

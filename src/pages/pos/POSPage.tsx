@@ -33,6 +33,14 @@ interface ShiftSale {
   total: number;
 }
 
+interface PackSize {
+  name: string;
+  unit: string;
+  quantityPerPack: number;
+  sellingPrice: number;
+  barcode?: string;
+}
+
 interface Product {
   _id: string;
   name: string;
@@ -43,6 +51,8 @@ interface Product {
   imageUrl?: string;
   stock: number;
   requiresPrescription: boolean;
+  unit: string;
+  packSizes?: PackSize[];
 }
 
 export const POSPage = () => {
@@ -62,6 +72,46 @@ export const POSPage = () => {
   } = useCartStore();
   const { format, symbol } = useCurrency();
   
+  // Helper to convert stock to readable units
+  const getStockDisplay = (stock: number, unit: string, packSizes?: PackSize[]): string => {
+    if (!packSizes || packSizes.length === 0) {
+      return `${stock} ${unit}s`;
+    }
+    
+    // Sort pack sizes by quantity descending (largest first)
+    const sorted = [...packSizes].sort((a, b) => b.quantityPerPack - a.quantityPerPack);
+    
+    // Check if this is a size variant pack (all have qty 1)
+    const allSizeVariants = sorted.every(p => p.quantityPerPack === 1);
+    
+    if (allSizeVariants) {
+      // For size variants, show count and available sizes
+      const availableSizes = sorted.filter(p => stock >= p.quantityPerPack).map(p => p.name);
+      if (availableSizes.length > 0) {
+        return `${stock} (${availableSizes.join(', ')})`;
+      }
+      return `${stock} ${unit}s`;
+    }
+    
+    // Regular pack sizes with quantity > 1
+    const largestPack = sorted.find(p => p.quantityPerPack > 1);
+    if (!largestPack) {
+      return `${stock} ${unit}s`;
+    }
+    
+    // Calculate packs and remaining
+    const packs = Math.floor(stock / largestPack.quantityPerPack);
+    const remaining = stock % largestPack.quantityPerPack;
+    
+    if (packs > 0 && remaining > 0) {
+      return `${packs} ${largestPack.name}(s), ${remaining} ${unit}s`;
+    } else if (packs > 0) {
+      return `${packs} ${largestPack.name}(s)`;
+    } else {
+      return `${stock} ${unit}s`;
+    }
+  };
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showShiftModal, setShowShiftModal] = useState(false);
@@ -78,6 +128,8 @@ export const POSPage = () => {
   const [showProfile, setShowProfile] = useState(false);
   const [scanMode, setScanMode] = useState(false);
   const [scanFeedback, setScanFeedback] = useState<{ message: string; ok: boolean } | null>(null);
+  const [showPackSizeModal, setShowPackSizeModal] = useState(false);
+  const [selectedProductForPack, setSelectedProductForPack] = useState<Product | null>(null);
   const scanFeedbackTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { isAvailable: cameraAvailable, startContinuousScan, stopContinuousScan } = useBarcodeScanner();
@@ -199,6 +251,8 @@ export const POSPage = () => {
           quantity: 1,
           unitPrice: found.price,
           requiresPrescription: found.requiresPrescription,
+          baseUnit: found.unit || 'unit',
+          quantityInBaseUnits: 1,
         });
         setScanFeedback({ message: `Added: ${found.name}`, ok: true });
       }
@@ -417,20 +471,41 @@ export const POSPage = () => {
     });
   };
 
-  const handleAddToCart = (product: Product) => {
+  const handleAddToCart = (product: Product, packSize?: PackSize) => {
     if (product.stock <= 0) return;
     if (!currentShift || currentShift.status !== 'open') {
       setShowShiftModal(true);
       return;
     }
+
+    // If product has pack sizes and none selected, show modal
+    const hasPackSizes = product.packSizes && product.packSizes.length > 0;
+    if (hasPackSizes && !packSize) {
+      setSelectedProductForPack(product);
+      setShowPackSizeModal(true);
+      return;
+    }
+
+    // Determine unit price and base unit quantity
+    const selectedPack = packSize || hasPackSizes ? null : null;
+    const unitPrice = packSize?.sellingPrice ?? product.price;
+    const quantityPerPack = packSize?.quantityPerPack ?? 1;
+    const baseUnit = product.unit || 'unit';
+
+    // For products with pack sizes, verify stock in base units
+    const quantityInBaseUnits = quantityPerPack;
+
     addItem({
       productId: product._id,
       productName: product.name,
       sku: product.sku,
-      barcode: product.barcode || '',
+      barcode: packSize?.barcode || product.barcode || '',
       quantity: 1,
-      unitPrice: product.price,
+      unitPrice,
       requiresPrescription: product.requiresPrescription,
+      baseUnit,
+      packSize: packSize || undefined,
+      quantityInBaseUnits,
     });
   };
 
@@ -643,7 +718,7 @@ export const POSPage = () => {
                       )}
                       {product.stock > 0 && product.stock <= 5 && (
                         <div className="absolute top-2 right-2 px-2.5 py-1 bg-orange-500 text-white text-xs font-semibold rounded-lg">
-                          Low Stock ({product.stock})
+                          Low Stock ({getStockDisplay(product.stock, product.unit, product.packSizes)})
                         </div>
                       )}
                       <div className="absolute inset-0 bg-linear-to-t from-black/40 to-transparent group-hover:from-black/60 transition-all" />
@@ -1108,6 +1183,63 @@ export const POSPage = () => {
                 {createExpenseMutation.isPending ? 'Logging...' : 'Log Expense'}
               </button>
             </div>
+</div>
+          </div>
+      )}
+
+      {/* Pack Size Selector Modal */}
+      {showPackSizeModal && selectedProductForPack && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/75" onClick={() => setShowPackSizeModal(false)} />
+          <div className="relative bg-primary-dark rounded-2xl p-6 w-full max-w-md mx-4 border border-gray-700">
+            <h2 className="text-xl font-bold text-white mb-1">Select Pack Size</h2>
+            <p className="text-gray-400 text-sm mb-4">{selectedProductForPack.name}</p>
+
+            <div className="space-y-3 mb-6">
+              {/* Base unit option (default) */}
+              <button
+                onClick={() => {
+                  handleAddToCart(selectedProductForPack, undefined);
+                  setShowPackSizeModal(false);
+                }}
+                className="w-full p-4 bg-primary-darker border border-gray-600 rounded-xl text-left hover:border-accent-green transition-colors"
+              >
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-white font-semibold">{selectedProductForPack.unit || 'Unit'}</p>
+                    <p className="text-gray-400 text-sm">1 {selectedProductForPack.unit || 'unit'}</p>
+                  </div>
+                  <p className="text-accent-green font-bold">{format(selectedProductForPack.price)}</p>
+                </div>
+              </button>
+
+              {/* Pack size options */}
+              {selectedProductForPack.packSizes?.map((pack) => (
+                <button
+                  key={pack.unit}
+                  onClick={() => {
+                    handleAddToCart(selectedProductForPack, pack);
+                    setShowPackSizeModal(false);
+                  }}
+                  className="w-full p-4 bg-primary-darker border border-gray-600 rounded-xl text-left hover:border-accent-green transition-colors"
+                >
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="text-white font-semibold">{pack.name}</p>
+                      <p className="text-gray-400 text-sm">{pack.quantityPerPack} {selectedProductForPack.unit}s per {pack.name.toLowerCase()}</p>
+                    </div>
+                    <p className="text-accent-green font-bold">{format(pack.sellingPrice)}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => setShowPackSizeModal(false)}
+              className="w-full py-3 bg-gray-700 text-white font-medium rounded-xl"
+            >
+              Cancel
+            </button>
           </div>
         </div>
       )}

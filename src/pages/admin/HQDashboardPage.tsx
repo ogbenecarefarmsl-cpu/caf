@@ -163,7 +163,9 @@ export default function HQDashboardPage() {
       const productsRaw = productsResponse.data?.data ?? productsResponse.data;
       const products = Array.isArray(productsRaw) ? productsRaw : [];
       const pendingTransfersRaw = transfersResponse.data?.data ?? transfersResponse.data;
-      const pendingTransfers = Array.isArray(pendingTransfersRaw) ? pendingTransfersRaw : [];
+      const pendingTransferRows: PendingTransferRaw[] = Array.isArray(pendingTransfersRaw)
+        ? pendingTransfersRaw
+        : [];
 
       let users: User[] = [];
       try {
@@ -318,9 +320,9 @@ export default function HQDashboardPage() {
         })
         .sort((a, b) => a.daysUntilExpiry - b.daysUntilExpiry);
 
-      const pendingTransfers = (pendingTransfersRaw || [])
-        .filter((transfer) => transfer.status === 'pending')
-        .map((transfer) => {
+      const pendingTransfers = pendingTransferRows
+        .filter((transfer: PendingTransferRaw) => transfer.status === 'pending')
+        .map((transfer: PendingTransferRaw) => {
           const sourceBranchId = getEntityId(transfer.sourceBranchId);
           const destinationBranchId = getEntityId(transfer.destinationBranchId);
           const productId = getEntityId(transfer.productId);
@@ -342,7 +344,7 @@ export default function HQDashboardPage() {
           };
         })
         .sort(
-          (a, b) =>
+          (a: PendingTransfer, b: PendingTransfer) =>
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
         );
 

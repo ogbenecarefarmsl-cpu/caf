@@ -21,6 +21,7 @@ interface Product {
   imageUrl?: string;
   stock: number;
   requiresPrescription: boolean;
+  unit: string;
 }
 
 type Category = 'all' | 'otc' | 'prescription' | 'vitamins' | 'supplies';
@@ -72,6 +73,8 @@ export const ProductCatalogPage = () => {
       quantity: 1,
       unitPrice: product.price,
       requiresPrescription: product.requiresPrescription,
+      baseUnit: product.unit || 'unit',
+      quantityInBaseUnits: 1,
     });
   };
 

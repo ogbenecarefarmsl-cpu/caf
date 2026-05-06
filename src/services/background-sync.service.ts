@@ -1,4 +1,4 @@
-import { offlineDb, getLastSync, setLastSync, type CachedProduct, type CachedBatch, type CachedCustomer, type CachedBranch, type ProductImage } from '../lib/offline-db';
+import { offlineDb, getLastSync, setLastSync, isStale, type CachedProduct, type CachedBatch, type CachedCustomer, type CachedBranch, type ProductImage } from '../lib/offline-db';
 import apiClient from '../lib/api-client';
 
 const SYNC_INTERVAL = 5 * 60 * 1000; // 5 minutes

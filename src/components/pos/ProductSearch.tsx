@@ -49,6 +49,8 @@ export const ProductSearch = ({ branchId }: ProductSearchProps) => {
       quantity: 1,
       unitPrice: product.sellingPrice,
       requiresPrescription: product.requiresPrescription,
+      baseUnit: product.unit || 'unit',
+      quantityInBaseUnits: 1,
     });
 
     setSearchQuery('');
