@@ -122,7 +122,8 @@ export default function TransferManagementPage() {
         productId: watchedProductId,
       });
       const response = await apiClient.get(url);
-      return response.data as Batch[];
+      const payload = response.data?.data ?? response.data;
+      return (Array.isArray(payload) ? payload : []) as Batch[];
     },
     enabled: !!selectedBranch && !!watchedProductId,
   });
@@ -133,7 +134,8 @@ export default function TransferManagementPage() {
     queryFn: async () => {
       const branchId = getBranchId(selectedBranch);
       const response = await apiClient.get(buildApiUrl('/transfers', { branchId }));
-      return response.data as Transfer[];
+      const payload = response.data?.data ?? response.data;
+      return (Array.isArray(payload) ? payload : []) as Transfer[];
     },
     enabled: !!selectedBranch,
   });

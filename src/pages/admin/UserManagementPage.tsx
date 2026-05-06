@@ -75,8 +75,9 @@ export const UserManagementPage = () => {
   const { data: users, isLoading, error } = useQuery({
     queryKey: queryKeys.users.list(),
     queryFn: async () => {
-      const response = await apiClient.get<User[]>('/users');
-      return response.data;
+      const response = await apiClient.get('/users');
+      const payload = response.data?.data ?? response.data;
+      return (Array.isArray(payload) ? payload : []) as User[];
     },
   });
 
@@ -84,8 +85,9 @@ export const UserManagementPage = () => {
   const { data: branches } = useQuery({
     queryKey: queryKeys.branches.list(),
     queryFn: async () => {
-      const response = await apiClient.get<Branch[]>('/branches');
-      return response.data;
+      const response = await apiClient.get('/branches');
+      const payload = response.data?.data ?? response.data;
+      return (Array.isArray(payload) ? payload : []) as Branch[];
     },
   });
 
