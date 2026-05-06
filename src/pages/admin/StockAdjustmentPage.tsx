@@ -67,7 +67,8 @@ export default function StockAdjustmentPage() {
     queryFn: async () => {
       const branchId = getBranchId(selectedBranch);
       const response = await apiClient.get(buildApiUrl('/batches', { branchId }));
-      return response.data as Batch[];
+      const payload = response.data?.data ?? response.data;
+      return (Array.isArray(payload) ? payload : []) as Batch[];
     },
     enabled: !!selectedBranch,
   });
@@ -84,7 +85,8 @@ export default function StockAdjustmentPage() {
         branchId,
         movementType: 'adjustment',
       }));
-      return response.data as StockMovement[];
+      const payload = response.data?.data ?? response.data;
+      return (Array.isArray(payload) ? payload : []) as StockMovement[];
     },
     enabled: !!selectedBranch,
   });

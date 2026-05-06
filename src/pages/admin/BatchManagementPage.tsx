@@ -97,8 +97,9 @@ export const BatchManagementPage = () => {
       if (activeBranchId) params.branchId = activeBranchId;
       if (filterProduct) params.productId = filterProduct;
       if (showExpiring) params.expiring = '90'; // Show batches expiring in 90 days
-      const response = await apiClient.get<Batch[]>('/batches', { params });
-      return response.data;
+      const response = await apiClient.get('/batches', { params });
+      const payload = response.data?.data ?? response.data;
+      return (Array.isArray(payload) ? payload : []) as Batch[];
     },
     enabled: !!branchId,
   });
