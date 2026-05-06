@@ -446,15 +446,21 @@ export const BatchManagementPage = () => {
             </div>
 
             <Input
-              label="Quantity"
+              label={editingBatch ? 'Quantity' : 'Initial Quantity'}
               type="number"
               {...register('quantity', {
                 required: 'Quantity is required',
                 min: { value: 0, message: 'Must be 0 or greater' },
               })}
               error={errors.quantity?.message}
-              placeholder="Enter quantity"
+              placeholder={editingBatch ? 'Stock quantity is adjusted from Stock Adjustments' : 'Enter quantity'}
+              disabled={!!editingBatch}
             />
+            {editingBatch ? (
+              <p className="text-xs text-gray-400">
+                Quantity cannot be edited here. Use Stock Adjustments for stock corrections so the movement is audited.
+              </p>
+            ) : null}
 
             {/* Pricing */}
             <div className="grid grid-cols-2 gap-4">
