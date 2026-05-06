@@ -84,6 +84,8 @@ interface Branch {
   isActive: boolean;
 }
 
+type BranchesResponse = Branch[] | { data?: Branch[] };
+
 interface Supplier {
   _id: string;
   name: string;
@@ -182,10 +184,10 @@ export const ProductManagementPage = () => {
   const total = productsData?.pagination?.total || 0;
 
   const { data: branches } = useQuery({
-    queryKey: ['branches'],
+    queryKey: queryKeys.branches.list(),
     queryFn: async () => {
-      const response = await apiClient.get(buildApiUrl('branches', undefined));
-      return (response.data?.data || []) as Branch[];
+      const response = await apiClient.get<BranchesResponse>(buildApiUrl('branches', undefined));
+      return Array.isArray(response.data) ? response.data : response.data?.data || [];
     },
   });
 
