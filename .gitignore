@@ -38,3 +38,4 @@ android/*.keystore
 .dev.vars*
 !.dev.vars.example
 !.env.example
+.capgo

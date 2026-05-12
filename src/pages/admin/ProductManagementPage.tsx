@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import apiClient from '../../lib/api-client';
@@ -21,6 +21,8 @@ import { useBarcodeScanner } from '../../hooks/useBarcodeScanner';
 import { usePagination } from '../../hooks/usePagination';
 import { useBranchAwareCRUDMutations } from '../../hooks/useCRUDMutations';
 import { saveProductImage, getProductImage } from '../../services/background-sync.service';
+import { useToast } from '../../hooks/useToast';
+import { getErrorMessage } from '../../lib/error-utils';
 
 interface PackSize {
   name: string;
@@ -91,6 +93,18 @@ interface Supplier {
   name: string;
 }
 
+interface ProductImportError {
+  row: number;
+  productName: string;
+  message: string;
+}
+
+interface ProductImportSummary {
+  createdCount: number;
+  failedCount: number;
+  errors: ProductImportError[];
+}
+
 export const ProductManagementPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -98,7 +112,11 @@ export const ProductManagementPage = () => {
   const [productImage, setProductImage] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [showPackSizeEditor, setShowPackSizeEditor] = useState(false);
+  const [isExportingTemplate, setIsExportingTemplate] = useState(false);
+  const [isImportingProducts, setIsImportingProducts] = useState(false);
+  const [importSummary, setImportSummary] = useState<ProductImportSummary | null>(null);
   const fileInputRef = useState<HTMLInputElement | null>(null);
+  const importInputRef = useRef<HTMLInputElement | null>(null);
   const {
     value: searchQuery,
     setValue: setSearchQuery,
@@ -108,6 +126,7 @@ export const ProductManagementPage = () => {
   const pagination = usePagination({ initialLimit: 20 });
   const queryClient = useQueryClient();
   const { format } = useCurrency();
+  const { showSuccess, showError } = useToast();
   const selectedBranch = useBranchStore((state) => state.selectedBranch);
   const branchId = getBranchId(selectedBranch);
 
@@ -364,6 +383,77 @@ export const ProductManagementPage = () => {
     if (valid) setWizardStep(2);
   };
 
+  const handleDownloadTemplate = async () => {
+    if (!branchId) return;
+
+    setIsExportingTemplate(true);
+    try {
+      const response = await apiClient.get('/products/import-template', {
+        params: { branchId },
+        responseType: 'blob',
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'product-import-template.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      showSuccess('Product import template downloaded');
+    } catch (error) {
+      showError(getErrorMessage(error, 'Failed to download product template'));
+    } finally {
+      setIsExportingTemplate(false);
+    }
+  };
+
+  const handleImportProducts = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file || !branchId) {
+      return;
+    }
+
+    setIsImportingProducts(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await apiClient.post<ProductImportSummary>(
+        '/products/import',
+        formData,
+        {
+          params: { branchId },
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        },
+      );
+
+      setImportSummary(response.data);
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.products.all(),
+        exact: false,
+      });
+
+      if (response.data.failedCount > 0) {
+        showError(
+          `Imported ${response.data.createdCount} product(s). ${response.data.failedCount} row(s) need attention.`,
+        );
+      } else {
+        showSuccess(`Imported ${response.data.createdCount} product(s) successfully`);
+      }
+    } catch (error) {
+      showError(getErrorMessage(error, 'Failed to import product Excel file'));
+    } finally {
+      setIsImportingProducts(false);
+      event.target.value = '';
+    }
+  };
+
   if (!branchId) {
     return (
       <AdminLayout>
@@ -464,9 +554,71 @@ export const ProductManagementPage = () => {
             <div className="sm:hidden">
               <BranchSelector />
             </div>
+            <input
+              ref={importInputRef}
+              type="file"
+              accept=".xlsx"
+              className="hidden"
+              onChange={handleImportProducts}
+            />
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleDownloadTemplate}
+              disabled={isExportingTemplate}
+            >
+              {isExportingTemplate ? 'Preparing Template...' : 'Excel Template'}
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => importInputRef.current?.click()}
+              disabled={isImportingProducts}
+            >
+              {isImportingProducts ? 'Importing...' : 'Import Excel'}
+            </Button>
             <Button onClick={() => handleOpenModal()}>+ Add Product</Button>
           </div>
         </div>
+
+        {importSummary ? (
+          <div className="rounded-2xl border border-white/10 bg-primary-dark/60 p-5">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-white">Latest Import</h2>
+                <p className="text-sm text-gray-400">
+                  Created {importSummary.createdCount} product(s), failed {importSummary.failedCount} row(s).
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setImportSummary(null)}
+              >
+                Clear
+              </Button>
+            </div>
+
+            {importSummary.errors.length > 0 ? (
+              <div className="mt-4 space-y-2">
+                {importSummary.errors.slice(0, 5).map((item) => (
+                  <div
+                    key={`${item.row}-${item.productName}`}
+                    className="rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-200"
+                  >
+                    Row {item.row} ({item.productName}): {item.message}
+                  </div>
+                ))}
+                {importSummary.errors.length > 5 ? (
+                  <p className="text-xs text-gray-400">
+                    Showing 5 of {importSummary.errors.length} import issues.
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
 
         <div className="flex gap-4">
           <Input
