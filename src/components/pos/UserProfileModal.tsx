@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuthStore } from '../../stores/auth-store';
 import { useToast } from '../../hooks/useToast';
+import { useBiometricAuth } from '../../hooks/useBiometricAuth';
 import apiClient from '../../lib/api-client';
 
 interface UserProfileModalProps {
@@ -10,7 +11,9 @@ interface UserProfileModalProps {
 
 export const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
   const user = useAuthStore((state) => state.user);
+  const accessToken = useAuthStore((state) => state.accessToken);
   const { showSuccess, showError } = useToast();
+  const biometric = useBiometricAuth();
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -105,6 +108,57 @@ export const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => 
                 <span className="text-gray-400">Role</span>
                 <span className="text-white capitalize">{user.role}</span>
               </div>
+            </div>
+
+            <div className="rounded-2xl border border-gray-700 bg-primary-darker p-4 space-y-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <h4 className="text-white font-medium">Fingerprint Login</h4>
+                  <p className="text-sm text-gray-400 leading-snug">
+                    {biometric.isAvailable
+                      ? biometric.isEnabled
+                        ? 'Fingerprint is registered on this device. You can use it to sign in quickly.'
+                        : 'Register fingerprint on this device so you can sign in without typing your password.'
+                      : 'Fingerprint sign-in is available in the mobile app on devices that support biometrics.'}
+                  </p>
+                </div>
+
+                {biometric.isEnabled ? (
+                  <button
+                    onClick={async () => {
+                      await biometric.disable();
+                      showSuccess('Fingerprint removed');
+                    }}
+                    className="w-full sm:w-auto px-4 py-2 bg-red-500/15 border border-red-500/40 rounded-xl text-red-300 font-medium hover:bg-red-500/25 transition-colors"
+                  >
+                    Remove
+                  </button>
+                ) : (
+                  <button
+                    onClick={async () => {
+                      if (!user.username || !accessToken) {
+                        showError('Sign in again before registering fingerprint');
+                        return;
+                      }
+
+                      const registered = await biometric.promptToEnable(user.username, accessToken);
+                      if (registered) {
+                        showSuccess('Fingerprint registered');
+                      } else {
+                        showError('Fingerprint was not registered');
+                      }
+                    }}
+                    disabled={!biometric.isAvailable || !accessToken || biometric.isLoading}
+                    className="w-full sm:w-auto px-4 py-2 bg-accent-green text-primary-dark font-semibold rounded-xl hover:bg-accent-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {biometric.isLoading ? 'Registering...' : 'Register Fingerprint'}
+                  </button>
+                )}
+              </div>
+
+              {biometric.error && (
+                <p className="text-sm text-red-400">{biometric.error}</p>
+              )}
             </div>
 
             {/* Actions */}

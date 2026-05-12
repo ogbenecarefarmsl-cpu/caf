@@ -1,8 +1,7 @@
-import { createContext, useContext, useEffect, useCallback, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, type ReactNode } from 'react';
 import { useAuthStore, type User } from '../stores/auth-store';
 import apiClient from '../lib/api-client';
 
-// AuthContext interface and hook
 export interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
@@ -25,80 +24,103 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const { isAuthenticated, user, clearAuth, setAuth, accessToken, refreshToken } = useAuthStore();
+  const {
+    isAuthenticated,
+    user,
+    clearAuth,
+    setAuth,
+    accessToken,
+    refreshToken,
+    sessionExpiresAt,
+  } = useAuthStore();
 
-  // Token refresh logic
+  const expireSession = useCallback(() => {
+    clearAuth();
+    window.location.href = '/login';
+  }, [clearAuth]);
+
   const refreshAccessToken = useCallback(async () => {
     try {
-      const storedRefreshToken = refreshToken || localStorage.getItem('refreshToken');
-      
-      if (!storedRefreshToken) {
+      if (sessionExpiresAt && Date.now() >= sessionExpiresAt) {
+        expireSession();
+        return;
+      }
+
+      if (!refreshToken) {
         throw new Error('No refresh token available');
       }
 
       const response = await apiClient.post('/auth/refresh', {
-        refreshToken: storedRefreshToken,
+        refreshToken,
       });
 
-      const { accessToken: newAccessToken, user: updatedUser } = response.data;
-      
-      // Update the store with new token
+      const {
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken,
+        user: updatedUser,
+      } = response.data;
+
       if (user && updatedUser) {
-        setAuth(updatedUser, newAccessToken, storedRefreshToken);
+        setAuth(
+          updatedUser,
+          newAccessToken,
+          newRefreshToken || refreshToken,
+          undefined,
+          sessionExpiresAt ?? undefined,
+        );
       }
     } catch (error) {
       console.error('Token refresh failed:', error);
-      clearAuth();
-      window.location.href = '/login';
+      expireSession();
     }
-  }, [refreshToken, user, setAuth, clearAuth]);
+  }, [expireSession, refreshToken, sessionExpiresAt, setAuth, user]);
 
-  // Logout function
   const logout = async () => {
     try {
-      // Call logout endpoint to invalidate tokens on server
       await apiClient.post('/auth/logout');
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      // Clear auth state regardless of API call result
-      clearAuth();
-      window.location.href = '/login';
+      expireSession();
     }
   };
 
-  // Set up token refresh interval
   useEffect(() => {
-    if (!isAuthenticated || !accessToken) {
+    if (!isAuthenticated || !accessToken || !sessionExpiresAt) {
       return;
     }
 
-    // Refresh token before the 12 hour session expires.
-    const refreshInterval = setInterval(() => {
-      refreshAccessToken();
-    }, 11.5 * 60 * 60 * 1000);
+    const timeoutMs = Math.max(sessionExpiresAt - Date.now(), 0);
+    if (timeoutMs === 0) {
+      expireSession();
+      return;
+    }
 
-    return () => clearInterval(refreshInterval);
-  }, [isAuthenticated, accessToken, refreshAccessToken]);
+    const expiryTimeout = window.setTimeout(() => {
+      expireSession();
+    }, timeoutMs);
 
-  // Validate token on mount
+    return () => window.clearTimeout(expiryTimeout);
+  }, [accessToken, expireSession, isAuthenticated, sessionExpiresAt]);
+
   useEffect(() => {
     const validateToken = async () => {
-      const storedAccessToken = accessToken;
-      
-      if (storedAccessToken && isAuthenticated) {
+      if (sessionExpiresAt && Date.now() >= sessionExpiresAt) {
+        expireSession();
+        return;
+      }
+
+      if (accessToken && isAuthenticated) {
         try {
-          // Validate token by making a test request
           await apiClient.get('/auth/me');
         } catch {
-          // Token is invalid, try to refresh
           await refreshAccessToken();
         }
       }
     };
 
-    validateToken();
-  }, [accessToken, isAuthenticated, refreshAccessToken]);
+    void validateToken();
+  }, [accessToken, expireSession, isAuthenticated, refreshAccessToken, sessionExpiresAt]);
 
   const value: AuthContextType = {
     isAuthenticated,

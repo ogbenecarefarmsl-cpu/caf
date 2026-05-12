@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMemo, useState } from 'react';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../../lib/api-client';
 import { useBranchStore, getBranchId } from '../../stores/branch-store';
@@ -17,6 +17,7 @@ interface Product {
   sku: string;
   barcode?: string;
   category: string;
+  brand?: string;
   price: number;
   imageUrl?: string;
   stock: number;
@@ -26,6 +27,11 @@ interface Product {
 
 type Category = 'all' | 'otc' | 'prescription' | 'vitamins' | 'supplies';
 
+const getDisplayBrand = (brand?: string) => {
+  const trimmed = brand?.trim();
+  return trimmed && trimmed.toLowerCase() !== 'unknown' ? trimmed : null;
+};
+
 export const ProductCatalogPage = () => {
   const navigate = useNavigate();
   const selectedBranch = useBranchStore((state) => state.selectedBranch);
@@ -33,28 +39,53 @@ export const ProductCatalogPage = () => {
   const { items, addItem, total } = useCartStore();
   const { format } = useCurrency();
   const { alertInfo, alertError } = useAlertReplacement();
-  
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<Category>('all');
   const [showScanner, setShowScanner] = useState(false);
+  const branchId = getBranchId(selectedBranch);
+  const productsPerPage = 24;
 
-  const { data: products, isLoading } = useQuery({
+  const {
+    data: productsResponse,
+    isLoading,
+    isFetchingNextPage,
+    fetchNextPage,
+    hasNextPage,
+  } = useInfiniteQuery({
     queryKey: queryKeys.products.list({
-      branchId: getBranchId(selectedBranch),
+      branchId,
       search: searchQuery,
       category: selectedCategory !== 'all' ? selectedCategory : undefined,
+      limit: productsPerPage,
     }),
-    queryFn: async () => {
-      const branchId = getBranchId(selectedBranch);
+    queryFn: async ({ pageParam = 1 }) => {
       if (!branchId) throw new Error('Branch ID is required');
-      const params: Record<string, string> = { branchId };
+      const params: Record<string, string | number> = {
+        branchId,
+        page: pageParam,
+        limit: productsPerPage,
+      };
       if (searchQuery) params.search = searchQuery;
       if (selectedCategory !== 'all') params.category = selectedCategory;
       const response = await apiClient.get('/products', { params });
-      return response.data.data as Product[];
+      return response.data;
     },
-    enabled: !!getBranchId(selectedBranch),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      const meta = lastPage?.pagination;
+      return meta?.hasNext ? meta.page + 1 : undefined;
+    },
+    enabled: !!branchId,
   });
+
+  const products = useMemo(
+    () => productsResponse?.pages.flatMap((page) => page.data || []) as Product[] || [],
+    [productsResponse],
+  );
+  const paginationMeta = productsResponse?.pages.at(-1)?.pagination as
+    | { page: number; limit: number; total: number; pages: number; hasNext: boolean; hasPrev: boolean }
+    | undefined;
 
   const categories: { id: Category; label: string }[] = [
     { id: 'all', label: 'All' },
@@ -62,6 +93,11 @@ export const ProductCatalogPage = () => {
     { id: 'prescription', label: 'Prescription' },
     { id: 'vitamins', label: 'Vitamins' },
   ];
+
+  const catalogSummary = useMemo(() => {
+    if (!paginationMeta) return '';
+    return `Showing ${products.length} of ${paginationMeta.total} products`;
+  }, [paginationMeta, products.length]);
 
   const handleAddToCart = (product: Product) => {
     if (product.stock <= 0) return;
@@ -80,18 +116,17 @@ export const ProductCatalogPage = () => {
 
   const handleBarcodeScan = async (barcode: string) => {
     try {
-      const branchId = getBranchId(selectedBranch);
       const response = await apiClient.get('/products', {
         params: { branchId, barcode },
       });
-      const product = response.data.data[0];
+      const product = response.data.data[0] as Product | undefined;
       if (product) {
         handleAddToCart(product);
         alertInfo(`Added ${product.name} to cart`);
       } else {
         alertError('Product not found');
       }
-    } catch (error) {
+    } catch {
       alertError('Failed to find product');
     }
   };
@@ -100,7 +135,6 @@ export const ProductCatalogPage = () => {
 
   return (
     <div className="min-h-screen bg-primary-darker flex flex-col">
-      {/* Header */}
       <div className="px-4 py-4 border-b border-gray-800">
         <div className="flex items-center justify-between mb-4">
           <button onClick={() => navigate('/pos')} className="text-white">
@@ -117,7 +151,6 @@ export const ProductCatalogPage = () => {
           </div>
         </div>
 
-        {/* Search Bar */}
         <div className="flex items-center space-x-3">
           <div className="flex-1 relative">
             <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -127,7 +160,7 @@ export const ProductCatalogPage = () => {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search products by name or code..."
+              placeholder="Search products by name, brand, SKU, or barcode..."
               className="w-full pl-12 pr-4 py-3 bg-primary-dark border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-accent-green"
             />
           </div>
@@ -138,7 +171,6 @@ export const ProductCatalogPage = () => {
           </button>
         </div>
 
-        {/* Category Tabs */}
         <div className="flex space-x-2 mt-4 overflow-x-auto pb-2">
           {categories.map((cat) => (
             <button
@@ -150,27 +182,29 @@ export const ProductCatalogPage = () => {
                   : 'bg-accent-green/20 text-accent-green'
               }`}
             >
-              {cat.id === 'all' && (
-                <span className="mr-1">☰</span>
-              )}
               {cat.label}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Product Grid */}
       <div className="flex-1 p-4 overflow-y-auto">
+        {catalogSummary ? (
+          <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-primary-dark/60 px-4 py-3 text-sm text-gray-300">
+            <span>{catalogSummary}</span>
+          </div>
+        ) : null}
+
         {isLoading ? (
           <div className="text-center py-8 text-gray-400">Loading products...</div>
-        ) : products && products.length > 0 ? (
-          <div className="grid grid-cols-2 gap-4">
+        ) : products.length > 0 ? (
+          <>
+            <div className="grid grid-cols-2 gap-4">
             {products.map((product) => (
               <div
                 key={product._id}
                 className="bg-card-light rounded-2xl overflow-hidden relative"
               >
-                {/* Product Image */}
                 <div className="aspect-square relative">
                   <img
                     src={getProductImage(product)}
@@ -196,20 +230,35 @@ export const ProductCatalogPage = () => {
                     </button>
                   )}
                 </div>
-                {/* Product Info */}
                 <div className="p-3 bg-primary-darker">
                   <h3 className="text-white font-medium text-sm leading-snug whitespace-normal break-words">{product.name}</h3>
-                  <p className="text-accent-green font-bold mt-1">{format(product.price)}</p>
+                  {getDisplayBrand(product.brand) && (
+                    <p className="mt-1 rounded-md bg-accent-green/10 px-2 py-1 text-xs font-semibold text-accent-green whitespace-normal break-words">
+                      Brand: {getDisplayBrand(product.brand)}
+                    </p>
+                  )}
+                  <p className="mt-1 text-xs text-gray-400 whitespace-normal break-words">{product.category}</p>
+                  <p className="mt-1 text-accent-green font-bold">{format(product.price)}</p>
                 </div>
               </div>
-            ))}
-          </div>
+              ))}
+            </div>
+            {hasNextPage && (
+              <button
+                type="button"
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+                className="mt-5 w-full rounded-xl border border-accent-green/40 bg-accent-green/10 px-4 py-3 text-sm font-semibold text-accent-green disabled:opacity-60"
+              >
+                {isFetchingNextPage ? 'Loading more...' : 'Load more products'}
+              </button>
+            )}
+          </>
         ) : (
           <div className="text-center py-8 text-gray-400">No products found</div>
         )}
       </div>
 
-      {/* Cart Footer */}
       {cartItemCount > 0 && (
         <div className="p-4 bg-primary-dark border-t border-gray-700">
           <div className="flex items-center justify-between">

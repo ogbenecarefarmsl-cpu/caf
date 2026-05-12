@@ -35,6 +35,18 @@ function getStoredToken(key: 'accessToken' | 'refreshToken'): string | null {
   }
 }
 
+function getSessionExpiresAt(): number | null {
+  try {
+    const raw = localStorage.getItem('auth-storage');
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    const value = parsed?.state?.sessionExpiresAt;
+    return typeof value === 'number' ? value : null;
+  } catch {
+    return null;
+  }
+}
+
 // Request interceptor to add auth token and idempotency keys
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
@@ -98,6 +110,11 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
+        const sessionExpiresAt = getSessionExpiresAt();
+        if (sessionExpiresAt && Date.now() >= sessionExpiresAt) {
+          throw new Error('Session expired');
+        }
+
         const refreshToken = getStoredToken('refreshToken');
         if (!refreshToken) {
           throw new Error('No refresh token available');

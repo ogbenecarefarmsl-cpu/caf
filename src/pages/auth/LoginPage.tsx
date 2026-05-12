@@ -81,9 +81,9 @@ export const LoginPage = () => {
       return response.data;
     },
     onSuccess: async (data) => {
-      const { user, accessToken, refreshToken } = data;
+      const { user, accessToken, refreshToken, expiresIn } = data;
 
-      setAuth(user, accessToken, refreshToken);
+      setAuth(user, accessToken, refreshToken, expiresIn);
 
       if (user.branchId) {
         try {
@@ -197,7 +197,13 @@ export const LoginPage = () => {
                     if (raw) {
                       const parsed = JSON.parse(raw);
                       if (parsed?.state?.user && parsed?.state?.accessToken) {
-                        setAuth(parsed.state.user, parsed.state.accessToken, parsed.state.refreshToken);
+                        setAuth(
+                          parsed.state.user,
+                          parsed.state.accessToken,
+                          parsed.state.refreshToken,
+                          undefined,
+                          parsed.state.sessionExpiresAt,
+                        );
                         const path =
                           parsed.state.user.role === 'cashier' || parsed.state.user.role === 'pharmacist'
                             ? '/pos'

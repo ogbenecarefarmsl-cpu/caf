@@ -15,10 +15,17 @@ interface AuthState {
   user: User | null;
   accessToken: string | null;
   refreshToken: string | null;
+  sessionExpiresAt: number | null;
   isAuthenticated: boolean;
   
   // Actions
-  setAuth: (user: User, accessToken: string, refreshToken: string) => void;
+  setAuth: (
+    user: User,
+    accessToken: string,
+    refreshToken: string,
+    expiresInSeconds?: number,
+    sessionExpiresAt?: number,
+  ) => void;
   clearAuth: () => void;
   updateUser: (user: Partial<User>) => void;
 }
@@ -29,13 +36,15 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       accessToken: null,
       refreshToken: null,
+      sessionExpiresAt: null,
       isAuthenticated: false,
 
-      setAuth: (user, accessToken, refreshToken) => {
+      setAuth: (user, accessToken, refreshToken, expiresInSeconds = 14 * 60 * 60, sessionExpiresAt) => {
         set({
           user,
           accessToken,
           refreshToken,
+          sessionExpiresAt: sessionExpiresAt ?? Date.now() + expiresInSeconds * 1000,
           isAuthenticated: true,
         });
       },
@@ -45,6 +54,7 @@ export const useAuthStore = create<AuthState>()(
           user: null,
           accessToken: null,
           refreshToken: null,
+          sessionExpiresAt: null,
           isAuthenticated: false,
         });
       },
@@ -60,6 +70,7 @@ export const useAuthStore = create<AuthState>()(
         user: state.user,
         accessToken: state.accessToken,
         refreshToken: state.refreshToken,
+        sessionExpiresAt: state.sessionExpiresAt,
         isAuthenticated: state.isAuthenticated,
       }),
     }

@@ -31,6 +31,11 @@ interface ProductSearchProps {
   branchId: string;
 }
 
+const getDisplayBrand = (brand?: string) => {
+  const trimmed = brand?.trim();
+  return trimmed && trimmed.toLowerCase() !== 'unknown' ? trimmed : null;
+};
+
 export const ProductSearch = ({ branchId }: ProductSearchProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showResults, setShowResults] = useState(false);
@@ -59,7 +64,6 @@ export const ProductSearch = ({ branchId }: ProductSearchProps) => {
     stockAvailable: product.stockAvailable ?? product.stock ?? 0,
   });
 
-  // Handle product selection
   const handleProductSelect = useCallback((product: Product) => {
     if (product.stockAvailable <= 0) {
       alertWarning('Product is out of stock');
@@ -83,13 +87,12 @@ export const ProductSearch = ({ branchId }: ProductSearchProps) => {
     inputRef.current?.focus();
   }, [addItem, alertWarning]);
 
-  // Handle barcode scanned
   const handleBarcodeScanned = useCallback(async (barcode: string) => {
     try {
       const response = await apiClient.get('/products/search', {
-        params: { query: barcode, branchId }
+        params: { query: barcode, branchId },
       });
-      
+
       if (response.data && response.data.length > 0) {
         handleProductSelect(normalizeProduct(response.data[0]));
       } else {
@@ -100,7 +103,6 @@ export const ProductSearch = ({ branchId }: ProductSearchProps) => {
     }
   }, [branchId, handleProductSelect, alertWarning, alertError]);
 
-  // Search products
   const { data: searchResults, isLoading } = useQuery({
     queryKey: queryKeys.products.list({
       branchId,
@@ -118,18 +120,15 @@ export const ProductSearch = ({ branchId }: ProductSearchProps) => {
     enabled: searchQuery.length >= 2,
   });
 
-  // Handle barcode scanning (keyboard input simulation)
   useEffect(() => {
     let barcodeBuffer = '';
     let barcodeTimeout: ReturnType<typeof setTimeout>;
 
     const handleKeyPress = (e: KeyboardEvent) => {
-      // Only process if scanner is active or input is focused
       if (!isScannerActive && document.activeElement !== inputRef.current) {
         return;
       }
 
-      // Enter key indicates end of barcode scan
       if (e.key === 'Enter' && barcodeBuffer.length > 0) {
         e.preventDefault();
         handleBarcodeScanned(barcodeBuffer);
@@ -137,11 +136,8 @@ export const ProductSearch = ({ branchId }: ProductSearchProps) => {
         return;
       }
 
-      // Accumulate barcode characters
       if (e.key.length === 1) {
         barcodeBuffer += e.key;
-        
-        // Clear buffer after 100ms of inactivity (typical for barcode scanners)
         clearTimeout(barcodeTimeout);
         barcodeTimeout = setTimeout(() => {
           barcodeBuffer = '';
@@ -156,7 +152,6 @@ export const ProductSearch = ({ branchId }: ProductSearchProps) => {
     };
   }, [isScannerActive, handleBarcodeScanned]);
 
-  // Close results when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
@@ -174,7 +169,7 @@ export const ProductSearch = ({ branchId }: ProductSearchProps) => {
         <Input
           ref={inputRef}
           type="text"
-          placeholder="Search by name, SKU, or barcode..."
+          placeholder="Search by name, brand, SKU, or barcode..."
           value={searchQuery}
           onChange={(e) => {
             setSearchQuery(e.target.value);
@@ -183,8 +178,7 @@ export const ProductSearch = ({ branchId }: ProductSearchProps) => {
           onFocus={() => setShowResults(true)}
           className="pr-24"
         />
-        
-        {/* Search Icon */}
+
         <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
           <svg
             className="w-5 h-5 text-gray-400"
@@ -201,7 +195,6 @@ export const ProductSearch = ({ branchId }: ProductSearchProps) => {
           </svg>
         </div>
 
-        {/* Barcode Scanner Button */}
         <button
           type="button"
           onClick={() => setIsScannerActive(!isScannerActive)}
@@ -228,7 +221,6 @@ export const ProductSearch = ({ branchId }: ProductSearchProps) => {
         </button>
       </div>
 
-      {/* Search Results Dropdown */}
       {showResults && searchQuery.length >= 2 && (
         <div className="absolute z-10 w-full mt-2 bg-primary-dark border border-gray-700 rounded-xl shadow-2xl shadow-black/40 max-h-96 overflow-y-auto">
           {isLoading ? (
@@ -253,11 +245,14 @@ export const ProductSearch = ({ branchId }: ProductSearchProps) => {
                     <div className="flex items-start justify-between">
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-white text-sm leading-snug whitespace-normal break-words">{product.name}</p>
-                        <p className="text-xs text-gray-400 mt-0.5">
-                          {product.brand} • {product.category}
-                        </p>
+                        {getDisplayBrand(product.brand) && (
+                          <p className="mt-1 inline-flex rounded-md bg-accent-green/10 px-2 py-1 text-xs font-semibold text-accent-green">
+                            Brand: {getDisplayBrand(product.brand)}
+                          </p>
+                        )}
+                        <p className="text-xs text-gray-400 mt-1">{product.category}</p>
                         <p className="text-xs text-gray-600 mt-1">
-                          SKU: {product.sku} • {product.barcode}
+                          SKU: {product.sku} - {product.barcode}
                         </p>
                       </div>
                       <div className="text-right ml-4 shrink-0">
@@ -292,11 +287,10 @@ export const ProductSearch = ({ branchId }: ProductSearchProps) => {
         </div>
       )}
 
-      {/* Scanner Active Indicator */}
       {isScannerActive && (
         <div className="mt-2 p-3 bg-accent-green/10 border border-accent-green/30 rounded-lg animate-pulse">
           <p className="text-xs text-accent-green text-center font-medium">
-            🔍 Scanner Active · Ready to scan or search
+            Scanner Active • Ready to scan or search
           </p>
         </div>
       )}

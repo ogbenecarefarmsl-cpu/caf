@@ -98,8 +98,8 @@ export function useBiometricAuth(
         biometricToken,
       });
 
-      const { user, accessToken, refreshToken } = response.data;
-      setAuth(user, accessToken, refreshToken);
+      const { user, accessToken, refreshToken, expiresIn } = response.data;
+      setAuth(user, accessToken, refreshToken, expiresIn);
 
       if (user.branchId) {
         try {

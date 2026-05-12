@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import apiClient from '../../lib/api-client';
 import { useBranchStore, getBranchId } from '../../stores/branch-store';
 import { useCartStore } from '../../stores/cart-store';
@@ -47,6 +47,7 @@ interface Product {
   sku: string;
   barcode?: string;
   category: string;
+  brand?: string;
   price: number;
   imageUrl?: string;
   stock: number;
@@ -54,6 +55,11 @@ interface Product {
   unit: string;
   packSizes?: PackSize[];
 }
+
+const getDisplayBrand = (brand?: string) => {
+  const trimmed = brand?.trim();
+  return trimmed && trimmed.toLowerCase() !== 'unknown' ? trimmed : null;
+};
 
 export const POSPage = () => {
   const navigate = useNavigate();
@@ -136,29 +142,52 @@ export const POSPage = () => {
 
   const terminalId = 'TERMINAL-01';
 
+  const productsPerPage = 48;
+
   // Get products
-  const { data: products, isLoading: loadingProducts } = useQuery({
+  const {
+    data: productsResponse,
+    isLoading: loadingProducts,
+    isFetchingNextPage: loadingMoreProducts,
+    fetchNextPage,
+    hasNextPage,
+  } = useInfiniteQuery({
     queryKey: queryKeys.products.list({
       branchId: getBranchId(selectedBranch),
       search: searchQuery,
       category: selectedCategory !== 'all' ? selectedCategory : undefined,
+      limit: productsPerPage,
     }),
-    queryFn: async () => {
+    queryFn: async ({ pageParam = 1 }) => {
       const branchId = getBranchId(selectedBranch);
       
       if (!branchId) {
         throw new Error('Branch ID is required');
       }
       
-      const params: Record<string, string> = { branchId };
+      const params: Record<string, string | number> = {
+        branchId,
+        page: pageParam,
+        limit: productsPerPage,
+      };
       if (searchQuery) params.search = searchQuery;
       if (selectedCategory !== 'all') params.category = selectedCategory;
       const response = await apiClient.get('/products', { params });
-      return response.data.data as Product[];
+      return response.data;
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      const meta = lastPage?.pagination;
+      return meta?.hasNext ? meta.page + 1 : undefined;
     },
     enabled: !!getBranchId(selectedBranch),
     retry: false,
   });
+
+  const products = (productsResponse?.pages.flatMap((page) => page.data || []) as Product[] | undefined) ?? [];
+  const productsPagination = productsResponse?.pages.at(-1)?.pagination as
+    | { total: number; page: number; limit: number; pages: number; hasNext: boolean }
+    | undefined;
 
   // Get current shift
   const { data: currentShift, refetch: refetchCurrentShift } = useQuery({
@@ -689,8 +718,15 @@ export const POSPage = () => {
                   <p className="text-gray-400">Loading products...</p>
                 </div>
               </div>
-            ) : products && products.length > 0 ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-3 gap-3 md:gap-4">
+            ) : products.length > 0 ? (
+              <div className="space-y-4">
+                {productsPagination && (
+                  <div className="rounded-xl border border-gray-700 bg-primary-dark/70 px-4 py-3 text-sm text-gray-300">
+                    Showing {products.length} of {productsPagination.total} products
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-3 gap-3 md:gap-4">
                 {products.map((product) => (
                   <button
                     key={product._id}
@@ -725,6 +761,12 @@ export const POSPage = () => {
                     </div>
                     <div className="p-3 bg-primary-dark rounded-b-xl border-t border-gray-700">
                       <h3 className="text-white font-semibold text-sm leading-snug text-left whitespace-normal break-words">{product.name}</h3>
+                      {getDisplayBrand(product.brand) && (
+                        <p className="mt-1 rounded-md bg-accent-green/10 px-2 py-1 text-left text-xs font-semibold text-accent-green whitespace-normal break-words">
+                          Brand: {getDisplayBrand(product.brand)}
+                        </p>
+                      )}
+                      <p className="mt-1 text-left text-xs text-gray-400 whitespace-normal break-words">{product.category}</p>
                       <div className="flex items-center justify-between mt-2">
                         <p className="text-accent-green font-bold text-base">{format(product.price)}</p>
                         {product.stock > 0 && (
@@ -736,6 +778,18 @@ export const POSPage = () => {
                     </div>
                   </button>
                 ))}
+                </div>
+
+                {hasNextPage && (
+                  <button
+                    type="button"
+                    onClick={() => fetchNextPage()}
+                    disabled={loadingMoreProducts}
+                    className="w-full rounded-xl border border-accent-green/40 bg-accent-green/10 px-4 py-3 text-sm font-semibold text-accent-green disabled:opacity-60"
+                  >
+                    {loadingMoreProducts ? 'Loading more...' : 'Load more products'}
+                  </button>
+                )}
               </div>
             ) : (
               <div className="flex items-center justify-center h-full">
