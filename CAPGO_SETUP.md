@@ -10,7 +10,7 @@
 
 ## 2. Add API Key to GitHub Secrets
 
-1. Go to: `https://github.com/Onahi7/caf-frontend/settings/secrets/actions`
+1. Go to: `https://github.com/ogbenecarefarmsl-cpu/caf/settings/secrets/actions`
 2. Click **"New repository secret"**
 3. Name: `CAPGO_API_KEY`
 4. Value: Paste your Capgo API key
@@ -65,7 +65,7 @@ git add .
 git commit -m "Test live update"
 git push origin main
 
-# Check GitHub Actions: https://github.com/Onahi7/caf-frontend/actions
+# Check GitHub Actions: https://github.com/ogbenecarefarmsl-cpu/caf/actions
 
 # After ~5 min, restart your Android app
 # It should load the new version!
@@ -78,7 +78,7 @@ git push origin main
 npx @capgo/cli bundle:list
 
 # Upload manually (without GitHub Actions)
-npx @capgo/cli bundle upload --channel production
+npx @capgo/cli bundle upload com.caf.pharmacy --path dist --channel production --apikey "$CAPGO_API_KEY"
 
 # Check app update status
 npx @capgo/cli app:info

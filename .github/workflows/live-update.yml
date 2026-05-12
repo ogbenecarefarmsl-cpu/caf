@@ -72,9 +72,15 @@ jobs:
 
       - name: Deploy to Capgo
         run: |
+          if [ -z "$CAPGO_API_KEY" ]; then
+            echo "CAPGO_API_KEY secret is missing."
+            exit 1
+          fi
+
           npx @capgo/cli@latest bundle upload com.caf.pharmacy \
             --path dist \
             --channel production \
-            --bundle "${{ github.run_number }}.${{ github.run_attempt }}.0"
+            --bundle "${{ github.run_number }}.${{ github.run_attempt }}.0" \
+            --apikey "$CAPGO_API_KEY"
         env:
           CAPGO_API_KEY: ${{ secrets.CAPGO_API_KEY }}
