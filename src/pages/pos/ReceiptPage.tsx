@@ -161,12 +161,12 @@ export const ReceiptPage = () => {
           {/* Items */}
           <div className="py-4 border-b border-gray-700 border-dashed">
             {sale.items.map((item: SaleItem, index: number) => (
-              <div key={index} className="flex justify-between py-2">
-                <div className="flex-1">
-                  <p className="text-white">{item.productName || item.productId}</p>
+              <div key={index} className="flex items-start justify-between gap-3 py-2">
+                <div className="flex-1 min-w-0">
+                  <p className="text-white leading-snug whitespace-normal break-words">{item.productName || item.productId}</p>
                   <p className="text-gray-400 text-sm">{item.quantity} x {format(item.unitPrice)}</p>
                 </div>
-                <p className="text-white font-medium">{format(item.subtotal)}</p>
+                <p className="text-white font-medium shrink-0">{format(item.subtotal)}</p>
               </div>
             ))}
           </div>

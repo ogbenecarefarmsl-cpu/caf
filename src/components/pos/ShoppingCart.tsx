@@ -69,8 +69,8 @@ export const ShoppingCart = ({ onCheckout }: ShoppingCartProps) => {
               >
                 {/* Item Header */}
                 <div className="flex items-start justify-between mb-2">
-                  <div className="flex-1">
-                    <h3 className="font-medium text-white">{item.productName}</h3>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium text-white leading-snug whitespace-normal break-words">{item.productName}</h3>
                     <p className="text-xs text-gray-400 mt-1">
                       SKU: {item.sku}
                     </p>

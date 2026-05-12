@@ -88,7 +88,7 @@ export const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(
             <tbody>
               {saleData.items.map((item, index) => (
                 <tr key={index} className="border-b border-gray-300">
-                  <td className="py-2">{item.productName}</td>
+                  <td className="py-2 break-words">{item.productName}</td>
                   <td className="text-center py-2">{item.quantity}</td>
                   <td className="text-right py-2">
                     {CURRENCY.format(item.unitPrice)}

@@ -34,7 +34,7 @@ export const Header = ({ title, showNav = false }: HeaderProps) => {
 
   const navLinks = [
     { path: '/admin/dashboard', label: 'Dashboard', roles: ['super_admin', 'branch_manager', 'auditor'] },
-    { path: '/pos', label: 'POS', roles: ['cashier', 'pharmacist', 'branch_manager', 'super_admin'] },
+    { path: '/pos', label: 'POS', roles: ['cashier', 'pharmacist', 'branch_manager', 'super_admin', 'auditor'] },
     { path: '/branches', label: 'Branches', roles: ['super_admin'] },
     { path: '/users', label: 'Users', roles: ['super_admin', 'branch_manager'] },
     { path: '/products', label: 'Products', roles: ['super_admin', 'branch_manager', 'pharmacist'] },

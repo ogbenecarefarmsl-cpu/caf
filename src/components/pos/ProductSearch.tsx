@@ -20,6 +20,13 @@ interface Product {
   stockAvailable: number;
 }
 
+type ProductResponse = Partial<Product> & {
+  price?: number;
+  stock?: number;
+  suggestedRetailPrice?: number;
+  basePrice?: number;
+};
+
 interface ProductSearchProps {
   branchId: string;
 }
@@ -33,6 +40,24 @@ export const ProductSearch = ({ branchId }: ProductSearchProps) => {
   const addItem = useCartStore((state) => state.addItem);
   const { alertWarning, alertError } = useAlertReplacement();
   const { format } = useCurrency();
+
+  const normalizeProduct = (product: ProductResponse): Product => ({
+    _id: product._id || '',
+    name: product.name || '',
+    sku: product.sku || '',
+    barcode: product.barcode || '',
+    category: product.category || '',
+    brand: product.brand || '',
+    unit: product.unit || 'unit',
+    sellingPrice:
+      product.sellingPrice ??
+      product.price ??
+      product.suggestedRetailPrice ??
+      product.basePrice ??
+      0,
+    requiresPrescription: Boolean(product.requiresPrescription),
+    stockAvailable: product.stockAvailable ?? product.stock ?? 0,
+  });
 
   // Handle product selection
   const handleProductSelect = useCallback((product: Product) => {
@@ -66,7 +91,7 @@ export const ProductSearch = ({ branchId }: ProductSearchProps) => {
       });
       
       if (response.data && response.data.length > 0) {
-        handleProductSelect(response.data[0]);
+        handleProductSelect(normalizeProduct(response.data[0]));
       } else {
         alertWarning('Product not found');
       }
@@ -86,7 +111,9 @@ export const ProductSearch = ({ branchId }: ProductSearchProps) => {
       const response = await apiClient.get('/products/search', {
         params: { query: searchQuery, branchId },
       });
-      return response.data;
+      return Array.isArray(response.data)
+        ? response.data.map(normalizeProduct)
+        : [];
     },
     enabled: searchQuery.length >= 2,
   });
@@ -223,9 +250,9 @@ export const ProductSearch = ({ branchId }: ProductSearchProps) => {
                     }`}
                     disabled={product.stockAvailable <= 0}
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <p className="font-semibold text-white text-sm">{product.name}</p>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-white text-sm leading-snug whitespace-normal break-words">{product.name}</p>
                         <p className="text-xs text-gray-400 mt-0.5">
                           {product.brand} • {product.category}
                         </p>

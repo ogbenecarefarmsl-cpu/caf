@@ -6,7 +6,9 @@ import {
   TrendingUp, 
   Users,
   CreditCard,
-  Percent
+  Percent,
+  WalletCards,
+  Upload
 } from 'lucide-react';
 
 export function SalesPage() {
@@ -31,6 +33,20 @@ export function SalesPage() {
       icon: FileText,
       path: '/pos/transactions',
       color: 'bg-purple-500'
+    },
+    {
+      title: 'Credit Sales',
+      description: 'Track balances due and receive follow-up payments',
+      icon: WalletCards,
+      path: '/admin/sales/credit',
+      color: 'bg-amber-500'
+    },
+    {
+      title: 'Request Uploads',
+      description: 'Upload client request sheets and match them to stock',
+      icon: Upload,
+      path: '/admin/sales/request-analysis',
+      color: 'bg-cyan-500'
     },
     {
       title: 'Customer Reports',
@@ -58,11 +74,31 @@ export function SalesPage() {
   return (
     <AdminLayout>
       <div className="max-w-7xl mx-auto p-6">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-white">Sales Management</h1>
-          <p className="mt-2 text-gray-400">
-            Process transactions, analyze sales performance, and manage customer relationships
-          </p>
+        <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-white">Sales Management</h1>
+            <p className="mt-2 text-gray-400">
+              Process transactions, analyze sales performance, manage customer balances, and respond to uploaded requests.
+            </p>
+            <p className="mt-2 text-sm text-gray-500">
+              Cashiers, pharmacists, branch managers, and super admins can all create credit sales from POS. Admin tools are for oversight and follow-up.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Link
+              to="/pos"
+              className="inline-flex items-center justify-center rounded-xl bg-accent-green px-5 py-3 font-semibold text-primary-dark transition-colors hover:bg-accent-light"
+            >
+              New Sale
+            </Link>
+            <Link
+              to="/pos"
+              className="inline-flex items-center justify-center rounded-xl border border-amber-400/30 bg-amber-500/10 px-5 py-3 font-semibold text-amber-200 transition-colors hover:border-amber-300/50 hover:bg-amber-500/15"
+            >
+              New Credit Sale
+            </Link>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

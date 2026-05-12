@@ -724,7 +724,7 @@ export const POSPage = () => {
                       <div className="absolute inset-0 bg-linear-to-t from-black/40 to-transparent group-hover:from-black/60 transition-all" />
                     </div>
                     <div className="p-3 bg-primary-dark rounded-b-xl border-t border-gray-700">
-                      <h3 className="text-white font-semibold text-sm truncate text-left">{product.name}</h3>
+                      <h3 className="text-white font-semibold text-sm leading-snug text-left whitespace-normal break-words">{product.name}</h3>
                       <div className="flex items-center justify-between mt-2">
                         <p className="text-accent-green font-bold text-base">{format(product.price)}</p>
                         {product.stock > 0 && (
@@ -783,7 +783,7 @@ export const POSPage = () => {
                 <div key={item.productId} className="bg-primary-darker rounded-lg p-3 border border-gray-700 hover:border-accent-green/40 transition-colors group">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-white font-semibold text-sm truncate">{item.productName}</h3>
+                      <h3 className="text-white font-semibold text-sm leading-snug whitespace-normal break-words">{item.productName}</h3>
                       <p className="text-xs text-gray-400 mt-0.5">SKU: {item.sku}</p>
                     </div>
                     <button
@@ -907,7 +907,7 @@ export const POSPage = () => {
               <div key={item.productId} className="bg-primary-dark rounded-xl p-4 border border-gray-700">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-white font-semibold text-base truncate">{item.productName}</h3>
+                    <h3 className="text-white font-semibold text-base leading-snug whitespace-normal break-words">{item.productName}</h3>
                     <p className="text-sm text-gray-400 mt-1">SKU: {item.sku}</p>
                   </div>
                   <button

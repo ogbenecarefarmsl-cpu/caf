@@ -20,6 +20,10 @@ export const POSSidebar = () => {
   const user = useAuthStore((state) => state.user);
   const selectedBranch = useBranchStore((state) => state.selectedBranch);
   const [isExpanded, setIsExpanded] = useState(false);
+  const dashboardPath =
+    user?.role === 'branch_manager' || user?.role === 'super_admin' || user?.role === 'auditor'
+      ? '/admin/dashboard'
+      : '/pos';
 
   // Get current shift
   const { data: currentShift } = useQuery({
@@ -79,7 +83,7 @@ export const POSSidebar = () => {
         </svg>
       ),
       path: '/pos/returns',
-      roles: ['pharmacist', 'branch_manager', 'super_admin'],
+      roles: ['pharmacist', 'branch_manager', 'super_admin', 'auditor'],
     },
     {
       id: 'customers',
@@ -216,7 +220,7 @@ export const POSSidebar = () => {
           {/* Quick Actions */}
           <div className="mt-3 grid grid-cols-2 gap-2">
             <button
-              onClick={() => navigate('/admin/dashboard')}
+              onClick={() => navigate(dashboardPath)}
               className="px-3 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-xs text-gray-300 hover:text-white transition-colors"
             >
               Dashboard

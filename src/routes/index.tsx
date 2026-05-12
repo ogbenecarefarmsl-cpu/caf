@@ -1,10 +1,12 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from '../components/ProtectedRoute';
+import { useAuthStore } from '../stores/auth-store';
 import {
   LoginPage,
   DashboardPage,
   InventoryPage,
   SalesPage,
+  CreditSalesPage,
   ReportsPage,
   BranchManagementPage,
   UserManagementPage,
@@ -53,12 +55,36 @@ import {
   ExpensesPage,
   FinanceTransactionsPage,
   ValuationReportPage,
+  RequestAnalysisPage,
 } from '../pages';
+
+const getDefaultRoute = (
+  role?: 'super_admin' | 'branch_manager' | 'pharmacist' | 'cashier' | 'auditor' | 'marketer',
+) => {
+  if (role === 'cashier' || role === 'pharmacist') {
+    return '/pos';
+  }
+
+  if (role === 'marketer') {
+    return '/marketer/dashboard';
+  }
+
+  if (role === 'branch_manager' || role === 'super_admin' || role === 'auditor') {
+    return '/admin/dashboard';
+  }
+
+  return '/login';
+};
+
+const RoleAwareHomeRedirect = () => {
+  const user = useAuthStore((state) => state.user);
+  return <Navigate to={getDefaultRoute(user?.role)} replace />;
+};
 
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <Navigate to="/pos" replace />,
+    element: <RoleAwareHomeRedirect />,
   },
   {
     path: '/login',
@@ -182,7 +208,7 @@ export const router = createBrowserRouter([
   },
   {
     path: '/dashboard',
-    element: <Navigate to="/admin/dashboard" replace />,
+    element: <RoleAwareHomeRedirect />,
   },
   {
     path: '/admin/inventory',
@@ -287,6 +313,26 @@ export const router = createBrowserRouter([
         <PrintersPage />
       </ProtectedRoute>
     ),
+  },
+  {
+    path: '/admin/sales/credit',
+    element: (
+      <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'auditor']}>
+        <CreditSalesPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/admin/sales/request-analysis',
+    element: (
+      <ProtectedRoute allowedRoles={['super_admin', 'branch_manager']}>
+        <RequestAnalysisPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/admin/printers/new',
+    element: <Navigate to="/admin/printers" replace />,
   },
   {
     path: '/admin/pricing',

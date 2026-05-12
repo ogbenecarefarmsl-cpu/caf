@@ -198,7 +198,7 @@ export const ProductCatalogPage = () => {
                 </div>
                 {/* Product Info */}
                 <div className="p-3 bg-primary-darker">
-                  <h3 className="text-white font-medium text-sm truncate">{product.name}</h3>
+                  <h3 className="text-white font-medium text-sm leading-snug whitespace-normal break-words">{product.name}</h3>
                   <p className="text-accent-green font-bold mt-1">{format(product.price)}</p>
                 </div>
               </div>

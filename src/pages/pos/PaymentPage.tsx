@@ -11,7 +11,8 @@ import { getErrorMessage } from '../../lib/error-utils';
 import { useAuthStore } from '../../stores/auth-store';
 import { queryKeys } from '../../lib/query-keys';
 
-type PaymentMethod = 'cash' | 'card' | 'mobile' | 'split';
+type PaymentMethod = 'cash' | 'card' | 'mobile' | 'split' | 'credit';
+type CreditCollectionMethod = 'cash' | 'card' | 'mobile' | 'bank_transfer';
 
 interface Shift {
   _id: string;
@@ -40,6 +41,12 @@ export const PaymentPage = () => {
   
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
   const [amountReceived, setAmountReceived] = useState(total.toFixed(2));
+  const [creditCustomerName, setCreditCustomerName] = useState('');
+  const [creditCustomerPhone, setCreditCustomerPhone] = useState('');
+  const [creditDueDate, setCreditDueDate] = useState('');
+  const [creditAmountPaid, setCreditAmountPaid] = useState('0');
+  const [creditInitialMethod, setCreditInitialMethod] =
+    useState<CreditCollectionMethod>('cash');
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailAddress, setEmailAddress] = useState('');
   const [lastSaleId, setLastSaleId] = useState<string | null>(null);
@@ -68,6 +75,7 @@ export const PaymentPage = () => {
   });
 
   const changeDue = Math.max(0, parseFloat(amountReceived || '0') - total);
+  const parsedCreditAmount = parseFloat(creditAmountPaid || '0');
 
   // Email receipt mutation
   const emailReceiptMutation = useMutation({
@@ -126,14 +134,36 @@ export const PaymentPage = () => {
         throw new Error('Invalid amount received');
       }
 
+      if (paymentMethod === 'credit') {
+        if (!creditCustomerName.trim()) {
+          throw new Error('Customer name is required for credit sales');
+        }
+
+        if (!creditDueDate) {
+          throw new Error('Due date is required for credit sales');
+        }
+
+        if (isNaN(parsedCreditAmount) || parsedCreditAmount < 0 || parsedCreditAmount > total) {
+          throw new Error('Invalid upfront payment amount');
+        }
+      }
+
       const paymentMethodMap: Record<PaymentMethod, string> = {
         cash: 'cash',
         card: 'card',
         mobile: 'orange_money',
         split: 'bank_transfer',
+        credit: 'credit',
       };
 
-const payload = {
+      const creditInitialMethodMap: Record<CreditCollectionMethod, string> = {
+        cash: 'cash',
+        card: 'card',
+        mobile: 'orange_money',
+        bank_transfer: 'bank_transfer',
+      };
+
+      const payload = {
         branchId,
         shiftId: currentShift._id,
         terminalId,
@@ -150,6 +180,15 @@ const payload = {
         })),
         discount,
         paymentMethod: paymentMethodMap[paymentMethod],
+        saleType: paymentMethod === 'credit' ? 'credit' : 'cash',
+        amountPaid: paymentMethod === 'credit' ? parsedCreditAmount : total,
+        dueDate: paymentMethod === 'credit' ? creditDueDate : undefined,
+        customerName: paymentMethod === 'credit' ? creditCustomerName.trim() : undefined,
+        customerPhone: paymentMethod === 'credit' ? creditCustomerPhone.trim() || undefined : undefined,
+        initialPaymentMethod:
+          paymentMethod === 'credit' && parsedCreditAmount > 0
+            ? creditInitialMethodMap[creditInitialMethod]
+            : undefined,
       };
 
       try {
@@ -230,6 +269,11 @@ const payload = {
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
       </svg>
     )},
+    { id: 'credit', label: 'Credit Sale', icon: (
+      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h4m6 0h.01M5 6h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" />
+      </svg>
+    )},
   ];
 
   return (
@@ -293,6 +337,86 @@ const payload = {
             </div>
           </div>
         )}
+
+        {paymentMethod === 'credit' && (
+          <div className="space-y-4">
+            <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4">
+              <p className="text-sm font-medium text-amber-200">
+                Stock will be released now and the balance will stay open until the customer pays.
+              </p>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <h2 className="text-white font-semibold mb-3">Customer Name</h2>
+                <input
+                  type="text"
+                  value={creditCustomerName}
+                  onChange={(e) => setCreditCustomerName(e.target.value)}
+                  className="w-full px-4 py-4 bg-primary-dark border border-gray-700 rounded-xl text-white focus:outline-none focus:border-accent-green"
+                  placeholder="Required for credit sale"
+                />
+              </div>
+              <div>
+                <h2 className="text-white font-semibold mb-3">Customer Phone</h2>
+                <input
+                  type="text"
+                  value={creditCustomerPhone}
+                  onChange={(e) => setCreditCustomerPhone(e.target.value)}
+                  className="w-full px-4 py-4 bg-primary-dark border border-gray-700 rounded-xl text-white focus:outline-none focus:border-accent-green"
+                  placeholder="Optional"
+                />
+              </div>
+              <div>
+                <h2 className="text-white font-semibold mb-3">Due Date</h2>
+                <input
+                  type="date"
+                  value={creditDueDate}
+                  onChange={(e) => setCreditDueDate(e.target.value)}
+                  className="w-full px-4 py-4 bg-primary-dark border border-gray-700 rounded-xl text-white focus:outline-none focus:border-accent-green"
+                />
+              </div>
+              <div>
+                <h2 className="text-white font-semibold mb-3">Upfront Payment</h2>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-accent-green text-xl font-bold">{symbol}</span>
+                  <input
+                    type="number"
+                    min="0"
+                    max={total}
+                    step="0.01"
+                    value={creditAmountPaid}
+                    onChange={(e) => setCreditAmountPaid(e.target.value)}
+                    className="w-full pl-14 pr-4 py-4 bg-primary-dark border border-gray-700 rounded-xl text-white focus:outline-none focus:border-accent-green"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {parsedCreditAmount > 0 && (
+              <div>
+                <h2 className="text-white font-semibold mb-3">Initial Payment Method</h2>
+                <select
+                  value={creditInitialMethod}
+                  onChange={(e) => setCreditInitialMethod(e.target.value as CreditCollectionMethod)}
+                  className="w-full px-4 py-4 bg-primary-dark border border-gray-700 rounded-xl text-white focus:outline-none focus:border-accent-green"
+                >
+                  <option value="cash">Cash</option>
+                  <option value="card">Card</option>
+                  <option value="mobile">Orange Money</option>
+                  <option value="bank_transfer">Bank Transfer</option>
+                </select>
+              </div>
+            )}
+
+            <div className="flex justify-end">
+              <span className="text-gray-400">Balance Due: </span>
+              <span className="text-amber-300 font-bold ml-2">
+                {format(Math.max(0, total - (Number.isFinite(parsedCreditAmount) ? parsedCreditAmount : 0)))}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Bottom Actions */}
@@ -302,12 +426,21 @@ const payload = {
           disabled={
             checkoutMutation.isPending ||
             (paymentMethod === 'cash' && parseFloat(amountReceived) < total) ||
+            (paymentMethod === 'credit' &&
+              (!creditCustomerName.trim() ||
+                !creditDueDate ||
+                parsedCreditAmount < 0 ||
+                parsedCreditAmount > total)) ||
             !currentShift ||
             currentShift.status !== 'open'
           }
           className="w-full py-4 bg-accent-green text-primary-dark font-semibold rounded-xl hover:bg-accent-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {checkoutMutation.isPending ? 'Processing...' : 'Confirm Payment'}
+          {checkoutMutation.isPending
+            ? 'Processing...'
+            : paymentMethod === 'credit'
+              ? 'Create Credit Sale'
+              : 'Confirm Payment'}
         </button>
 
         <div className="flex justify-center space-x-8">

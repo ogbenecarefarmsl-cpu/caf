@@ -1,8 +1,19 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui';
+import { useAuthStore } from '../../stores/auth-store';
 
 export const NotFoundPage = () => {
   const navigate = useNavigate();
+  const user = useAuthStore((state) => state.user);
+
+  const homePath =
+    user?.role === 'cashier' || user?.role === 'pharmacist'
+      ? '/pos'
+      : user?.role === 'marketer'
+        ? '/marketer/dashboard'
+        : user?.role === 'branch_manager' || user?.role === 'super_admin' || user?.role === 'auditor'
+          ? '/admin/dashboard'
+          : '/login';
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-primary-darker">
@@ -12,7 +23,7 @@ export const NotFoundPage = () => {
         <p className="text-gray-400 mb-6">
           The page you're looking for doesn't exist.
         </p>
-        <Button onClick={() => navigate('/')}>Go Home</Button>
+        <Button onClick={() => navigate(homePath)}>Go Home</Button>
       </div>
     </div>
   );

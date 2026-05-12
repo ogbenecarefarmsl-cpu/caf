@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Printer, Plus, Trash2, TestTube, CheckCircle, XCircle } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { CheckCircle, Plus, Printer, TestTube, Trash2, XCircle } from 'lucide-react';
 import apiClient from '../../lib/api-client';
 import { AdminLayout } from '../../components/AdminLayout';
+import { Button } from '../../components/ui/Button';
+import { PrinterSettingsModal } from '../../components/admin/PrinterSettingsModal';
 import { useToast } from '../../hooks/useToast';
+import { getBranchId, useBranchStore } from '../../stores/branch-store';
 
 interface PrinterConfig {
   _id: string;
@@ -28,23 +30,27 @@ interface PrinterConfig {
 }
 
 export const PrintersPage: React.FC = () => {
-  const navigate = useNavigate();
   const [printers, setPrinters] = useState<PrinterConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [testing, setTesting] = useState<string | null>(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const { showSuccess, showError } = useToast();
+  const selectedBranch = useBranchStore((state) => state.selectedBranch);
+  const branchId = getBranchId(selectedBranch);
+  const terminalId = 'TERMINAL-01';
 
   useEffect(() => {
-    loadPrinters();
+    void loadPrinters();
   }, []);
 
   const loadPrinters = async () => {
     setLoading(true);
     try {
       const response = await apiClient.get('/printers');
-      setPrinters(response.data);
+      setPrinters(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error('Failed to load printers:', error);
+      showError('Failed to load printers');
     } finally {
       setLoading(false);
     }
@@ -64,7 +70,9 @@ export const PrintersPage: React.FC = () => {
   };
 
   const deletePrinter = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this printer?')) return;
+    if (!window.confirm('Are you sure you want to delete this printer?')) {
+      return;
+    }
 
     try {
       await apiClient.delete(`/printers/${id}`);
@@ -78,196 +86,172 @@ export const PrintersPage: React.FC = () => {
   const getConnectionIcon = (type: string) => {
     switch (type) {
       case 'network':
-        return '🌐';
+        return 'Network';
       case 'bluetooth':
-        return '📱';
+        return 'Bluetooth';
       case 'usb':
-        return '🔌';
+        return 'USB';
       case 'serial':
-        return '🔗';
+        return 'Serial';
       default:
-        return '🖨️';
+        return 'Printer';
     }
   };
 
   if (loading) {
     return (
-      <AdminLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="text-gray-500">Loading printers...</div>
+      <AdminLayout title="Thermal Printers">
+        <div className="flex h-64 items-center justify-center">
+          <div className="text-gray-400">Loading printers...</div>
         </div>
       </AdminLayout>
     );
   }
 
   return (
-    <AdminLayout>
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-3">
-          <Printer className="w-8 h-8 text-blue-600" />
-          <h1 className="text-2xl font-bold">Thermal Printers</h1>
+    <AdminLayout title="Thermal Printers">
+      <div className="space-y-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <Printer className="mt-1 h-8 w-8 text-accent-green" />
+            <div>
+              <h1 className="text-2xl font-bold text-white">Thermal Printers</h1>
+              <p className="mt-1 text-sm text-gray-400">
+                Manage receipt printing for the selected branch and terminal.
+              </p>
+            </div>
+          </div>
+          <Button onClick={() => setIsSettingsOpen(true)} className="inline-flex items-center justify-center gap-2 sm:w-auto">
+            <Plus className="h-4 w-4" />
+            <span>Add Printer</span>
+          </Button>
         </div>
-        <button
-          onClick={() => navigate('/admin/printers/new')}
-          className="flex items-center space-x-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add Printer</span>
-        </button>
-      </div>
 
-      {/* Info Banner */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-        <h3 className="font-semibold mb-2">📱 Mobile & Web Compatibility</h3>
-        <div className="text-sm space-y-1">
-          <p>
-            <strong>Network Printers:</strong> Work on all devices (Windows, Mac,
-            Android, iOS)
-          </p>
-          <p>
-            <strong>Bluetooth Printers:</strong> Mobile only (Android with Chrome
-            98+)
-          </p>
-          <p>
-            <strong>USB/Serial Printers:</strong> Desktop only (Chrome/Edge with Web
-            Serial API)
-          </p>
+        <div className="rounded-xl border border-accent-green/20 bg-white/5 p-4 text-sm text-gray-300">
+          <h3 className="mb-2 font-semibold text-white">Mobile and web compatibility</h3>
+          <div className="space-y-1">
+            <p><strong className="text-white">Network printers:</strong> work on Windows, Mac, Android, and iOS.</p>
+            <p><strong className="text-white">Bluetooth printers:</strong> best for Android handheld devices.</p>
+            <p><strong className="text-white">USB and serial printers:</strong> best for fixed desktop counters.</p>
+          </div>
         </div>
-      </div>
 
-      {printers.length === 0 ? (
-        <div className="text-center py-12 bg-gray-50 rounded-lg">
-          <Printer className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500 mb-4">No printers configured</p>
-          <button
-            onClick={() => navigate('/admin/printers/new')}
-            className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600"
-          >
-            Add Your First Printer
-          </button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {printers.map((printer) => (
-            <div
-              key={printer._id}
-              className="bg-white border rounded-lg p-4 hover:shadow-lg transition-shadow"
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center space-x-2">
-                  <span className="text-2xl">
-                    {getConnectionIcon(printer.connectionType)}
-                  </span>
-                  <div>
-                    <h3 className="font-semibold">{printer.name}</h3>
-                    <p className="text-xs text-gray-500">
-                      {typeof printer.branchId === 'object'
-                        ? printer.branchId.name
-                        : 'Unknown Branch'}{' '}
-                      - {printer.terminalId}
+        {printers.length === 0 ? (
+          <div className="rounded-xl border border-white/10 bg-primary-dark py-12 text-center">
+            <Printer className="mx-auto mb-4 h-16 w-16 text-gray-600" />
+            <p className="mb-4 text-gray-400">No printers configured yet.</p>
+            <Button onClick={() => setIsSettingsOpen(true)}>Add Your First Printer</Button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {printers.map((printer) => (
+              <div
+                key={printer._id}
+                className="rounded-xl border border-white/10 bg-primary-dark p-4 shadow-sm"
+              >
+                <div className="mb-4 flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-xs uppercase tracking-wide text-gray-500">{getConnectionIcon(printer.connectionType)}</p>
+                    <h3 className="truncate text-lg font-semibold text-white">{printer.name}</h3>
+                    <p className="truncate text-xs text-gray-400">
+                      {typeof printer.branchId === 'object' ? printer.branchId.name : 'Unknown Branch'} • {printer.terminalId}
                     </p>
                   </div>
-                </div>
-                <span
-                  className={`px-2 py-1 text-xs rounded ${
-                    printer.isActive
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-gray-100 text-gray-700'
-                  }`}
-                >
-                  {printer.isActive ? 'Active' : 'Inactive'}
-                </span>
-              </div>
-
-              <div className="space-y-2 text-sm mb-4">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Type:</span>
-                  <span className="font-medium capitalize">
-                    {printer.connectionType}
+                  <span
+                    className={`rounded-full px-2 py-1 text-xs font-semibold ${
+                      printer.isActive ? 'border border-accent-green/20 bg-accent-green/15 text-accent-green' : 'bg-white/10 text-gray-300'
+                    }`}
+                  >
+                    {printer.isActive ? 'Active' : 'Inactive'}
                   </span>
                 </div>
 
-                {printer.connectionType === 'network' && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Address:</span>
-                    <span className="font-medium">
-                      {printer.ipAddress}:{printer.port}
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="text-gray-400">Type</span>
+                    <span className="text-right font-medium capitalize text-white">{printer.connectionType}</span>
+                  </div>
+                  {printer.connectionType === 'network' ? (
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="text-gray-400">Address</span>
+                      <span className="text-right font-medium text-white">{printer.ipAddress}:{printer.port}</span>
+                    </div>
+                  ) : null}
+                  {printer.connectionType === 'bluetooth' ? (
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="text-gray-400">Device</span>
+                      <span className="text-right font-medium text-white">{printer.bluetoothName || '-'}</span>
+                    </div>
+                  ) : null}
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="text-gray-400">Paper</span>
+                    <span className="font-medium text-white">{printer.paperWidth}mm</span>
+                  </div>
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="text-gray-400">Auto-print</span>
+                    <span className="text-right font-medium text-white">
+                      {printer.autoPrintEnabled ? `Yes (${printer.defaultCopies}x)` : 'No'}
                     </span>
                   </div>
-                )}
-
-                {printer.connectionType === 'bluetooth' && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Device:</span>
-                    <span className="font-medium">{printer.bluetoothName}</span>
-                  </div>
-                )}
-
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Paper:</span>
-                  <span className="font-medium">{printer.paperWidth}mm</span>
-                </div>
-
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Auto-print:</span>
-                  <span className="font-medium">
-                    {printer.autoPrintEnabled
-                      ? `Yes (${printer.defaultCopies}x)`
-                      : 'No'}
-                  </span>
-                </div>
-
-                {printer.lastTestAt && (
-                  <div className="flex justify-between items-center pt-2 border-t">
-                    <span className="text-gray-600">Last Test:</span>
-                    <div className="flex items-center space-x-1">
-                      {printer.lastTestStatus === 'success' ? (
-                        <CheckCircle className="w-4 h-4 text-green-500" />
-                      ) : (
-                        <XCircle className="w-4 h-4 text-red-500" />
-                      )}
-                      <span
-                        className={`text-xs ${
-                          printer.lastTestStatus === 'success'
-                            ? 'text-green-600'
-                            : 'text-red-600'
-                        }`}
-                      >
-                        {new Date(printer.lastTestAt).toLocaleDateString()}
-                      </span>
+                  {printer.lastTestAt ? (
+                    <div className="flex items-center justify-between gap-3 border-t border-white/10 pt-3">
+                      <span className="text-gray-400">Last Test</span>
+                      <div className="flex items-center gap-1">
+                        {printer.lastTestStatus === 'success' ? (
+                          <CheckCircle className="h-4 w-4 text-accent-green" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-red-400" />
+                        )}
+                        <span className={`text-xs ${printer.lastTestStatus === 'success' ? 'text-accent-green' : 'text-red-300'}`}>
+                          {new Date(printer.lastTestAt).toLocaleDateString()}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => testConnection(printer._id)}
-                  disabled={testing === printer._id}
-                  className="flex-1 flex items-center justify-center space-x-1 bg-blue-500 text-white px-3 py-2 rounded text-sm hover:bg-blue-600 disabled:opacity-50"
-                >
-                  <TestTube className="w-4 h-4" />
-                  <span>{testing === printer._id ? 'Testing...' : 'Test'}</span>
-                </button>
-                <button
-                  onClick={() => deletePrinter(printer._id)}
-                  className="p-2 border rounded hover:bg-red-50 hover:border-red-300 text-red-600"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-
-              {printer.lastTestError && (
-                <div className="mt-2 text-xs text-red-600 bg-red-50 p-2 rounded">
-                  {printer.lastTestError}
+                  ) : null}
                 </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+
+                <div className="mt-4 flex gap-2">
+                  <Button
+                    onClick={() => testConnection(printer._id)}
+                    isLoading={testing === printer._id}
+                    className="flex-1 text-sm"
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      <TestTube className="h-4 w-4" />
+                      <span>{testing === printer._id ? 'Testing...' : 'Test'}</span>
+                    </span>
+                  </Button>
+                  <Button
+                    onClick={() => deletePrinter(printer._id)}
+                    variant="danger"
+                    className="px-3"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                {printer.lastTestError ? (
+                  <div className="mt-3 rounded-lg border border-red-500/20 bg-red-500/10 p-2 text-xs text-red-300">
+                    {printer.lastTestError}
+                  </div>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {branchId ? (
+          <PrinterSettingsModal
+            isOpen={isSettingsOpen}
+            onClose={() => {
+              setIsSettingsOpen(false);
+              void loadPrinters();
+            }}
+            branchId={branchId}
+            terminalId={terminalId}
+          />
+        ) : null}
+      </div>
     </AdminLayout>
   );
 };

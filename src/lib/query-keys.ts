@@ -43,6 +43,8 @@ export interface SalesFilters extends BaseFilters, PaginationParams {
   category?: string;
   paymentMethod?: string;
   status?: string;
+  saleType?: string;
+  paymentStatus?: string;
   cashierId?: string;
   productId?: string;
   startDate?: string;
@@ -144,6 +146,7 @@ export const queryKeys = {
     detail: (id?: string) => [...queryKeys.sales.details(), id] as const,
     recent: (filters?: SalesFilters) => [...queryKeys.sales.all(), 'recent', filters] as const,
     history: (filters?: SalesFilters) => [...queryKeys.sales.all(), 'history', filters] as const,
+    credit: (filters?: SalesFilters) => [...queryKeys.sales.all(), 'credit', filters] as const,
   },
 
   // Shifts
@@ -209,6 +212,11 @@ export const queryKeys = {
     products: () => [...queryKeys.pricing.all(), 'products'] as const,
     product: (productId?: string, branchId?: string) => [...queryKeys.pricing.products(), productId, branchId] as const,
     analytics: (branchId?: string) => [...queryKeys.pricing.all(), 'analytics', branchId] as const,
+  },
+
+  requestAnalysis: {
+    all: () => [...queryKeys.all(), 'request-analysis'] as const,
+    branch: (branchId?: string) => [...queryKeys.requestAnalysis.all(), branchId] as const,
   },
 
   // Stock Adjustments

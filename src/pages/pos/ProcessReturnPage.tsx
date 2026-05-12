@@ -211,8 +211,8 @@ export const ProcessReturnPage = () => {
                       : 'bg-gray-800/50 border-gray-700 hover:border-gray-600'
                   }`}
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center space-x-3">
+                  <div className="flex items-start justify-between mb-2 gap-3">
+                    <div className="flex items-start space-x-3 min-w-0 flex-1">
                       <div className={`w-5 h-5 rounded border flex items-center justify-center ${
                         item.selected ? 'bg-cyan-500 border-cyan-500' : 'border-gray-500'
                       }`}>
@@ -222,9 +222,9 @@ export const ProcessReturnPage = () => {
                           </svg>
                         )}
                       </div>
-                      <p className="text-white font-medium">{item.productName}</p>
+                      <p className="text-white font-medium leading-snug whitespace-normal break-words">{item.productName}</p>
                     </div>
-                    <p className="text-white font-semibold">{format(item.unitPrice * item.quantity)}</p>
+                    <p className="text-white font-semibold shrink-0">{format(item.unitPrice * item.quantity)}</p>
                   </div>
                   <div className="flex items-center justify-between">
                     <p className="text-gray-400 text-sm">Max: {item.maxQuantity} available for return</p>
