@@ -54,19 +54,19 @@ function App() {
     let isMounted = true;
 
     const checkForUpdates = async () => {
-      const apkUpdate = await checkForApkUpdate();
+      const liveUpdate = await checkForLiveUpdate();
       if (!isMounted) {
         return;
       }
 
-      if (apkUpdate) {
-        setAvailableUpdate({ type: 'apk', update: apkUpdate });
+      if (liveUpdate) {
+        setAvailableUpdate({ type: 'live', update: liveUpdate });
         return;
       }
 
-      const liveUpdate = await checkForLiveUpdate();
-      if (isMounted && liveUpdate) {
-        setAvailableUpdate({ type: 'live', update: liveUpdate });
+      const apkUpdate = await checkForApkUpdate();
+      if (isMounted && apkUpdate) {
+        setAvailableUpdate({ type: 'apk', update: apkUpdate });
       }
     };
 
