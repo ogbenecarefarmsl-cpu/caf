@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "caf-frontend",
+  "name": "caf",
   "compatibility_date": "2026-04-26",
   "observability": {
     "enabled": true
