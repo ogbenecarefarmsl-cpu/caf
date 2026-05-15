@@ -2,11 +2,11 @@ import { Link } from 'react-router-dom';
 import { AdminLayout } from '../../components/AdminLayout';
 import { 
   Package, 
-  FileText, 
   TrendingUp, 
   AlertTriangle,
   RefreshCw,
-  ArrowLeftRight
+  ArrowLeftRight,
+  Truck
 } from 'lucide-react';
 
 export function InventoryPage() {
@@ -19,18 +19,18 @@ export function InventoryPage() {
       color: 'bg-blue-500'
     },
     {
-      title: 'Batches',
-      description: 'Track batch numbers, expiry dates, and quantities',
-      icon: FileText,
-      path: '/admin/batches',
-      color: 'bg-green-500'
-    },
-    {
       title: 'Stock Adjustments',
-      description: 'Record stock adjustments and corrections',
+      description: 'Adjust total product stock with supplier and expiry context',
       icon: TrendingUp,
       path: '/admin/stock-adjustments',
       color: 'bg-purple-500'
+    },
+    {
+      title: 'Purchase Orders',
+      description: 'Receive incoming stock from suppliers and update product inventory',
+      icon: Truck,
+      path: '/admin/purchase-orders',
+      color: 'bg-green-500'
     },
     {
       title: 'Stock Transfers',
@@ -61,7 +61,7 @@ export function InventoryPage() {
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-white">Inventory Management</h1>
           <p className="mt-2 text-gray-400">
-            Manage products, batches, stock levels, and inventory movements
+            Manage products, total stock levels, suppliers, and inventory movements
           </p>
         </div>
 

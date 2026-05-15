@@ -1,4 +1,4 @@
-import { useCartStore } from '../../stores/cart-store';
+import { useCartStore, itemKey } from '../../stores/cart-store';
 import { useCurrency } from '../../hooks/useCurrency';
 import { Button } from '../ui/Button';
 
@@ -10,20 +10,20 @@ export const ShoppingCart = ({ onCheckout }: ShoppingCartProps) => {
   const { items, subtotal, discount, total, updateQuantity, removeItem } = useCartStore();
   const { format } = useCurrency();
 
-  const handleQuantityChange = (productId: string, newQuantity: string) => {
+  const handleQuantityChange = (productId: string, packSizeUnit: string | undefined, newQuantity: string) => {
     const quantity = parseInt(newQuantity, 10);
     if (!isNaN(quantity) && quantity > 0) {
-      updateQuantity(productId, quantity);
+      updateQuantity(productId, quantity, packSizeUnit);
     }
   };
 
-  const handleQuantityIncrement = (productId: string, currentQuantity: number) => {
-    updateQuantity(productId, currentQuantity + 1);
+  const handleQuantityIncrement = (productId: string, packSizeUnit: string | undefined, currentQuantity: number) => {
+    updateQuantity(productId, currentQuantity + 1, packSizeUnit);
   };
 
-  const handleQuantityDecrement = (productId: string, currentQuantity: number) => {
+  const handleQuantityDecrement = (productId: string, packSizeUnit: string | undefined, currentQuantity: number) => {
     if (currentQuantity > 1) {
-      updateQuantity(productId, currentQuantity - 1);
+      updateQuantity(productId, currentQuantity - 1, packSizeUnit);
     }
   };
 
@@ -64,7 +64,7 @@ export const ShoppingCart = ({ onCheckout }: ShoppingCartProps) => {
           <div className="space-y-3">
             {items.map((item) => (
               <div
-                key={item.productId}
+                key={itemKey(item.productId, item.packSize?.unit)}
                 className="bg-[--color-primary-darker] rounded-lg p-3 border border-gray-700"
               >
                 {/* Item Header */}
@@ -73,10 +73,15 @@ export const ShoppingCart = ({ onCheckout }: ShoppingCartProps) => {
                     <h3 className="font-medium text-white leading-snug whitespace-normal break-words">{item.productName}</h3>
                     <p className="text-xs text-gray-400 mt-1">
                       SKU: {item.sku}
+                      {item.packSize && (
+                        <span className="ml-1 px-1.5 py-0.5 bg-accent-green/10 text-accent-green rounded text-[10px]">
+                          {item.packSize.name}
+                        </span>
+                      )}
                     </p>
                   </div>
                   <button
-                    onClick={() => removeItem(item.productId)}
+                    onClick={() => removeItem(item.productId, item.packSize?.unit)}
                     className="text-gray-400 hover:text-red-500 transition-colors ml-2"
                     title="Remove item"
                   >
@@ -101,7 +106,7 @@ export const ShoppingCart = ({ onCheckout }: ShoppingCartProps) => {
                   {/* Quantity Controls */}
                   <div className="flex items-center space-x-2">
                     <button
-                      onClick={() => handleQuantityDecrement(item.productId, item.quantity)}
+                      onClick={() => handleQuantityDecrement(item.productId, item.packSize?.unit, item.quantity)}
                       className="w-8 h-8 flex items-center justify-center bg-[--color-primary-dark] text-white rounded-lg hover:bg-gray-700 transition-colors"
                       disabled={item.quantity <= 1}
                     >
@@ -124,12 +129,12 @@ export const ShoppingCart = ({ onCheckout }: ShoppingCartProps) => {
                       type="number"
                       min="1"
                       value={item.quantity}
-                      onChange={(e) => handleQuantityChange(item.productId, e.target.value)}
+                      onChange={(e) => handleQuantityChange(item.productId, item.packSize?.unit, e.target.value)}
                       className="w-16 px-2 py-1 text-center bg-[--color-primary-dark] text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[--color-accent-green]"
                     />
 
                     <button
-                      onClick={() => handleQuantityIncrement(item.productId, item.quantity)}
+                      onClick={() => handleQuantityIncrement(item.productId, item.packSize?.unit, item.quantity)}
                       className="w-8 h-8 flex items-center justify-center bg-[--color-primary-dark] text-white rounded-lg hover:bg-gray-700 transition-colors"
                     >
                       <svg

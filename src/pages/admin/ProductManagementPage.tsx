@@ -49,6 +49,10 @@ interface Product {
   isControlled: boolean;
   isActive: boolean;
   maxStockLevel?: number;
+  quantityAvailable?: number;
+  supplierId?: string | { _id: string; name: string };
+  supplyDate?: string;
+  expiryDate?: string;
   packSizes?: PackSize[];
   createdAt: string;
   updatedAt: string;
@@ -62,9 +66,9 @@ interface ProductFormData {
    brand: string;
    unit: string;
    initialStock: number;
-   initialLotNumber?: string;
    initialExpiryDate?: string;
    initialSupplierId?: string;
+   initialSupplyDate?: string;
    initialPurchasePrice?: number;
    initialSellingPrice?: number;
    basePrice: number;
@@ -113,6 +117,7 @@ export const ProductManagementPage = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [showPackSizeEditor, setShowPackSizeEditor] = useState(false);
   const [isExportingTemplate, setIsExportingTemplate] = useState(false);
+  const [isExportingProducts, setIsExportingProducts] = useState(false);
   const [isImportingProducts, setIsImportingProducts] = useState(false);
   const [importSummary, setImportSummary] = useState<ProductImportSummary | null>(null);
   const fileInputRef = useState<HTMLInputElement | null>(null);
@@ -246,9 +251,9 @@ export const ProductManagementPage = () => {
       branchId: data.branchId,
       packSizes,
       initialStock: data.initialStock,
-      initialLotNumber: data.initialLotNumber || undefined,
       initialExpiryDate,
       initialSupplierId: data.initialSupplierId || undefined,
+      initialSupplyDate: data.initialSupplyDate || undefined,
       initialPurchasePrice: data.initialPurchasePrice,
       initialSellingPrice: data.initialSellingPrice,
       maxStockLevel: data.maxStockLevel,
@@ -312,10 +317,13 @@ export const ProductManagementPage = () => {
         category: product.category,
         brand: product.brand,
         unit: product.unit,
-        initialStock: 0,
-        initialLotNumber: '',
-        initialExpiryDate: '',
-        initialSupplierId: '',
+        initialStock: product.quantityAvailable || 0,
+        initialExpiryDate: product.expiryDate ? product.expiryDate.split('T')[0] : '',
+        initialSupplierId:
+          typeof product.supplierId === 'string'
+            ? product.supplierId
+            : product.supplierId?._id || '',
+        initialSupplyDate: product.supplyDate ? product.supplyDate.split('T')[0] : '',
         initialPurchasePrice: product.costPrice || 0,
         initialSellingPrice: product.suggestedRetailPrice || product.basePrice || 0,
         basePrice: product.basePrice || 0,
@@ -340,9 +348,9 @@ export const ProductManagementPage = () => {
         brand: '',
         unit: 'piece',
         initialStock: 0,
-        initialLotNumber: '',
         initialExpiryDate: '',
         initialSupplierId: '',
+        initialSupplyDate: '',
         initialPurchasePrice: 0,
         initialSellingPrice: 0,
         basePrice: 0,
@@ -406,6 +414,32 @@ export const ProductManagementPage = () => {
       showError(getErrorMessage(error, 'Failed to download product template'));
     } finally {
       setIsExportingTemplate(false);
+    }
+  };
+
+  const handleExportProducts = async () => {
+    if (!branchId) return;
+
+    setIsExportingProducts(true);
+    try {
+      const response = await apiClient.get('/products/export', {
+        params: { branchId },
+        responseType: 'blob',
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'products-export.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      showSuccess('Products exported to Excel');
+    } catch (error) {
+      showError(getErrorMessage(error, 'Failed to export products'));
+    } finally {
+      setIsExportingProducts(false);
     }
   };
 
@@ -561,6 +595,14 @@ export const ProductManagementPage = () => {
               className="hidden"
               onChange={handleImportProducts}
             />
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleExportProducts}
+              disabled={isExportingProducts}
+            >
+              {isExportingProducts ? 'Exporting...' : 'Export Excel'}
+            </Button>
             <Button
               type="button"
               variant="secondary"
@@ -906,7 +948,7 @@ export const ProductManagementPage = () => {
               <>
                 <div className="grid grid-cols-2 gap-4">
                   <Input
-                    label="Initial Stock (for new batch)"
+                    label="Opening Stock"
                     type="number"
                     min="0"
                     {...register('initialStock', { min: 0 })}
@@ -925,18 +967,19 @@ export const ProductManagementPage = () => {
                 </div>
 
                 <Input
-                  label="Lot Number"
-                  {...register('initialLotNumber')}
-                />
-
-                <Input
                   label="Expiry Date"
                   type="date"
                   {...register('initialExpiryDate')}
                 />
 
+                <Input
+                  label="Supply Date"
+                  type="date"
+                  {...register('initialSupplyDate')}
+                />
+
                 <Select
-                  label="Supplier (Optional)"
+                  label="Supplier"
                   {...register('initialSupplierId')}
                 >
                   <option value="" className="bg-primary-dark text-white">Select Supplier</option>

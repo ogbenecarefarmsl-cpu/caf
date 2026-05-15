@@ -11,7 +11,6 @@ import {
   BranchManagementPage,
   UserManagementPage,
   ProductManagementPage,
-  BatchManagementPage,
   StockAdjustmentPage,
   TransferManagementPage,
   SalesReportsPage,
@@ -272,15 +271,11 @@ export const router = createBrowserRouter([
   },
   {
     path: '/admin/batches',
-    element: (
-      <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'pharmacist']}>
-        <BatchManagementPage />
-      </ProtectedRoute>
-    ),
+    element: <Navigate to="/admin/stock-adjustments" replace />,
   },
   {
     path: '/batches',
-    element: <Navigate to="/admin/batches" replace />,
+    element: <Navigate to="/admin/stock-adjustments" replace />,
   },
   {
     path: '/admin/stock-adjustments',

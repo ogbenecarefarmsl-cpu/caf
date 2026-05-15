@@ -27,13 +27,6 @@ interface Product {
   _id: string;
   name: string;
   sku: string;
-}
-
-interface Batch {
-  _id: string;
-  productId: string;
-  lotNumber: string;
-  expiryDate: string;
   quantityAvailable: number;
 }
 
@@ -48,11 +41,9 @@ interface Transfer {
     name: string;
   };
   productId: {
+    _id: string;
     name: string;
     sku: string;
-  };
-  batchId: {
-    lotNumber: string;
   };
   quantity: number;
   reason: string;
@@ -73,7 +64,6 @@ interface Transfer {
 interface TransferFormData {
   destinationBranchId: string;
   productId: string;
-  batchId: string;
   quantity: number;
   reason: string;
 }
@@ -88,9 +78,13 @@ export default function TransferManagementPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { showSuccess, showError } = useToast();
-  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<TransferFormData>();
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<TransferFormData>();
   const branchId = getBranchId(selectedBranch);
-  const watchedProductId = watch('productId');
 
   const { data: branches } = useQuery({
     queryKey: queryKeys.branches.list(),
@@ -101,28 +95,13 @@ export default function TransferManagementPage() {
   });
 
   const { data: products } = useQuery({
-    queryKey: queryKeys.products.list(),
+    queryKey: queryKeys.products.list({ branchId }),
     queryFn: async () => {
-      const response = await apiClient.get('/products');
-      return response.data.data as Product[];
-    },
-  });
-
-  const { data: batches } = useQuery({
-    queryKey: queryKeys.batches.list({
-      branchId,
-      productId: watchedProductId,
-    }),
-    queryFn: async () => {
-      const url = buildApiUrl('/batches', {
-        branchId,
-        productId: watchedProductId,
-      });
-      const response = await apiClient.get(url);
+      const response = await apiClient.get(buildApiUrl('/products', { branchId }));
       const payload = response.data?.data ?? response.data;
-      return (Array.isArray(payload) ? payload : []) as Batch[];
+      return (Array.isArray(payload) ? payload : []) as Product[];
     },
-    enabled: !!branchId && !!watchedProductId,
+    enabled: !!branchId,
   });
 
   const { data: transfers, isLoading: transfersLoading, error: transfersError } = useQuery({
@@ -136,19 +115,21 @@ export default function TransferManagementPage() {
   });
 
   const createTransferMutation = useMutation({
-    mutationFn: async (data: TransferFormData) => apiClient.post('/transfers', {
-      ...data,
-      sourceBranchId: branchId,
-      requestedBy: user?.id,
-    }),
+    mutationFn: async (data: TransferFormData) =>
+      apiClient.post('/transfers', {
+        ...data,
+        sourceBranchId: branchId,
+        requestedBy: user?.id,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.transfers.all(), exact: false });
-      queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(), exact: false });
+      queryClient.invalidateQueries({ queryKey: queryKeys.products.all(), exact: false });
       setIsCreateModalOpen(false);
       reset();
       showSuccess('Transfer request created');
     },
-    onError: (err: any) => showError(err?.response?.data?.message ?? 'Failed to create transfer'),
+    onError: (err: any) =>
+      showError(err?.response?.data?.message ?? 'Failed to create transfer'),
   });
 
   const approveTransferMutation = useMutation({
@@ -159,17 +140,26 @@ export default function TransferManagementPage() {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.transfers.all(), exact: false });
-      queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(), exact: false });
+      queryClient.invalidateQueries({ queryKey: queryKeys.products.all(), exact: false });
       setIsApprovalModalOpen(false);
       setSelectedTransfer(null);
       setApprovalNotes('');
       showSuccess('Transfer approved');
     },
-    onError: (err: any) => showError(err?.response?.data?.message ?? 'Failed to approve transfer'),
+    onError: (err: any) =>
+      showError(err?.response?.data?.message ?? 'Failed to approve transfer'),
   });
 
   const rejectTransferMutation = useMutation({
-    mutationFn: async ({ transferId, notes, rejectionReason: reason }: { transferId: string; notes?: string; rejectionReason: string }) =>
+    mutationFn: async ({
+      transferId,
+      notes,
+      rejectionReason: reason,
+    }: {
+      transferId: string;
+      notes?: string;
+      rejectionReason: string;
+    }) =>
       apiClient.patch(`/transfers/${transferId}/reject`, {
         rejectionReason: reason,
         notes,
@@ -182,7 +172,8 @@ export default function TransferManagementPage() {
       setRejectionReason('');
       showSuccess('Transfer rejected');
     },
-    onError: (err: any) => showError(err?.response?.data?.message ?? 'Failed to reject transfer'),
+    onError: (err: any) =>
+      showError(err?.response?.data?.message ?? 'Failed to reject transfer'),
   });
 
   const onSubmit = (data: TransferFormData) => {
@@ -211,17 +202,25 @@ export default function TransferManagementPage() {
     {
       key: 'createdAt',
       header: 'Date',
-      render: (transfer: Transfer) => <span className="text-gray-300">{new Date(transfer.createdAt).toLocaleDateString()}</span>,
+      render: (transfer: Transfer) => (
+        <span className="text-gray-300">
+          {new Date(transfer.createdAt).toLocaleDateString()}
+        </span>
+      ),
     },
     {
       key: 'sourceBranchId.name',
       header: 'From',
-      render: (transfer: Transfer) => <span className="text-white">{transfer.sourceBranchId.name}</span>,
+      render: (transfer: Transfer) => (
+        <span className="text-white">{transfer.sourceBranchId.name}</span>
+      ),
     },
     {
       key: 'destinationBranchId.name',
       header: 'To',
-      render: (transfer: Transfer) => <span className="text-white">{transfer.destinationBranchId.name}</span>,
+      render: (transfer: Transfer) => (
+        <span className="text-white">{transfer.destinationBranchId.name}</span>
+      ),
     },
     {
       key: 'productId.name',
@@ -235,14 +234,11 @@ export default function TransferManagementPage() {
       className: 'whitespace-normal',
     },
     {
-      key: 'batchId.lotNumber',
-      header: 'Lot Number',
-      render: (transfer: Transfer) => <span className="text-gray-300">{transfer.batchId.lotNumber}</span>,
-    },
-    {
       key: 'quantity',
       header: 'Quantity',
-      render: (transfer: Transfer) => <span className="text-white">{transfer.quantity}</span>,
+      render: (transfer: Transfer) => (
+        <span className="text-white">{transfer.quantity}</span>
+      ),
     },
     {
       key: 'status',
@@ -253,23 +249,28 @@ export default function TransferManagementPage() {
       key: 'requestedBy',
       header: 'Requested By',
       render: (transfer: Transfer) => (
-        <span className="text-gray-300">{transfer.requestedBy.firstName} {transfer.requestedBy.lastName}</span>
+        <span className="text-gray-300">
+          {transfer.requestedBy.firstName} {transfer.requestedBy.lastName}
+        </span>
       ),
       className: 'whitespace-normal',
     },
     {
       key: 'actions',
       header: 'Actions',
-      render: (transfer: Transfer) => (
+      render: (transfer: Transfer) =>
         transfer.status === 'pending' ? (
-          <Button variant="secondary" size="sm" onClick={() => {
-            setSelectedTransfer(transfer);
-            setIsApprovalModalOpen(true);
-          }}>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              setSelectedTransfer(transfer);
+              setIsApprovalModalOpen(true);
+            }}
+          >
             Review
           </Button>
-        ) : null
-      ),
+        ) : null,
     },
   ];
 
@@ -284,11 +285,19 @@ export default function TransferManagementPage() {
   }
 
   if (transfersLoading) {
-    return <AdminLayout title="Transfer Management"><Loading /></AdminLayout>;
+    return (
+      <AdminLayout title="Transfer Management">
+        <Loading />
+      </AdminLayout>
+    );
   }
 
   if (transfersError) {
-    return <AdminLayout title="Transfer Management"><Error message="Failed to load transfers" /></AdminLayout>;
+    return (
+      <AdminLayout title="Transfer Management">
+        <Error message="Failed to load transfers" />
+      </AdminLayout>
+    );
   }
 
   const safeTransfers = transfers || [];
@@ -303,7 +312,7 @@ export default function TransferManagementPage() {
               <h1 className="text-2xl font-bold text-white">Transfer Management</h1>
             </div>
             <p className="mt-2 text-sm text-gray-400">
-              Create branch-to-branch requests, review pending movements, and keep stock transfers easy to read on mobile and desktop.
+              Move product stock between branches without dealing with batch records.
             </p>
           </div>
           <Button onClick={() => setIsCreateModalOpen(true)} className="w-full sm:w-auto">
@@ -348,7 +357,7 @@ export default function TransferManagementPage() {
           <div className="border-b border-white/10 px-4 py-4 sm:px-6">
             <h2 className="text-lg font-semibold text-white">Transfer History</h2>
             <p className="mt-1 text-sm text-gray-400">
-              Review all outgoing and incoming requests for the selected branch.
+              Review outgoing and incoming product-level transfer requests for the selected branch.
             </p>
           </div>
 
@@ -381,18 +390,18 @@ export default function TransferManagementPage() {
                       <p className="text-white">{transfer.destinationBranchId.name}</p>
                     </div>
                     <div>
-                      <p className="text-gray-500">Lot</p>
-                      <p className="text-white">{transfer.batchId.lotNumber}</p>
-                    </div>
-                    <div>
                       <p className="text-gray-500">Qty</p>
                       <p className="text-white">{transfer.quantity}</p>
                     </div>
                   </div>
                   <div className="mt-3 text-sm">
                     <p className="text-gray-500">Requested by</p>
-                    <p className="text-white">{transfer.requestedBy.firstName} {transfer.requestedBy.lastName}</p>
-                    <p className="mt-1 text-xs text-gray-500">{new Date(transfer.createdAt).toLocaleString()}</p>
+                    <p className="text-white">
+                      {transfer.requestedBy.firstName} {transfer.requestedBy.lastName}
+                    </p>
+                    <p className="mt-1 text-xs text-gray-500">
+                      {new Date(transfer.createdAt).toLocaleString()}
+                    </p>
                   </div>
                   {transfer.status === 'pending' ? (
                     <Button
@@ -424,48 +433,45 @@ export default function TransferManagementPage() {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <Select
               label="Destination Branch"
-              {...register('destinationBranchId', { required: 'Destination branch is required' })}
+              {...register('destinationBranchId', {
+                required: 'Destination branch is required',
+              })}
               error={errors.destinationBranchId?.message}
             >
-              <option value="" className="bg-primary-dark text-white">Select destination branch</option>
-              {branches?.filter((branch) => branch._id !== branchId).map((branch) => (
-                <option key={branch._id} value={branch._id} className="bg-primary-dark text-white">
-                  {branch.name} ({branch.code})
-                </option>
-              ))}
+              <option value="" className="bg-primary-dark text-white">
+                Select destination branch
+              </option>
+              {branches
+                ?.filter((branch) => branch._id !== branchId)
+                .map((branch) => (
+                  <option
+                    key={branch._id}
+                    value={branch._id}
+                    className="bg-primary-dark text-white"
+                  >
+                    {branch.name} ({branch.code})
+                  </option>
+                ))}
             </Select>
 
             <Select
               label="Product"
               {...register('productId', { required: 'Product is required' })}
               error={errors.productId?.message}
-              onChange={(event) => {
-                setValue('productId', event.target.value);
-                setValue('batchId', '');
-              }}
             >
-              <option value="" className="bg-primary-dark text-white">Select product</option>
+              <option value="" className="bg-primary-dark text-white">
+                Select product
+              </option>
               {products?.map((product) => (
-                <option key={product._id} value={product._id} className="bg-primary-dark text-white">
-                  {product.name} ({product.sku})
+                <option
+                  key={product._id}
+                  value={product._id}
+                  className="bg-primary-dark text-white"
+                >
+                  {product.name} ({product.sku}) • Available: {product.quantityAvailable}
                 </option>
               ))}
             </Select>
-
-            {watchedProductId ? (
-              <Select
-                label="Batch"
-                {...register('batchId', { required: 'Batch is required' })}
-                error={errors.batchId?.message}
-              >
-                <option value="" className="bg-primary-dark text-white">Select batch</option>
-                {batches?.map((batch) => (
-                  <option key={batch._id} value={batch._id} className="bg-primary-dark text-white">
-                    Lot: {batch.lotNumber} • Available: {batch.quantityAvailable} • Exp: {new Date(batch.expiryDate).toLocaleDateString()}
-                  </option>
-                ))}
-              </Select>
-            ) : null}
 
             <Input
               label="Quantity"
@@ -494,10 +500,14 @@ export default function TransferManagementPage() {
             </div>
 
             <div className="flex flex-col-reverse gap-3 pt-4 sm:flex-row sm:justify-end">
-              <Button type="button" variant="secondary" onClick={() => {
-                setIsCreateModalOpen(false);
-                reset();
-              }}>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  setIsCreateModalOpen(false);
+                  reset();
+                }}
+              >
                 Cancel
               </Button>
               <Button type="submit" disabled={createTransferMutation.isPending}>
@@ -527,7 +537,6 @@ export default function TransferManagementPage() {
                 <p><span className="font-semibold text-white">From:</span> {selectedTransfer.sourceBranchId.name}</p>
                 <p><span className="font-semibold text-white">To:</span> {selectedTransfer.destinationBranchId.name}</p>
                 <p><span className="font-semibold text-white">Product:</span> {selectedTransfer.productId.name}</p>
-                <p><span className="font-semibold text-white">Lot Number:</span> {selectedTransfer.batchId.lotNumber}</p>
                 <p><span className="font-semibold text-white">Quantity:</span> {selectedTransfer.quantity}</p>
                 <p><span className="font-semibold text-white">Reason:</span> {selectedTransfer.reason}</p>
                 <p><span className="font-semibold text-white">Requested By:</span> {selectedTransfer.requestedBy.firstName} {selectedTransfer.requestedBy.lastName}</p>
@@ -545,9 +554,6 @@ export default function TransferManagementPage() {
                   rows={2}
                   placeholder="Provide reason for rejecting this transfer"
                 />
-                {rejectTransferMutation.isError && !rejectionReason.trim() ? (
-                  <p className="mt-1 text-xs text-red-500">Rejection reason is required.</p>
-                ) : null}
               </div>
 
               <div>

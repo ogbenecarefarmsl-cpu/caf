@@ -48,7 +48,7 @@ interface CartState {
  * Generate a unique key for cart items (productId + packSize)
  * This allows selling the same product in different pack sizes
  */
-function itemKey(productId: string, packSizeUnit?: string): string {
+export function itemKey(productId: string, packSizeUnit?: string): string {
   return packSizeUnit ? `${productId}:${packSizeUnit}` : productId;
 }
 

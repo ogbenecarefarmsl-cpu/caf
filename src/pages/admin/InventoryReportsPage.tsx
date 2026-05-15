@@ -32,15 +32,6 @@ interface InventoryReportItem {
   branchName: string;
   totalQuantity: number;
   totalValue: number;
-  batches: {
-    batchId: string;
-    lotNumber: string;
-    expiryDate: string;
-    quantity: number;
-    purchasePrice: number;
-    sellingPrice: number;
-    value: number;
-  }[];
   isLowStock: boolean;
   reorderLevel?: number;
 }
@@ -135,11 +126,6 @@ export const InventoryReportsPage = () => {
       key: 'totalValue', 
       header: 'Total Value',
       render: (item: InventoryReportItem) => format(item.totalValue)
-    },
-    { 
-      key: 'batches', 
-      header: 'Batches',
-      render: (item: InventoryReportItem) => item.batches.length
     },
   ];
 

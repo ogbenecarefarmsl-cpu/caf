@@ -69,6 +69,20 @@ export const ReceiptModal = ({ isOpen, onClose, saleData }: ReceiptModalProps) =
 
   const handlePrint = () => {
     if (receiptRef.current) {
+      // Sanitize content to prevent XSS
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = receiptRef.current.innerHTML;
+      // Remove all script tags and event handlers
+      tempDiv.querySelectorAll('script').forEach(s => s.remove());
+      tempDiv.querySelectorAll('*').forEach(el => {
+        Array.from(el.attributes).forEach(attr => {
+          if (attr.name.startsWith('on')) {
+            el.removeAttribute(attr.name);
+          }
+        });
+      });
+      const sanitizedContent = tempDiv.innerHTML;
+
       const printWindow = window.open('', '_blank');
       if (printWindow) {
         printWindow.document.write(`
@@ -90,7 +104,7 @@ export const ReceiptModal = ({ isOpen, onClose, saleData }: ReceiptModalProps) =
               </style>
             </head>
             <body>
-              ${receiptRef.current.innerHTML}
+              ${sanitizedContent}
             </body>
           </html>
         `);

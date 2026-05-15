@@ -1,9 +1,9 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import apiClient from '../../lib/api-client';
 import { useBranchStore, getBranchId } from '../../stores/branch-store';
-import { useCartStore } from '../../stores/cart-store';
+import { useCartStore, itemKey } from '../../stores/cart-store';
 import { useAuthStore } from '../../stores/auth-store';
 import { useWebSocket } from '../../hooks/useWebSocket';
 import { useCurrency } from '../../hooks/useCurrency';
@@ -184,7 +184,10 @@ export const POSPage = () => {
     retry: false,
   });
 
-  const products = (productsResponse?.pages.flatMap((page) => page.data || []) as Product[] | undefined) ?? [];
+  const products = useMemo(
+    () => (productsResponse?.pages.flatMap((page) => page.data || []) as Product[] | undefined) ?? [],
+    [productsResponse],
+  );
   const productsPagination = productsResponse?.pages.at(-1)?.pagination as
     | { total: number; page: number; limit: number; pages: number; hasNext: boolean }
     | undefined;
@@ -272,18 +275,26 @@ export const POSPage = () => {
         setShowShiftModal(true);
         setScanFeedback({ message: 'Open a shift before adding scanned products', ok: false });
       } else {
-        addItem({
-          productId: found._id,
-          productName: found.name,
-          sku: found.sku,
-          barcode: found.barcode || '',
-          quantity: 1,
-          unitPrice: found.price,
-          requiresPrescription: found.requiresPrescription,
-          baseUnit: found.unit || 'unit',
-          quantityInBaseUnits: 1,
-        });
-        setScanFeedback({ message: `Added: ${found.name}`, ok: true });
+        // Check if product has pack sizes - if so, show selector
+        const hasPackSizes = found.packSizes && found.packSizes.length > 0;
+        if (hasPackSizes) {
+          setSelectedProductForPack(found);
+          setShowPackSizeModal(true);
+          setScanFeedback({ message: `Select pack size for: ${found.name}`, ok: true });
+        } else {
+          addItem({
+            productId: found._id,
+            productName: found.name,
+            sku: found.sku,
+            barcode: found.barcode || '',
+            quantity: 1,
+            unitPrice: found.price,
+            requiresPrescription: found.requiresPrescription,
+            baseUnit: found.unit || 'unit',
+            quantityInBaseUnits: 1,
+          });
+          setScanFeedback({ message: `Added: ${found.name}`, ok: true });
+        }
       }
     }
 
@@ -331,22 +342,22 @@ export const POSPage = () => {
   });
 
   // Cart handlers
-  const handleQuantityIncrement = (productId: string, currentQuantity: number) => {
-    updateQuantity(productId, currentQuantity + 1);
+  const handleQuantityIncrement = (productId: string, packSizeUnit: string | undefined, currentQuantity: number) => {
+    updateQuantity(productId, currentQuantity + 1, packSizeUnit);
   };
 
-  const handleQuantityDecrement = (productId: string, currentQuantity: number) => {
+  const handleQuantityDecrement = (productId: string, packSizeUnit: string | undefined, currentQuantity: number) => {
     if (currentQuantity > 1) {
-      updateQuantity(productId, currentQuantity - 1);
+      updateQuantity(productId, currentQuantity - 1, packSizeUnit);
     } else {
-      removeItem(productId);
+      removeItem(productId, packSizeUnit);
     }
   };
 
-  const handleQuantityChange = (productId: string, value: string) => {
+  const handleQuantityChange = (productId: string, packSizeUnit: string | undefined, value: string) => {
     const qty = parseInt(value);
     if (!isNaN(qty) && qty > 0) {
-      updateQuantity(productId, qty);
+      updateQuantity(productId, qty, packSizeUnit);
     }
   };
 
@@ -515,14 +526,9 @@ export const POSPage = () => {
       return;
     }
 
-    // Determine unit price and base unit quantity
-    const selectedPack = packSize || hasPackSizes ? null : null;
     const unitPrice = packSize?.sellingPrice ?? product.price;
     const quantityPerPack = packSize?.quantityPerPack ?? 1;
     const baseUnit = product.unit || 'unit';
-
-    // For products with pack sizes, verify stock in base units
-    const quantityInBaseUnits = quantityPerPack;
 
     addItem({
       productId: product._id,
@@ -534,7 +540,7 @@ export const POSPage = () => {
       requiresPrescription: product.requiresPrescription,
       baseUnit,
       packSize: packSize || undefined,
-      quantityInBaseUnits,
+      quantityInBaseUnits: quantityPerPack,
     });
   };
 
@@ -834,14 +840,21 @@ export const POSPage = () => {
               </div>
             ) : (
               items.map((item) => (
-                <div key={item.productId} className="bg-primary-darker rounded-lg p-3 border border-gray-700 hover:border-accent-green/40 transition-colors group">
+                <div key={itemKey(item.productId, item.packSize?.unit)} className="bg-primary-darker rounded-lg p-3 border border-gray-700 hover:border-accent-green/40 transition-colors group">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1 min-w-0">
                       <h3 className="text-white font-semibold text-sm leading-snug whitespace-normal break-words">{item.productName}</h3>
-                      <p className="text-xs text-gray-400 mt-0.5">SKU: {item.sku}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        SKU: {item.sku}
+                        {item.packSize && (
+                          <span className="ml-1 px-1.5 py-0.5 bg-accent-green/10 text-accent-green rounded text-[10px]">
+                            {item.packSize.name}
+                          </span>
+                        )}
+                      </p>
                     </div>
                     <button
-                      onClick={() => removeItem(item.productId)}
+                      onClick={() => removeItem(item.productId, item.packSize?.unit)}
                       className="text-gray-500 hover:text-red-400 transition-colors ml-2 shrink-0"
                       title="Remove item"
                     >
@@ -854,7 +867,7 @@ export const POSPage = () => {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2 bg-primary-dark rounded-lg p-1">
                       <button
-                        onClick={() => handleQuantityDecrement(item.productId, item.quantity)}
+                        onClick={() => handleQuantityDecrement(item.productId, item.packSize?.unit, item.quantity)}
                         className="w-6 h-6 flex items-center justify-center hover:bg-gray-700 rounded transition-colors text-gray-300"
                       >
                         −
@@ -862,11 +875,11 @@ export const POSPage = () => {
                       <input
                         type="text"
                         value={item.quantity}
-                        onChange={(e) => handleQuantityChange(item.productId, e.target.value)}
+                        onChange={(e) => handleQuantityChange(item.productId, item.packSize?.unit, e.target.value)}
                         className="w-8 h-6 bg-transparent text-center text-white font-semibold text-sm focus:outline-none"
                       />
                       <button
-                        onClick={() => handleQuantityIncrement(item.productId, item.quantity)}
+                        onClick={() => handleQuantityIncrement(item.productId, item.packSize?.unit, item.quantity)}
                         className="w-6 h-6 flex items-center justify-center hover:bg-gray-700 rounded transition-colors text-gray-300"
                       >
                         +
@@ -958,14 +971,21 @@ export const POSPage = () => {
           {/* Mobile Cart Items */}
           <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
             {items.map((item) => (
-              <div key={item.productId} className="bg-primary-dark rounded-xl p-4 border border-gray-700">
+              <div key={itemKey(item.productId, item.packSize?.unit)} className="bg-primary-dark rounded-xl p-4 border border-gray-700">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1 min-w-0">
                     <h3 className="text-white font-semibold text-base leading-snug whitespace-normal break-words">{item.productName}</h3>
-                    <p className="text-sm text-gray-400 mt-1">SKU: {item.sku}</p>
+                    <p className="text-sm text-gray-400 mt-1">
+                      SKU: {item.sku}
+                      {item.packSize && (
+                        <span className="ml-1 px-1.5 py-0.5 bg-accent-green/10 text-accent-green rounded text-[10px]">
+                          {item.packSize.name}
+                        </span>
+                      )}
+                    </p>
                   </div>
                   <button
-                    onClick={() => removeItem(item.productId)}
+                    onClick={() => removeItem(item.productId, item.packSize?.unit)}
                     className="text-gray-500 hover:text-red-400 transition-colors ml-3 shrink-0"
                   >
                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -977,7 +997,7 @@ export const POSPage = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2 bg-primary-darker rounded-lg p-1.5">
                     <button
-                      onClick={() => handleQuantityDecrement(item.productId, item.quantity)}
+                      onClick={() => handleQuantityDecrement(item.productId, item.packSize?.unit, item.quantity)}
                       className="w-8 h-8 flex items-center justify-center hover:bg-gray-700 rounded transition-colors text-gray-300"
                     >
                       <span className="text-lg">−</span>
@@ -985,11 +1005,11 @@ export const POSPage = () => {
                     <input
                       type="text"
                       value={item.quantity}
-                      onChange={(e) => handleQuantityChange(item.productId, e.target.value)}
+                      onChange={(e) => handleQuantityChange(item.productId, item.packSize?.unit, e.target.value)}
                       className="w-10 h-8 bg-transparent text-center text-white font-semibold text-base focus:outline-none"
                     />
                     <button
-                      onClick={() => handleQuantityIncrement(item.productId, item.quantity)}
+                      onClick={() => handleQuantityIncrement(item.productId, item.packSize?.unit, item.quantity)}
                       className="w-8 h-8 flex items-center justify-center hover:bg-gray-700 rounded transition-colors text-gray-300"
                     >
                       <span className="text-lg">+</span>

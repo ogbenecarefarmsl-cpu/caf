@@ -38,7 +38,6 @@ export const Header = ({ title, showNav = false }: HeaderProps) => {
     { path: '/branches', label: 'Branches', roles: ['super_admin'] },
     { path: '/users', label: 'Users', roles: ['super_admin', 'branch_manager'] },
     { path: '/products', label: 'Products', roles: ['super_admin', 'branch_manager', 'pharmacist'] },
-    { path: '/batches', label: 'Batches', roles: ['super_admin', 'branch_manager', 'pharmacist'] },
   ];
 
   const filteredNavLinks = navLinks.filter(link => 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import apiClient from '../../lib/api-client';
 import { AdminLayout } from '../../components/AdminLayout';
 import { Button } from '../../components/ui/Button';
@@ -13,154 +13,196 @@ import { useBranchStore, getBranchId } from '../../stores/branch-store';
 import { queryKeys } from '../../lib/query-keys';
 import { buildApiUrl } from '../../lib/api-utils';
 
-interface Batch {
+interface Product {
   _id: string;
-  productId: {
+  name: string;
+  sku: string;
+  brand: string;
+  unit: string;
+  quantityAvailable: number;
+  supplierId?: {
     _id: string;
     name: string;
-    sku: string;
-  };
-  lotNumber: string;
-  expiryDate: string;
-  quantityAvailable: number;
-  sellingPrice: number;
+  } | string;
+  supplyDate?: string;
+  expiryDate?: string;
 }
 
 interface StockMovement {
   _id: string;
   branchId: string;
-  productId: {
+  productId?: {
+    _id: string;
     name: string;
     sku: string;
-  };
-  batchId: {
-    lotNumber: string;
   };
   quantity: number;
   movementType: string;
   reason: string;
-  userId: {
-    firstName: string;
-    lastName: string;
+  userId?: {
+    firstName?: string;
+    lastName?: string;
   };
   timestamp: string;
 }
 
 interface AdjustmentFormData {
-  batchId: string;
+  productId: string;
   quantityChange: number;
   reason: string;
   approvedBy?: string;
 }
 
+const formatDate = (value?: string) =>
+  value ? new Date(value).toLocaleDateString() : '-';
+
+const formatSupplier = (supplier?: Product['supplierId']) => {
+  if (!supplier) return '-';
+  return typeof supplier === 'string' ? supplier : supplier.name;
+};
+
 export default function StockAdjustmentPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedBatch, setSelectedBatch] = useState<Batch | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const { selectedBranch } = useBranchStore();
   const queryClient = useQueryClient();
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<AdjustmentFormData>();
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<AdjustmentFormData>();
 
-  // Fetch batches for the selected branch
-  const { data: batches, isLoading: batchesLoading, error: batchesError } = useQuery({
-    queryKey: queryKeys.batches.list({ branchId: getBranchId(selectedBranch) }),
+  const branchId = getBranchId(selectedBranch);
+
+  const { data: products, isLoading, error } = useQuery({
+    queryKey: queryKeys.products.list({ branchId }),
     queryFn: async () => {
-      const branchId = getBranchId(selectedBranch);
-      const response = await apiClient.get(buildApiUrl('/batches', { branchId }));
+      const response = await apiClient.get(buildApiUrl('/products', { branchId }));
       const payload = response.data?.data ?? response.data;
-      return (Array.isArray(payload) ? payload : []) as Batch[];
+      return (Array.isArray(payload) ? payload : []) as Product[];
     },
-    enabled: !!selectedBranch,
+    enabled: !!branchId,
   });
 
-  // Fetch adjustment history (stock movements of type 'adjustment')
   const { data: adjustments, isLoading: adjustmentsLoading } = useQuery({
     queryKey: queryKeys.adjustments.list({
-      branchId: getBranchId(selectedBranch),
+      branchId,
       movementType: 'adjustment',
     }),
     queryFn: async () => {
-      const branchId = getBranchId(selectedBranch);
-      const response = await apiClient.get(buildApiUrl('/inventory/stock-movements', {
-        branchId,
-        movementType: 'adjustment',
-      }));
+      const response = await apiClient.get(
+        buildApiUrl('/inventory/stock-movements', {
+          branchId,
+          movementType: 'adjustment',
+        }),
+      );
       const payload = response.data?.data ?? response.data;
       return (Array.isArray(payload) ? payload : []) as StockMovement[];
     },
-    enabled: !!selectedBranch,
+    enabled: !!branchId,
   });
 
-  // Create adjustment mutation
   const adjustmentMutation = useMutation({
-    mutationFn: async (data: AdjustmentFormData) => {
-      const branchId = getBranchId(selectedBranch);
-      return apiClient.post('/inventory/adjust', {
+    mutationFn: async (data: AdjustmentFormData) =>
+      apiClient.post('/inventory/adjust', {
         ...data,
-        branchId: branchId,
-      });
-    },
+        branchId,
+      }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(), exact: false });
-      queryClient.invalidateQueries({ queryKey: queryKeys.adjustments.all(), exact: false });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.products.all(),
+        exact: false,
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.adjustments.all(),
+        exact: false,
+      });
       setIsModalOpen(false);
+      setSelectedProduct(null);
       reset();
-      setSelectedBatch(null);
     },
   });
 
-  const handleOpenModal = (batch: Batch) => {
-    setSelectedBatch(batch);
+  const handleOpenModal = (product: Product) => {
+    setSelectedProduct(product);
     setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    setSelectedBatch(null);
+    setSelectedProduct(null);
     reset();
   };
 
   const onSubmit = (data: AdjustmentFormData) => {
-    if (selectedBatch) {
-      adjustmentMutation.mutate({
-        ...data,
-        batchId: selectedBatch._id,
-        quantityChange: Number(data.quantityChange),
-      });
-    }
+    if (!selectedProduct) return;
+
+    adjustmentMutation.mutate({
+      ...data,
+      productId: selectedProduct._id,
+      quantityChange: Number(data.quantityChange),
+    });
   };
 
   if (!selectedBranch) {
     return (
       <AdminLayout>
-        <div className="text-center py-12">
-          <p className="text-gray-500">Please select a branch to manage stock adjustments</p>
+        <div className="py-12 text-center">
+          <p className="text-gray-500">
+            Please select a branch to manage stock adjustments
+          </p>
         </div>
       </AdminLayout>
     );
   }
 
-  if (batchesLoading) return <AdminLayout><Loading /></AdminLayout>;
-  if (batchesError) return <AdminLayout><Error message="Failed to load batches" /></AdminLayout>;
+  if (isLoading) {
+    return (
+      <AdminLayout>
+        <Loading />
+      </AdminLayout>
+    );
+  }
 
-  const batchColumns = [
-    { key: 'productId.name', header: 'Product' },
-    { key: 'productId.sku', header: 'SKU' },
-    { key: 'lotNumber', header: 'Lot Number' },
-    { 
-      key: 'expiryDate', 
-      header: 'Expiry Date',
-      render: (batch: Batch) => new Date(batch.expiryDate).toLocaleDateString()
-    },
+  if (error) {
+    return (
+      <AdminLayout>
+        <Error message="Failed to load products" />
+      </AdminLayout>
+    );
+  }
+
+  const productColumns = [
+    { key: 'name', header: 'Product' },
+    { key: 'sku', header: 'SKU' },
+    { key: 'brand', header: 'Brand' },
+    { key: 'unit', header: 'Unit' },
     { key: 'quantityAvailable', header: 'Current Stock' },
+    {
+      key: 'supplierId',
+      header: 'Supplier',
+      render: (product: Product) => formatSupplier(product.supplierId),
+    },
+    {
+      key: 'supplyDate',
+      header: 'Supply Date',
+      render: (product: Product) => formatDate(product.supplyDate),
+    },
+    {
+      key: 'expiryDate',
+      header: 'Expiry',
+      render: (product: Product) => formatDate(product.expiryDate),
+    },
     {
       key: 'actions',
       header: 'Actions',
-      render: (batch: Batch) => (
+      render: (product: Product) => (
         <Button
           variant="secondary"
           size="sm"
-          onClick={() => handleOpenModal(batch)}
+          onClick={() => handleOpenModal(product)}
         >
           Adjust
         </Button>
@@ -169,107 +211,129 @@ export default function StockAdjustmentPage() {
   ];
 
   const adjustmentColumns = [
-    { 
-      key: 'timestamp', 
+    {
+      key: 'timestamp',
       header: 'Date',
-      render: (adj: StockMovement) => new Date(adj.timestamp).toLocaleString()
+      render: (adj: StockMovement) => new Date(adj.timestamp).toLocaleString(),
     },
-    { key: 'productId.name', header: 'Product' },
-    { key: 'batchId.lotNumber', header: 'Lot Number' },
-    { 
-      key: 'quantity', 
+    {
+      key: 'productId.name',
+      header: 'Product',
+      render: (adj: StockMovement) => adj.productId?.name || '-',
+    },
+    {
+      key: 'quantity',
       header: 'Adjustment',
       render: (adj: StockMovement) => (
         <span className={adj.quantity > 0 ? 'text-green-600' : 'text-red-600'}>
-          {adj.quantity > 0 ? '+' : ''}{adj.quantity}
+          {adj.quantity > 0 ? '+' : ''}
+          {adj.quantity}
         </span>
-      )
+      ),
     },
     { key: 'reason', header: 'Reason' },
-    { 
-      key: 'userId', 
+    {
+      key: 'userId',
       header: 'Adjusted By',
-      render: (adj: StockMovement) => `${adj.userId.firstName} ${adj.userId.lastName}`
+      render: (adj: StockMovement) =>
+        adj.userId
+          ? `${adj.userId.firstName || ''} ${adj.userId.lastName || ''}`.trim()
+          : '-',
     },
   ];
 
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Stock Adjustments</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-gray-900">
+            Stock Adjustments
+          </h1>
         </div>
 
-        {/* Current Stock Section */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Current Stock</h2>
+        <div className="rounded-lg bg-white shadow">
+          <div className="border-b border-gray-200 px-6 py-4">
+            <h2 className="text-lg font-semibold text-gray-900">
+              Product Stock
+            </h2>
           </div>
-          <Table
-            data={batches || []}
-            columns={batchColumns}
-          />
+          <Table data={products || []} columns={productColumns} />
         </div>
 
-        {/* Adjustment History Section */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Adjustment History</h2>
+        <div className="rounded-lg bg-white shadow">
+          <div className="border-b border-gray-200 px-6 py-4">
+            <h2 className="text-lg font-semibold text-gray-900">
+              Adjustment History
+            </h2>
           </div>
           {adjustmentsLoading ? (
-            <div className="p-6"><Loading /></div>
+            <div className="p-6">
+              <Loading />
+            </div>
           ) : (
-            <Table
-              data={adjustments || []}
-              columns={adjustmentColumns}
-            />
+            <Table data={adjustments || []} columns={adjustmentColumns} />
           )}
         </div>
 
-        {/* Adjustment Modal */}
         <Modal
           isOpen={isModalOpen}
           onClose={handleCloseModal}
-          title="Adjust Stock"
+          title="Adjust Product Stock"
         >
-          {selectedBatch && (
+          {selectedProduct ? (
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div>
-                <p className="text-sm text-gray-600">Product: <span className="font-semibold">{selectedBatch.productId.name}</span></p>
-                <p className="text-sm text-gray-600">Lot Number: <span className="font-semibold">{selectedBatch.lotNumber}</span></p>
-                <p className="text-sm text-gray-600">Current Stock: <span className="font-semibold">{selectedBatch.quantityAvailable}</span></p>
+                <p className="text-sm text-gray-600">
+                  Product:{' '}
+                  <span className="font-semibold">{selectedProduct.name}</span>
+                </p>
+                <p className="text-sm text-gray-600">
+                  Current Stock:{' '}
+                  <span className="font-semibold">
+                    {selectedProduct.quantityAvailable}
+                  </span>
+                </p>
+                <p className="text-sm text-gray-600">
+                  Supplier:{' '}
+                  <span className="font-semibold">
+                    {formatSupplier(selectedProduct.supplierId)}
+                  </span>
+                </p>
               </div>
 
               <Input
                 label="Quantity Change"
                 type="number"
-                placeholder="Enter adjustment (+/-)"
-                {...register('quantityChange', { 
+                placeholder="Use positive to add or negative to remove"
+                {...register('quantityChange', {
                   required: 'Quantity change is required',
-                  validate: (value) => value !== 0 || 'Quantity change cannot be zero'
+                  validate: (value) =>
+                    Number(value) !== 0 || 'Quantity change cannot be zero',
                 })}
                 error={errors.quantityChange?.message}
               />
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="mb-1 block text-sm font-medium text-gray-700">
                   Reason <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   {...register('reason', { required: 'Reason is required' })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   rows={3}
                   placeholder="Explain the reason for this adjustment"
                 />
-                {errors.reason && (
-                  <p className="mt-1 text-sm text-red-600">{errors.reason.message}</p>
-                )}
+                {errors.reason ? (
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.reason.message}
+                  </p>
+                ) : null}
               </div>
 
               <Input
                 label="Approved By (Optional)"
                 type="text"
-                placeholder="Enter supervisor name (optional)"
+                placeholder="Enter supervisor name"
                 {...register('approvedBy')}
               />
 
@@ -281,22 +345,18 @@ export default function StockAdjustmentPage() {
                 >
                   Cancel
                 </Button>
-                <Button
-                  type="submit"
-                  disabled={adjustmentMutation.isPending}
-                >
+                <Button type="submit" disabled={adjustmentMutation.isPending}>
                   {adjustmentMutation.isPending ? 'Adjusting...' : 'Adjust Stock'}
                 </Button>
               </div>
 
-              {adjustmentMutation.isError && (
+              {adjustmentMutation.isError ? (
                 <Error message="Failed to adjust stock. Please try again." />
-              )}
+              ) : null}
             </form>
-          )}
+          ) : null}
         </Modal>
       </div>
     </AdminLayout>
   );
 }
-

@@ -29,8 +29,6 @@ interface ExpiryReportItem {
   productName: string;
   branchId: string;
   branchName: string;
-  batchId: string;
-  lotNumber: string;
   expiryDate: string;
   quantity: number;
   purchasePrice: number;
@@ -120,7 +118,6 @@ export const ExpiryReportsPage = () => {
     { key: 'productName', header: 'Product' },
     { key: 'productId', header: 'Product ID' },
     { key: 'branchName', header: 'Branch' },
-    { key: 'lotNumber', header: 'Lot Number' },
     { 
       key: 'expiryDate', 
       header: 'Expiry Date',
@@ -285,7 +282,7 @@ export const ExpiryReportsPage = () => {
             {totals && (
               <div className="px-6 py-4 grid grid-cols-1 md:grid-cols-4 gap-4 border-b border-white/5">
                 <div className="bg-blue-500/10 p-4 rounded-xl border border-blue-500/20">
-                  <p className="text-sm text-blue-200">Total Batches</p>
+                  <p className="text-sm text-blue-200">Total Products</p>
                   <p className="text-2xl font-bold text-blue-400">{data.length}</p>
                 </div>
                 <div className="bg-red-500/10 p-4 rounded-xl border border-red-500/20">
@@ -312,7 +309,7 @@ export const ExpiryReportsPage = () => {
 
         {data && data.length === 0 && (
           <div className="bg-primary-dark/50 backdrop-blur-sm rounded-2xl shadow-xl border border-white/5 p-6 text-center">
-            <p className="text-gray-400">No batches expiring within the selected timeframe.</p>
+            <p className="text-gray-400">No products expiring within the selected timeframe.</p>
           </div>
         )}
       </div>
