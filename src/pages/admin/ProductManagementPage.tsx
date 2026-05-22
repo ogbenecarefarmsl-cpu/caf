@@ -782,7 +782,8 @@ export const ProductManagementPage = () => {
                   <option value="jar" className="bg-primary-dark text-white">Jar</option>
                   <option value="pack" className="bg-primary-dark text-white">Pack</option>
                   <option value="box" className="bg-primary-dark text-white">Box</option>
-                  <option value="strip" className="bg-primary-dark text-white">Strip/Blister</option>
+                  <option value="card" className="bg-primary-dark text-white">Card</option>
+                  <option value="strip" className="bg-primary-dark text-white">Strip (Lab)</option>
                   <option value="sachet" className="bg-primary-dark text-white">Sachet</option>
                   <option value="kit" className="bg-primary-dark text-white">Kit</option>
                   <option value="adult" className="bg-primary-dark text-white">Adult Size</option>
@@ -1045,8 +1046,8 @@ export const ProductManagementPage = () => {
                               >
                                 <option value="">Package type</option>
                                 <option value="Box">Box</option>
+                                <option value="Card">Card</option>
                                 <option value="Pack">Pack</option>
-                                <option value="Strip">Strip</option>
                                 <option value="Blister">Blister</option>
                                 <option value="Bottle">Bottle</option>
                                 <option value="Tube">Tube</option>
@@ -1054,6 +1055,7 @@ export const ProductManagementPage = () => {
                                 <option value="Ampoule">Ampoule</option>
                                 <option value="Sachet">Sachet</option>
                                 <option value="Kit">Kit</option>
+                                <option value="Strip">Strip (Lab)</option>
                                 <option value="Adult">Adult</option>
                                 <option value="Children">Children</option>
                                 <option value="Neonatal">Neonatal</option>
