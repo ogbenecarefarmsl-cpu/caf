@@ -34,6 +34,7 @@ interface PackSize {
 
 interface Product {
   _id: string;
+  branchId?: string | { _id: string; name: string };
   name: string;
   sku: string;
   barcode: string;
@@ -181,6 +182,25 @@ export const ProductManagementPage = () => {
         : `PRD${suffix}`;
   };
 
+  const normalizePackSizes = (packSizes: PackSize[] = []) =>
+    packSizes
+      .map((pack) => {
+        const name = pack.name.trim();
+        const unit = (pack.unit || name.toLowerCase().replace(/\s+/g, '-')).trim();
+
+        return {
+          name,
+          unit,
+          quantityPerPack: Number(pack.quantityPerPack) || 1,
+          sellingPrice: Number(pack.sellingPrice) || 0,
+          barcode: pack.barcode?.trim() || undefined,
+        };
+      })
+      .filter((pack) => pack.name && pack.unit);
+
+  const toIsoDate = (value?: string) =>
+    value ? new Date(`${value}T00:00:00.000Z`).toISOString() : undefined;
+
   const { data: productsData, isLoading, error } = useQuery({
     queryKey: [
       'products',
@@ -226,14 +246,7 @@ export const ProductManagementPage = () => {
   });
 
   const handleCreateProduct = async (data: ProductFormData) => {
-    const initialExpiryDate = data.initialExpiryDate
-      ? new Date(`${data.initialExpiryDate}T00:00:00.000Z`).toISOString()
-      : undefined;
-    const packSizes = (data.packSizes || []).map((pack) => ({
-      ...pack,
-      unit: pack.unit || pack.name.trim().toLowerCase().replace(/\s+/g, '-'),
-      barcode: pack.barcode?.trim() || undefined,
-    })).filter((pack) => pack.name.trim() && pack.unit.trim());
+    const packSizes = normalizePackSizes(data.packSizes);
     const payload = {
       name: data.name,
       sku: data.sku,
@@ -251,7 +264,7 @@ export const ProductManagementPage = () => {
       branchId: data.branchId,
       packSizes,
       initialStock: data.initialStock,
-      initialExpiryDate,
+      initialExpiryDate: toIsoDate(data.initialExpiryDate),
       initialSupplierId: data.initialSupplierId || undefined,
       initialSupplyDate: data.initialSupplyDate || undefined,
       initialPurchasePrice: data.initialPurchasePrice,
@@ -276,16 +289,24 @@ export const ProductManagementPage = () => {
 
     const payload = {
       name: data.name,
+      sku: data.sku,
+      barcode: data.barcode,
       category: data.category,
       brand: data.brand,
       unit: data.unit,
+      reorderLevel: data.reorderLevel,
+      maxStockLevel: data.maxStockLevel,
       basePrice: data.basePrice,
       costPrice: data.costPrice,
       suggestedRetailPrice: data.suggestedRetailPrice,
       markupPercentage: data.markupPercentage,
       requiresPrescription: data.requiresPrescription,
       isControlled: data.isControlled,
-      packSizes: data.packSizes || [],
+      quantityAvailable: data.initialStock,
+      supplierId: data.initialSupplierId || undefined,
+      supplyDate: toIsoDate(data.initialSupplyDate),
+      expiryDate: toIsoDate(data.initialExpiryDate),
+      packSizes: normalizePackSizes(data.packSizes),
     };
 
     updateMutation.mutate({ id: editingProduct._id, data: payload });
@@ -309,6 +330,11 @@ export const ProductManagementPage = () => {
   const handleOpenModal = (product?: Product) => {
     setWizardStep(1);
     if (product) {
+      const productBranchId =
+        typeof product.branchId === 'string'
+          ? product.branchId
+          : product.branchId?._id || getBranchId(selectedBranch) || '';
+
       setEditingProduct(product);
       reset({
         name: product.name,
@@ -335,7 +361,7 @@ export const ProductManagementPage = () => {
         reorderLevel: product.reorderLevel || 0,
         maxStockLevel: product.maxStockLevel || undefined,
         packSizes: product.packSizes || [],
-        branchId: '',
+        branchId: productBranchId,
       });
     } else {
       setEditingProduct(null);
@@ -360,9 +386,12 @@ export const ProductManagementPage = () => {
         requiresPrescription: false,
         isControlled: false,
         branchId: defaultBranchId,
+        reorderLevel: 0,
+        maxStockLevel: undefined,
         packSizes: [],
       });
     }
+    setShowPackSizeEditor(!!product?.packSizes?.length);
     setIsModalOpen(true);
   };
 
@@ -376,7 +405,7 @@ export const ProductManagementPage = () => {
   };
 
   const handleNextStep = async () => {
-    const valid = await trigger([
+    const fieldsToValidate: Array<keyof ProductFormData> = [
       'branchId',
       'name',
       'barcode',
@@ -387,7 +416,8 @@ export const ProductManagementPage = () => {
       'costPrice',
       'suggestedRetailPrice',
       'markupPercentage',
-    ]);
+    ];
+    const valid = await trigger(fieldsToValidate);
     if (valid) setWizardStep(2);
   };
 
@@ -690,7 +720,13 @@ export const ProductManagementPage = () => {
         <Modal isOpen={isModalOpen} onClose={handleCloseModal} size="xl">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <h2 className="text-xl font-bold text-white">
-              {editingProduct ? 'Edit Product' : wizardStep === 1 ? 'Add Product (Step 1 of 2)' : 'Add Product (Step 2 of 2)'}
+              {editingProduct
+                ? wizardStep === 1
+                  ? 'Edit Product (Details)'
+                  : 'Edit Product (Stock & Units)'
+                : wizardStep === 1
+                  ? 'Add Product (Step 1 of 2)'
+                  : 'Add Product (Step 2 of 2)'}
             </h2>
 
             {wizardStep === 1 ? (
@@ -949,7 +985,7 @@ export const ProductManagementPage = () => {
               <>
                 <div className="grid grid-cols-2 gap-4">
                   <Input
-                    label="Opening Stock"
+                    label={editingProduct ? 'Current Total Stock' : 'Opening Stock'}
                     type="number"
                     min="0"
                     {...register('initialStock', { min: 0 })}
@@ -957,7 +993,7 @@ export const ProductManagementPage = () => {
                   />
 
                   <Input
-                    label="Purchase Price"
+                    label={editingProduct ? 'Latest Purchase Price' : 'Purchase Price'}
                     type="number"
                     step="0.01"
                     {...register('initialPurchasePrice', {
@@ -1004,13 +1040,13 @@ export const ProductManagementPage = () => {
 
                 <div className="space-y-3 p-4 bg-white/5 rounded-xl border border-white/5">
                   <div className="flex items-center justify-between">
-                    <label className="block text-sm font-medium text-white">Pack Sizes</label>
+                    <label className="block text-sm font-medium text-white">Pack Sizes / Unit Conversion</label>
                     <button
                       type="button"
                       onClick={() => setShowPackSizeEditor(!showPackSizeEditor)}
                       className="text-accent-green text-sm hover:underline"
                     >
-                      {showPackSizeEditor ? 'Done' : 'Add Pack Sizes'}
+                      {showPackSizeEditor ? 'Done' : 'Edit Pack Sizes'}
                     </button>
                   </div>
 
@@ -1158,33 +1194,28 @@ export const ProductManagementPage = () => {
                 Cancel
               </Button>
 
-              {!editingProduct && wizardStep === 1 ? (
+              {wizardStep === 1 ? (
                 <Button type="button" onClick={handleNextStep}>
-                  Next
+                  {editingProduct ? 'Advanced Stock & Units' : 'Next'}
                 </Button>
               ) : null}
 
-              {!editingProduct && wizardStep === 2 ? (
+              {wizardStep === 2 ? (
                 <>
                   <Button type="button" variant="secondary" onClick={() => setWizardStep(1)}>
                     Back
                   </Button>
                   <Button
                     type="submit"
-                    disabled={createMutation.isPending}
+                    disabled={createMutation.isPending || updateMutation.isPending}
                   >
-                    {createMutation.isPending ? 'Saving...' : 'Create Product'}
+                    {createMutation.isPending || updateMutation.isPending
+                      ? 'Saving...'
+                      : editingProduct
+                        ? 'Update Product'
+                        : 'Create Product'}
                   </Button>
                 </>
-              ) : null}
-
-              {editingProduct ? (
-                <Button
-                  type="submit"
-                  disabled={updateMutation.isPending}
-                >
-                  {updateMutation.isPending ? 'Saving...' : 'Update Product'}
-                </Button>
               ) : null}
             </div>
 
