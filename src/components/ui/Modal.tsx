@@ -1,4 +1,5 @@
 import { useEffect, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 
 interface ModalProps {
   isOpen: boolean;
@@ -36,32 +37,42 @@ export const Modal = ({
   if (!isOpen) return null;
 
   const sizeStyles = {
-    sm: 'max-w-md',
-    md: 'max-w-lg',
-    lg: 'max-w-2xl',
-    xl: 'max-w-4xl',
-    full: 'max-w-full mx-4',
+    sm: 'sm:max-w-md',
+    md: 'sm:max-w-lg',
+    lg: 'sm:max-w-2xl',
+    xl: 'sm:max-w-4xl',
+    full: 'sm:max-w-[calc(100vw-2rem)]',
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+  return createPortal(
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center overflow-hidden p-0 sm:items-center sm:p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={title ? 'modal-title' : undefined}
+    >
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/80 backdrop-blur-sm transition-opacity"
+        className="absolute inset-0 bg-black/75 backdrop-blur-sm"
         onClick={onClose}
       />
 
       {/* Modal */}
       <div
-        className={`relative bg-primary-dark rounded-2xl shadow-2xl border border-white/10 ${sizeStyles[size]} w-full my-8 max-h-[90vh] overflow-hidden transform transition-all`}
+        className={`relative flex max-h-[92vh] w-full ${sizeStyles[size]} flex-col overflow-hidden rounded-t-2xl border border-white/10 bg-primary-dark shadow-2xl sm:my-8 sm:rounded-2xl`}
+        onClick={(event) => event.stopPropagation()}
       >
         {/* Header */}
         {title && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-white/2">
-            <h2 className="text-xl font-bold text-white tracking-tight">{title}</h2>
+          <div className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-white/10 bg-primary-dark px-5 py-4 sm:px-6">
+            <h2 id="modal-title" className="min-w-0 truncate text-lg font-bold text-white sm:text-xl">
+              {title}
+            </h2>
             <button
+              type="button"
               onClick={onClose}
-              className="text-gray-400 hover:text-white transition-colors p-1 hover:bg-white/10 rounded-xl"
+              className="shrink-0 rounded-lg p-2 text-gray-400 transition-colors hover:bg-white/10 hover:text-white"
+              aria-label="Close modal"
             >
               <svg
                 className="w-5 h-5"
@@ -81,10 +92,11 @@ export const Modal = ({
         )}
 
         {/* Content */}
-        <div className="px-6 py-6 overflow-y-auto max-h-[calc(90vh-12rem)]">
+        <div className="flex-1 overflow-y-auto px-5 py-5 sm:px-6 sm:py-6">
           {children}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 };
