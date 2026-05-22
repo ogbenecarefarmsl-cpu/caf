@@ -173,7 +173,7 @@ export default function PurchaseOrderPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.purchaseOrders.all(), exact: false });
-      queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(), exact: false });
+      queryClient.invalidateQueries({ queryKey: queryKeys.products.all(), exact: false });
       setIsReceiveModalOpen(false);
       setSelectedPO(null);
       resetReceive();
@@ -226,7 +226,7 @@ export default function PurchaseOrderPage() {
     return (
       <AdminLayout>
         <div className="text-center py-12">
-          <p className="text-gray-500">Please select a branch to manage purchase orders</p>
+          <p className="text-gray-400">Please select a branch to manage purchase orders</p>
         </div>
       </AdminLayout>
     );
@@ -237,10 +237,10 @@ export default function PurchaseOrderPage() {
 
   const getStatusBadge = (status: string) => {
     const colors = {
-      pending: 'bg-yellow-100 text-yellow-800',
-      partially_received: 'bg-blue-100 text-blue-800',
-      completed: 'bg-green-100 text-green-800',
-      cancelled: 'bg-red-100 text-red-800',
+      pending: 'bg-yellow-500/15 text-yellow-200 border border-yellow-500/20',
+      partially_received: 'bg-blue-500/15 text-blue-300 border border-blue-500/20',
+      completed: 'bg-green-500/15 text-green-300 border border-green-500/20',
+      cancelled: 'bg-red-500/15 text-red-300 border border-red-500/20',
     };
     return (
       <span className={`px-2 py-1 text-xs font-semibold rounded-full ${colors[status as keyof typeof colors]}`}>
@@ -302,14 +302,14 @@ export default function PurchaseOrderPage() {
     <AdminLayout>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Purchase Orders</h1>
+          <h1 className="text-2xl font-bold text-white">Purchase Orders</h1>
           <Button onClick={handleOpenCreateModal}>
             Create Purchase Order
           </Button>
         </div>
 
         {/* Purchase Orders Table */}
-        <div className="bg-white rounded-lg shadow">
+        <div className="rounded-xl border border-white/10 bg-white/5 shadow-lg">
           <Table
             data={purchaseOrders || []}
             columns={columns}
@@ -344,7 +344,7 @@ export default function PurchaseOrderPage() {
             />
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
                 Items
               </label>
               {fields.map((field, index) => (
@@ -433,18 +433,18 @@ export default function PurchaseOrderPage() {
         >
           {selectedPO && (
             <form onSubmit={handleSubmitReceive(onSubmitReceive)} className="space-y-4">
-              <div className="bg-gray-50 p-4 rounded-md space-y-2">
-                <p className="text-sm"><span className="font-semibold">PO Number:</span> {selectedPO.orderNumber}</p>
-                <p className="text-sm"><span className="font-semibold">Supplier:</span> {selectedPO.supplierId.name}</p>
+              <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-gray-300 space-y-2">
+                <p className="text-sm"><span className="font-semibold text-white">PO Number:</span> {selectedPO.orderNumber}</p>
+                <p className="text-sm"><span className="font-semibold text-white">Supplier:</span> {selectedPO.supplierId.name}</p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
                   Received Items
                 </label>
                 {selectedPO.items.map((item, index) => (
-                  <div key={index} className="border border-gray-200 rounded-md p-4 mb-4">
-                    <p className="font-semibold mb-2">{item.productId.name}</p>
+                  <div key={index} className="mb-4 rounded-xl border border-white/10 bg-white/5 p-4">
+                    <p className="font-semibold text-white mb-2">{item.productId.name}</p>
                     <div className="grid grid-cols-2 gap-2">
                       <Input
                         label="Quantity Received"

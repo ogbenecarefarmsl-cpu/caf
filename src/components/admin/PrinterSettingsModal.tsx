@@ -4,6 +4,10 @@ import {
   getPrinterConfig,
   type PrinterConfig,
 } from '../../lib/receipt-printer';
+import apiClient from '../../lib/api-client';
+import { useToast } from '../../hooks/useToast';
+
+type SavedPrinterConfig = PrinterConfig & { _id?: string };
 
 interface PrinterSettingsModalProps {
   isOpen: boolean;
@@ -18,8 +22,9 @@ export const PrinterSettingsModal: React.FC<PrinterSettingsModalProps> = ({
   branchId,
   terminalId,
 }) => {
-  const [config, setConfig] = useState<PrinterConfig | null>(null);
+  const [config, setConfig] = useState<SavedPrinterConfig | null>(null);
   const [loading, setLoading] = useState(false);
+  const { showSuccess, showError } = useToast();
   const [formData, setFormData] = useState({
     name: '',
     model: 'generic_esc_pos' as PrinterConfig['model'],
@@ -43,7 +48,7 @@ export const PrinterSettingsModal: React.FC<PrinterSettingsModalProps> = ({
     try {
       const data = await getPrinterConfig(branchId, terminalId);
       if (data) {
-        setConfig(data);
+        setConfig(data as SavedPrinterConfig);
         setFormData({
           name: data.name,
           model: data.model,
@@ -66,25 +71,26 @@ export const PrinterSettingsModal: React.FC<PrinterSettingsModalProps> = ({
   const handleSave = async () => {
     setLoading(true);
     try {
-      const endpoint = config
-        ? `/printers/${config.id}`
-        : '/printers';
-      const method = config ? 'PATCH' : 'POST';
+      const printerId = config?._id ?? config?.id;
 
-      await fetch(`${import.meta.env.VITE_API_URL}${endpoint}`, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      if (printerId) {
+        await apiClient.patch(`/printers/${printerId}`, {
           ...formData,
           branchId,
           terminalId,
-        }),
-      });
+        });
+      } else {
+        await apiClient.post('/printers', {
+          ...formData,
+          branchId,
+          terminalId,
+        });
+      }
 
-      alert('Printer settings saved successfully');
+      showSuccess('Printer settings saved');
       onClose();
     } catch (error) {
-      alert('Failed to save printer settings');
+      showError('Failed to save printer settings');
     } finally {
       setLoading(false);
     }
@@ -94,8 +100,8 @@ export const PrinterSettingsModal: React.FC<PrinterSettingsModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <h2 className="text-xl font-bold mb-4">Thermal Printer Settings</h2>
+      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-white/10 bg-primary-dark p-6 text-gray-200 shadow-2xl">
+        <h2 className="mb-4 text-xl font-bold text-white">Thermal Printer Settings</h2>
 
         <div className="space-y-4">
           {/* Printer Name */}
@@ -109,7 +115,7 @@ export const PrinterSettingsModal: React.FC<PrinterSettingsModalProps> = ({
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
               }
-              className="w-full px-3 py-2 border rounded"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white placeholder-gray-500 focus:border-accent-green/50 focus:outline-none focus:ring-2 focus:ring-accent-green/20"
               placeholder="Main Counter Printer"
             />
           </div>
@@ -127,7 +133,7 @@ export const PrinterSettingsModal: React.FC<PrinterSettingsModalProps> = ({
                   connectionType: e.target.value as any,
                 })
               }
-              className="w-full px-3 py-2 border rounded"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white focus:border-accent-green/50 focus:outline-none focus:ring-2 focus:ring-accent-green/20"
             >
               <option value="network">Network (WiFi/Ethernet)</option>
               <option value="bluetooth">Bluetooth (Mobile)</option>
@@ -149,7 +155,7 @@ export const PrinterSettingsModal: React.FC<PrinterSettingsModalProps> = ({
                   paperWidth: Number(e.target.value) as any,
                 })
               }
-              className="w-full px-3 py-2 border rounded"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white focus:border-accent-green/50 focus:outline-none focus:ring-2 focus:ring-accent-green/20"
             >
               <option value="58">58mm</option>
               <option value="80">80mm</option>
@@ -169,7 +175,7 @@ export const PrinterSettingsModal: React.FC<PrinterSettingsModalProps> = ({
                   onChange={(e) =>
                     setFormData({ ...formData, ipAddress: e.target.value })
                   }
-                  className="w-full px-3 py-2 border rounded"
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white placeholder-gray-500 focus:border-accent-green/50 focus:outline-none focus:ring-2 focus:ring-accent-green/20"
                   placeholder="192.168.1.100"
                 />
               </div>
@@ -181,7 +187,7 @@ export const PrinterSettingsModal: React.FC<PrinterSettingsModalProps> = ({
                   onChange={(e) =>
                     setFormData({ ...formData, port: Number(e.target.value) })
                   }
-                  className="w-full px-3 py-2 border rounded"
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white placeholder-gray-500 focus:border-accent-green/50 focus:outline-none focus:ring-2 focus:ring-accent-green/20"
                   placeholder="9100"
                 />
               </div>
@@ -200,11 +206,11 @@ export const PrinterSettingsModal: React.FC<PrinterSettingsModalProps> = ({
                 onChange={(e) =>
                   setFormData({ ...formData, bluetoothName: e.target.value })
                 }
-                className="w-full px-3 py-2 border rounded"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white placeholder-gray-500 focus:border-accent-green/50 focus:outline-none focus:ring-2 focus:ring-accent-green/20"
                 placeholder="Thermal Printer BT"
               />
-              <p className="text-xs text-gray-500 mt-1">
-                📱 Bluetooth pairing will be requested when printing
+              <p className="text-xs text-gray-400 mt-1">
+                Bluetooth pairing will be requested when printing
               </p>
             </div>
           )}
@@ -220,7 +226,7 @@ export const PrinterSettingsModal: React.FC<PrinterSettingsModalProps> = ({
                   autoPrintEnabled: e.target.checked,
                 })
               }
-              className="w-4 h-4"
+              className="h-4 w-4 rounded border-white/20 bg-white/5 text-accent-green focus:ring-accent-green"
             />
             <label className="text-sm font-medium">
               Auto-print receipts after sale
@@ -243,13 +249,13 @@ export const PrinterSettingsModal: React.FC<PrinterSettingsModalProps> = ({
                   defaultCopies: Number(e.target.value),
                 })
               }
-              className="w-full px-3 py-2 border rounded"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white focus:border-accent-green/50 focus:outline-none focus:ring-2 focus:ring-accent-green/20"
             />
           </div>
 
           {/* Info Box */}
-          <div className="bg-blue-50 border border-blue-200 rounded p-3 text-sm">
-            <p className="font-medium mb-2">📱 Mobile Deployment Notes:</p>
+          <div className="rounded-xl border border-blue-500/20 bg-blue-500/10 p-3 text-sm text-blue-100">
+            <p className="font-medium mb-2">Mobile deployment notes:</p>
             <ul className="list-disc list-inside space-y-1 text-xs">
               <li>
                 <strong>Network:</strong> Best for fixed installations. Works
@@ -271,13 +277,13 @@ export const PrinterSettingsModal: React.FC<PrinterSettingsModalProps> = ({
           <button
             onClick={handleSave}
             disabled={loading}
-            className="flex-1 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50"
+            className="flex-1 rounded-lg bg-accent-green px-4 py-2 font-medium text-primary-darker transition-colors hover:bg-accent-green/90 disabled:opacity-50"
           >
             {loading ? 'Saving...' : 'Save Settings'}
           </button>
           <button
             onClick={onClose}
-            className="px-4 py-2 border rounded hover:bg-gray-50"
+            className="rounded-lg border border-white/10 px-4 py-2 text-gray-300 transition-colors hover:bg-white/10 hover:text-white"
           >
             Cancel
           </button>

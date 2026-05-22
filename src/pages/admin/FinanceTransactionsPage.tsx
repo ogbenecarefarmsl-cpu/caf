@@ -22,10 +22,10 @@ const TX_TYPES = [
 ];
 
 const TYPE_BADGE: Record<string, string> = {
-  cash_in: 'bg-green-100 text-green-800',
-  cash_out: 'bg-red-100 text-red-800',
-  expense: 'bg-orange-100 text-orange-800',
-  marketer_remittance: 'bg-purple-100 text-purple-800',
+  cash_in: 'bg-green-500/15 text-green-300 border border-green-500/20',
+  cash_out: 'bg-red-500/15 text-red-300 border border-red-500/20',
+  expense: 'bg-orange-500/15 text-orange-300 border border-orange-500/20',
+  marketer_remittance: 'bg-purple-500/15 text-purple-300 border border-purple-500/20',
 };
 
 const TYPE_LABEL: Record<string, string> = {
@@ -121,14 +121,14 @@ export function FinanceTransactionsPage() {
     <AdminLayout>
       <div className="max-w-6xl mx-auto py-6 px-4">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Finance Transactions</h1>
+          <h1 className="text-2xl font-bold text-white">Finance Transactions</h1>
           <Button onClick={() => setIsModalOpen(true)} disabled={!selectedBranch}>
             + Add Transaction
           </Button>
         </div>
 
         {!selectedBranch && (
-          <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg p-4 text-sm mb-4">
+          <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/10 p-4 text-sm text-yellow-200 mb-4">
             Select a branch to view transactions.
           </div>
         )}
@@ -136,25 +136,25 @@ export function FinanceTransactionsPage() {
         {/* Summary cards */}
         {summary && (
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-            <div className="bg-white border border-green-200 rounded-lg p-4">
-              <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Cash In</p>
+            <div className="rounded-xl border border-green-500/20 bg-white/5 p-4">
+              <p className="text-xs text-gray-400 uppercase font-semibold mb-1">Cash In</p>
               <p className="text-xl font-bold text-green-600">{format(summary.totalCashIn)}</p>
             </div>
-            <div className="bg-white border border-red-200 rounded-lg p-4">
-              <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Cash Out</p>
+            <div className="rounded-xl border border-red-500/20 bg-white/5 p-4">
+              <p className="text-xs text-gray-400 uppercase font-semibold mb-1">Cash Out</p>
               <p className="text-xl font-bold text-red-600">{format(summary.totalCashOut)}</p>
             </div>
-            <div className="bg-white border border-orange-200 rounded-lg p-4">
-              <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Expenses</p>
+            <div className="rounded-xl border border-orange-500/20 bg-white/5 p-4">
+              <p className="text-xs text-gray-400 uppercase font-semibold mb-1">Expenses</p>
               <p className="text-xl font-bold text-orange-600">{format(summary.totalExpenses)}</p>
             </div>
-            <div className="bg-white border border-purple-200 rounded-lg p-4">
-              <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Remittance</p>
+            <div className="rounded-xl border border-purple-500/20 bg-white/5 p-4">
+              <p className="text-xs text-gray-400 uppercase font-semibold mb-1">Remittance</p>
               <p className="text-xl font-bold text-purple-600">{format(summary.totalMarketerRemittance)}</p>
             </div>
-            <div className={`bg-white border rounded-lg p-4 ${summary.net >= 0 ? 'border-green-300' : 'border-red-300'}`}>
-              <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Net</p>
-              <p className={`text-xl font-bold ${summary.net >= 0 ? 'text-green-700' : 'text-red-700'}`}>{format(summary.net)}</p>
+            <div className={`rounded-xl border bg-white/5 p-4 ${summary.net >= 0 ? 'border-green-500/30' : 'border-red-500/30'}`}>
+              <p className="text-xs text-gray-400 uppercase font-semibold mb-1">Net</p>
+              <p className={`text-xl font-bold ${summary.net >= 0 ? 'text-green-300' : 'text-red-300'}`}>{format(summary.net)}</p>
             </div>
           </div>
         )}
@@ -163,13 +163,13 @@ export function FinanceTransactionsPage() {
         {error && <Error message="Failed to load transactions" />}
 
         {transactions && transactions.length === 0 && (
-          <div className="text-gray-500 text-sm text-center py-12">
+          <div className="text-gray-400 text-sm text-center py-12">
             No transactions recorded for this branch.
           </div>
         )}
 
         {transactions && transactions.length > 0 && (
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="rounded-xl border border-white/10 bg-white/5 overflow-hidden">
             <Table
               columns={[
                 {
@@ -181,7 +181,7 @@ export function FinanceTransactionsPage() {
                   key: 'type',
                   header: 'Type',
                   render: (row: FinanceTransaction) => (
-                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${TYPE_BADGE[row.type] ?? 'bg-gray-100 text-gray-600'}`}>
+                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${TYPE_BADGE[row.type] ?? 'bg-white/10 text-gray-300 border border-white/10'}`}>
                       {TYPE_LABEL[row.type] ?? row.type}
                     </span>
                   ),
@@ -191,7 +191,7 @@ export function FinanceTransactionsPage() {
                   header: 'Description',
                   render: (row: FinanceTransaction) => (
                     <div>
-                      <p className="text-gray-900">{row.description ?? '—'}</p>
+                      <p className="text-gray-200">{row.description ?? '-'}</p>
                       {row.reference && <p className="text-xs text-gray-400">Ref: {row.reference}</p>}
                       {row.category && <p className="text-xs text-gray-400">{row.category}</p>}
                     </div>
@@ -203,13 +203,13 @@ export function FinanceTransactionsPage() {
                   render: (row: FinanceTransaction) =>
                     typeof row.recordedBy === 'object'
                       ? `${row.recordedBy.firstName} ${row.recordedBy.lastName}`
-                      : '—',
+                      : '-',
                 },
                 {
                   key: 'amount',
                   header: 'Amount',
                   render: (row: FinanceTransaction) => (
-                    <span className={`font-semibold ${row.type === 'cash_in' ? 'text-green-700' : 'text-red-700'}`}>
+                    <span className={`font-semibold ${row.type === 'cash_in' ? 'text-green-300' : 'text-red-300'}`}>
                       {row.type === 'cash_in' ? '+' : '-'}{format(row.amount)}
                     </span>
                   ),
@@ -227,12 +227,12 @@ export function FinanceTransactionsPage() {
         >
           <form onSubmit={handleSubmit((d) => createMutation.mutate(d))} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+              <label className="block text-sm font-medium text-gray-300 mb-1">Type</label>
               <select
                 {...register('type', { required: 'Type is required' })}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-accent-green/50 focus:outline-none focus:ring-2 focus:ring-accent-green/20"
               >
-                <option value="">Select type…</option>
+                <option value="">Select type...</option>
                 {TX_TYPES.map((t) => (
                   <option key={t.value} value={t.value}>{t.label}</option>
                 ))}

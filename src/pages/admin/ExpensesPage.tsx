@@ -7,7 +7,6 @@ import { Button } from '../../components/ui/Button';
 import { Table } from '../../components/ui/Table';
 import { Modal } from '../../components/ui/Modal';
 import { Input } from '../../components/ui/Input';
-import { Select } from '../../components/ui/Select';
 import { Loading } from '../../components/ui/Loading';
 import { Error } from '../../components/ui/Error';
 import { useBranchStore, getBranchId } from '../../stores/branch-store';
@@ -25,11 +24,11 @@ const CATEGORIES = [
 ];
 
 const CATEGORY_BADGE: Record<string, string> = {
-  supplies: 'bg-blue-100 text-blue-800',
-  maintenance: 'bg-orange-100 text-orange-800',
-  utilities: 'bg-yellow-100 text-yellow-800',
-  petty_cash: 'bg-purple-100 text-purple-800',
-  other: 'bg-gray-100 text-gray-600',
+  supplies: 'bg-blue-500/15 text-blue-300 border border-blue-500/20',
+  maintenance: 'bg-orange-500/15 text-orange-300 border border-orange-500/20',
+  utilities: 'bg-yellow-500/15 text-yellow-200 border border-yellow-500/20',
+  petty_cash: 'bg-purple-500/15 text-purple-300 border border-purple-500/20',
+  other: 'bg-white/10 text-gray-300 border border-white/10',
 };
 
 interface Expense {
@@ -133,14 +132,14 @@ export function ExpensesPage() {
     <AdminLayout>
       <div className="max-w-6xl mx-auto py-6 px-4">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Expenses</h1>
+          <h1 className="text-2xl font-bold text-white">Expenses</h1>
           <Button onClick={() => setIsModalOpen(true)} disabled={!selectedBranch}>
             + Record Expense
           </Button>
         </div>
 
         {!selectedBranch && (
-          <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg p-4 text-sm mb-4">
+          <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/10 p-4 text-sm text-yellow-200 mb-4">
             Select a branch to view expenses.
           </div>
         )}
@@ -148,15 +147,15 @@ export function ExpensesPage() {
         {/* Summary cards */}
         {byCategory && byCategory.length > 0 && (
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-            <div className="col-span-2 md:col-span-1 bg-white border border-gray-200 rounded-lg p-4">
-              <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Total</p>
-              <p className="text-2xl font-bold text-gray-900">{format(totalExpenses)}</p>
+            <div className="col-span-2 rounded-xl border border-white/10 bg-white/5 p-4 md:col-span-1">
+              <p className="text-xs text-gray-400 uppercase font-semibold mb-1">Total</p>
+              <p className="text-2xl font-bold text-white">{format(totalExpenses)}</p>
               <p className="text-xs text-gray-400 mt-1">{expenses?.length ?? 0} entries</p>
             </div>
             {byCategory.map((item) => (
-              <div key={item.category} className="bg-white border border-gray-200 rounded-lg p-4">
-                <p className="text-xs text-gray-500 uppercase font-semibold mb-1">{item.category.replace('_', ' ')}</p>
-                <p className="text-xl font-bold text-gray-900">{format(item.total)}</p>
+              <div key={item.category} className="rounded-xl border border-white/10 bg-white/5 p-4">
+                <p className="text-xs text-gray-400 uppercase font-semibold mb-1">{item.category.replace('_', ' ')}</p>
+                <p className="text-xl font-bold text-white">{format(item.total)}</p>
                 <p className="text-xs text-gray-400 mt-1">{item.count} entries</p>
               </div>
             ))}
@@ -167,13 +166,13 @@ export function ExpensesPage() {
         {error && <Error message="Failed to load expenses" />}
 
         {expenses && expenses.length === 0 && (
-          <div className="text-gray-500 text-sm text-center py-12">
+          <div className="text-gray-400 text-sm text-center py-12">
             No expenses recorded for this branch.
           </div>
         )}
 
         {expenses && expenses.length > 0 && (
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="rounded-xl border border-white/10 bg-white/5 overflow-hidden">
             <Table
               columns={[
                 {
@@ -195,7 +194,7 @@ export function ExpensesPage() {
                   header: 'Description',
                   render: (row: Expense) => (
                     <div>
-                      <p className="font-medium text-gray-900">{row.description}</p>
+                      <p className="font-medium text-gray-200">{row.description}</p>
                       {row.receiptNumber && (
                         <p className="text-xs text-gray-400">Receipt: {row.receiptNumber}</p>
                       )}
@@ -208,13 +207,13 @@ export function ExpensesPage() {
                   render: (row: Expense) =>
                     typeof row.recordedBy === 'object'
                       ? `${row.recordedBy.firstName} ${row.recordedBy.lastName}`
-                      : '—',
+                      : '-',
                 },
                 {
                   key: 'amount',
                   header: 'Amount',
                   render: (row: Expense) => (
-                    <span className="font-semibold text-gray-900">{format(row.amount)}</span>
+                    <span className="font-semibold text-white">{format(row.amount)}</span>
                   ),
                 },
                 {
@@ -249,12 +248,12 @@ export function ExpensesPage() {
               placeholder="MongoDB ID of the current shift"
             />
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+              <label className="block text-sm font-medium text-gray-300 mb-1">Category</label>
               <select
                 {...register('category', { required: 'Category is required' })}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-accent-green/50 focus:outline-none focus:ring-2 focus:ring-accent-green/20"
               >
-                <option value="">Select category…</option>
+                <option value="">Select category...</option>
                 {CATEGORIES.map((c) => (
                   <option key={c.value} value={c.value}>{c.label}</option>
                 ))}

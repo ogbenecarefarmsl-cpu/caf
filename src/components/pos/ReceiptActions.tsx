@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { downloadPDFReceipt, printPDFReceipt, sendToThermalPrinter } from '../../lib/receipt-printer';
+import { useToast } from '../../hooks/useToast';
 
 interface ReceiptActionsProps {
   saleId: string;
@@ -10,13 +11,15 @@ interface ReceiptActionsProps {
 export const ReceiptActions = ({ saleId, receiptNumber, compact = false }: ReceiptActionsProps) => {
   const [printing, setPrinting] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const { showError, showSuccess } = useToast();
 
   const handlePrint = async () => {
     setPrinting(true);
     try {
       await printPDFReceipt(saleId);
+      showSuccess('Receipt print opened');
     } catch (error) {
-      alert('Failed to print receipt. Please try again.');
+      showError('Failed to print receipt. Please try again.');
     } finally {
       setPrinting(false);
     }
@@ -26,8 +29,9 @@ export const ReceiptActions = ({ saleId, receiptNumber, compact = false }: Recei
     setDownloading(true);
     try {
       await downloadPDFReceipt(saleId);
+      showSuccess('Receipt downloaded');
     } catch (error) {
-      alert('Failed to download receipt. Please try again.');
+      showError('Failed to download receipt. Please try again.');
     } finally {
       setDownloading(false);
     }
@@ -37,8 +41,9 @@ export const ReceiptActions = ({ saleId, receiptNumber, compact = false }: Recei
     setPrinting(true);
     try {
       await sendToThermalPrinter(saleId, 80);
+      showSuccess('Thermal receipt prepared');
     } catch (error) {
-      alert('Failed to send to thermal printer. Please ensure printer is connected.');
+      showError('Failed to send to thermal printer. Please ensure printer is connected.');
     } finally {
       setPrinting(false);
     }
@@ -77,8 +82,8 @@ export const ReceiptActions = ({ saleId, receiptNumber, compact = false }: Recei
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-900">Receipt Actions</h3>
-        <span className="text-sm text-gray-600">#{receiptNumber}</span>
+        <h3 className="text-lg font-semibold text-white">Receipt Actions</h3>
+        <span className="text-sm text-gray-400">#{receiptNumber}</span>
       </div>
 
       <div className="grid grid-cols-1 gap-3">
@@ -119,9 +124,9 @@ export const ReceiptActions = ({ saleId, receiptNumber, compact = false }: Recei
         </button>
       </div>
 
-      <div className="text-xs text-gray-500 mt-2">
-        <p>• PDF receipts can be printed on any standard printer</p>
-        <p>• Thermal printer requires driver installation or USB connection</p>
+      <div className="mt-2 text-xs text-gray-400">
+        <p>- PDF receipts can be printed on any standard printer</p>
+        <p>- Thermal printer requires driver installation or USB connection</p>
       </div>
     </div>
   );

@@ -150,7 +150,7 @@ export default function StockAdjustmentPage() {
     return (
       <AdminLayout>
         <div className="py-12 text-center">
-          <p className="text-gray-500">
+          <p className="text-gray-400">
             Please select a branch to manage stock adjustments
           </p>
         </div>
@@ -246,23 +246,23 @@ export default function StockAdjustmentPage() {
     <AdminLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-white">
             Stock Adjustments
           </h1>
         </div>
 
-        <div className="rounded-lg bg-white shadow">
-          <div className="border-b border-gray-200 px-6 py-4">
-            <h2 className="text-lg font-semibold text-gray-900">
+        <div className="rounded-xl border border-white/10 bg-white/5 shadow-lg">
+          <div className="border-b border-white/10 px-6 py-4">
+            <h2 className="text-lg font-semibold text-white">
               Product Stock
             </h2>
           </div>
           <Table data={products || []} columns={productColumns} />
         </div>
 
-        <div className="rounded-lg bg-white shadow">
-          <div className="border-b border-gray-200 px-6 py-4">
-            <h2 className="text-lg font-semibold text-gray-900">
+        <div className="rounded-xl border border-white/10 bg-white/5 shadow-lg">
+          <div className="border-b border-white/10 px-6 py-4">
+            <h2 className="text-lg font-semibold text-white">
               Adjustment History
             </h2>
           </div>
@@ -283,19 +283,19 @@ export default function StockAdjustmentPage() {
           {selectedProduct ? (
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-300">
                   Product:{' '}
-                  <span className="font-semibold">{selectedProduct.name}</span>
+                  <span className="font-semibold text-white">{selectedProduct.name}</span>
                 </p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-300">
                   Current Stock:{' '}
-                  <span className="font-semibold">
+                  <span className="font-semibold text-white">
                     {selectedProduct.quantityAvailable}
                   </span>
                 </p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-300">
                   Supplier:{' '}
-                  <span className="font-semibold">
+                  <span className="font-semibold text-white">
                     {formatSupplier(selectedProduct.supplierId)}
                   </span>
                 </p>
@@ -314,12 +314,12 @@ export default function StockAdjustmentPage() {
               />
 
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
+                <label className="mb-1 block text-sm font-medium text-gray-300">
                   Reason <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   {...register('reason', { required: 'Reason is required' })}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-white placeholder-gray-500 focus:border-accent-green/50 focus:outline-none focus:ring-2 focus:ring-accent-green/20"
                   rows={3}
                   placeholder="Explain the reason for this adjustment"
                 />

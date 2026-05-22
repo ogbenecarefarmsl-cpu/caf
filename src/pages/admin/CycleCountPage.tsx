@@ -42,10 +42,10 @@ interface CycleCount {
 }
 
 const STATUS_BADGE: Record<CycleCountStatus, string> = {
-  [CycleCountStatus.DRAFT]: 'bg-yellow-100 text-yellow-800',
-  [CycleCountStatus.SUBMITTED]: 'bg-blue-100 text-blue-800',
-  [CycleCountStatus.APPROVED]: 'bg-green-100 text-green-800',
-  [CycleCountStatus.CANCELLED]: 'bg-gray-100 text-gray-600',
+  [CycleCountStatus.DRAFT]: 'bg-yellow-500/15 text-yellow-200 border border-yellow-500/20',
+  [CycleCountStatus.SUBMITTED]: 'bg-blue-500/15 text-blue-300 border border-blue-500/20',
+  [CycleCountStatus.APPROVED]: 'bg-green-500/15 text-green-300 border border-green-500/20',
+  [CycleCountStatus.CANCELLED]: 'bg-white/10 text-gray-300 border border-white/10',
 };
 
 function StatusBadge({ status }: { status: CycleCountStatus }) {
@@ -167,12 +167,12 @@ export function CycleCountPage() {
         <div className="max-w-5xl mx-auto py-6 px-4">
           <div className="flex items-center gap-3 mb-6">
             <button
-              className="text-sm text-blue-600 hover:underline"
+              className="text-sm text-accent-green hover:underline"
               onClick={() => setSelectedCount(null)}
             >
               ← Back to list
             </button>
-            <h1 className="text-xl font-bold text-gray-900">
+            <h1 className="text-xl font-bold text-white">
               Cycle Count — {activeDetail?.status && <StatusBadge status={activeDetail.status} />}
             </h1>
           </div>
@@ -181,9 +181,9 @@ export function CycleCountPage() {
 
           {activeDetail && (
             <>
-              <div className="bg-white rounded-lg border border-gray-200 overflow-hidden mb-6">
+              <div className="mb-6 overflow-hidden rounded-xl border border-white/10 bg-white/5">
                 <table className="w-full text-sm">
-                  <thead className="bg-gray-50 text-gray-600 uppercase text-xs">
+                  <thead className="bg-primary-darker text-gray-400 uppercase text-xs">
                     <tr>
                       <th className="px-4 py-3 text-left">Product</th>
                       <th className="px-4 py-3 text-left">SKU</th>
@@ -194,7 +194,7 @@ export function CycleCountPage() {
                       )}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100">
+                  <tbody className="divide-y divide-white/10 text-gray-200">
                     {activeDetail.lines.map((line) => {
                       const productName =
                         typeof line.productId === 'object'
@@ -207,7 +207,7 @@ export function CycleCountPage() {
                       const variance = line.variance;
 
                       return (
-                        <tr key={line.batchId} className="hover:bg-gray-50">
+                        <tr key={line.batchId} className="hover:bg-white/5">
                           <td className="px-4 py-3">{productName}</td>
                           <td className="px-4 py-3 font-mono text-xs">{productSku}</td>
                           <td className="px-4 py-3 text-right">{line.systemQuantity}</td>
@@ -217,7 +217,7 @@ export function CycleCountPage() {
                                 type="number"
                                 min={0}
                                 defaultValue={line.systemQuantity}
-                                className="w-24 border border-gray-300 rounded px-2 py-1 text-right text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                className="w-24 rounded border border-white/10 bg-white/5 px-2 py-1 text-right text-sm text-white focus:border-accent-green/50 focus:outline-none focus:ring-2 focus:ring-accent-green/20"
                                 onChange={(e) =>
                                   setCountedValues((prev) => ({
                                     ...prev,
@@ -303,7 +303,7 @@ export function CycleCountPage() {
     <AdminLayout>
       <div className="max-w-5xl mx-auto py-6 px-4">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Cycle Counts</h1>
+          <h1 className="text-2xl font-bold text-white">Cycle Counts</h1>
           <Button
             onClick={() => createMutation.mutate()}
             disabled={createMutation.isPending || !selectedBranch}
@@ -313,7 +313,7 @@ export function CycleCountPage() {
         </div>
 
         {!selectedBranch && (
-          <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg p-4 text-sm">
+          <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/10 p-4 text-sm text-yellow-200">
             Select a branch to view or start cycle counts.
           </div>
         )}
@@ -322,13 +322,13 @@ export function CycleCountPage() {
         {error && <Error message="Failed to load cycle counts" />}
 
         {cycleCounts && cycleCounts.length === 0 && (
-          <div className="text-gray-500 text-sm text-center py-12">
+          <div className="text-gray-400 text-sm text-center py-12">
             No cycle counts yet. Start one to reconcile physical stock.
           </div>
         )}
 
         {cycleCounts && cycleCounts.length > 0 && (
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="overflow-hidden rounded-xl border border-white/10 bg-white/5">
             <Table
               columns={[
                 {
@@ -360,7 +360,7 @@ export function CycleCountPage() {
                     row.status !== CycleCountStatus.CANCELLED &&
                     row.status !== CycleCountStatus.APPROVED ? (
                       <button
-                        className="text-blue-600 hover:underline text-sm"
+                        className="text-accent-green hover:underline text-sm"
                         onClick={() => {
                           setSelectedCount(row);
                           setCountedValues({});
