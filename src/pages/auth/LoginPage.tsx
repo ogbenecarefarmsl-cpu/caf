@@ -8,6 +8,7 @@ import { useBranchStore } from '../../stores/branch-store';
 import { useBiometricAuth } from '../../hooks/useBiometricAuth';
 import apiClient from '../../lib/api-client';
 import { getErrorMessage } from '../../lib/error-utils';
+import { getDefaultRouteForRole } from '../../lib/role-routes';
 
 export const LoginPage = () => {
   const navigate = useNavigate();
@@ -44,12 +45,7 @@ export const LoginPage = () => {
   useEffect(() => {
     if (isAuthenticated && user) {
       const locationState = location.state as { from?: { pathname?: string } } | null;
-      const defaultPath =
-        user.role === 'cashier' || user.role === 'pharmacist'
-          ? '/pos'
-          : user.role === 'marketer'
-            ? '/marketer/dashboard'
-            : '/admin/dashboard';
+      const defaultPath = getDefaultRouteForRole(user.role);
       const from = locationState?.from?.pathname || defaultPath;
       navigate(from, { replace: true });
     }
@@ -94,13 +90,7 @@ export const LoginPage = () => {
         }
       }
 
-      if (user.role === 'cashier' || user.role === 'pharmacist') {
-        navigate('/pos');
-      } else if (user.role === 'marketer') {
-        navigate('/marketer/dashboard');
-      } else {
-        navigate('/admin/dashboard');
-      }
+      navigate(getDefaultRouteForRole(user.role));
     },
   });
 
@@ -204,13 +194,7 @@ export const LoginPage = () => {
                           undefined,
                           parsed.state.sessionExpiresAt,
                         );
-                        const path =
-                          parsed.state.user.role === 'cashier' || parsed.state.user.role === 'pharmacist'
-                            ? '/pos'
-                            : parsed.state.user.role === 'marketer'
-                              ? '/marketer/dashboard'
-                              : '/admin/dashboard';
-                        navigate(path, { replace: true });
+                        navigate(getDefaultRouteForRole(parsed.state.user.role), { replace: true });
                       }
                     }
                   } catch {

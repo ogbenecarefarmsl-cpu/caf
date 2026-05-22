@@ -5,6 +5,7 @@ import { Capacitor } from '@capacitor/core';
 import apiClient from '../lib/api-client';
 import { useAuthStore } from '../stores/auth-store';
 import { useBranchStore } from '../stores/branch-store';
+import { getDefaultRouteForRole } from '../lib/role-routes';
 
 const BIOMETRIC_TOKEN_KEY = 'biometric_token';
 const BIOMETRIC_USERNAME_KEY = 'biometric_username';
@@ -110,14 +111,7 @@ export function useBiometricAuth(
         }
       }
 
-      const path =
-        user.role === 'cashier' || user.role === 'pharmacist'
-          ? '/pos'
-          : user.role === 'marketer'
-            ? '/marketer/dashboard'
-            : '/admin/dashboard';
-
-      onSuccess?.(path);
+      onSuccess?.(getDefaultRouteForRole(user.role));
     } catch (err: unknown) {
       const msg =
         err instanceof Error ? err.message : 'Biometric authentication failed';

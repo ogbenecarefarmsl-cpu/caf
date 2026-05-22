@@ -1,5 +1,6 @@
 import axios, { type AxiosError, type AxiosInstance, type InternalAxiosRequestConfig } from 'axios';
 import { SyncService } from '../services/sync-service';
+import { useAuthStore } from '../stores/auth-store';
 
 const DEFAULT_API_BASE_URL = 'https://carefam-00c1641bcdf9.herokuapp.com/api';
 const API_BASE_URL = import.meta.env.VITE_API_URL?.trim() || DEFAULT_API_BASE_URL;
@@ -25,6 +26,9 @@ const apiClient: AxiosInstance = axios.create({
 
 // Helper to read token from Zustand persisted storage
 function getStoredToken(key: 'accessToken' | 'refreshToken'): string | null {
+  const token = useAuthStore.getState()[key];
+  if (token) return token;
+
   try {
     const raw = localStorage.getItem('auth-storage');
     if (!raw) return null;
@@ -35,15 +39,9 @@ function getStoredToken(key: 'accessToken' | 'refreshToken'): string | null {
   }
 }
 
-function getSessionExpiresAt(): number | null {
-  try {
-    const raw = localStorage.getItem('auth-storage');
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    const value = parsed?.state?.sessionExpiresAt;
-    return typeof value === 'number' ? value : null;
-  } catch {
-    return null;
+function redirectToLogin(): void {
+  if (window.location.pathname !== '/login') {
+    window.location.href = '/login';
   }
 }
 
@@ -77,6 +75,10 @@ apiClient.interceptors.response.use(
     return response;
   },
   async (error: AxiosError) => {
+    if (!error.config) {
+      return Promise.reject(error);
+    }
+
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
     const requestUrl = originalRequest.url || '';
     const isAuthEndpoint = /\/auth\/(login|refresh|logout)/.test(requestUrl);
@@ -106,15 +108,10 @@ apiClient.interceptors.response.use(
     }
 
     // If error is 401 and we haven't retried yet
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       originalRequest._retry = true;
 
       try {
-        const sessionExpiresAt = getSessionExpiresAt();
-        if (sessionExpiresAt && Date.now() >= sessionExpiresAt) {
-          throw new Error('Session expired');
-        }
-
         const refreshToken = getStoredToken('refreshToken');
         if (!refreshToken) {
           throw new Error('No refresh token available');
@@ -127,17 +124,20 @@ apiClient.interceptors.response.use(
           withCredentials: true,
         });
 
-        const { accessToken, refreshToken: newRefreshToken } = response.data;
-        // Update Zustand persisted storage
-        try {
-          const raw = localStorage.getItem('auth-storage');
-          if (raw) {
-            const parsed = JSON.parse(raw);
-            parsed.state.accessToken = accessToken;
-            if (newRefreshToken) parsed.state.refreshToken = newRefreshToken;
-            localStorage.setItem('auth-storage', JSON.stringify(parsed));
-          }
-        } catch { /* ignore parse errors */ }
+        const {
+          accessToken,
+          refreshToken: newRefreshToken,
+          user,
+          expiresIn,
+        } = response.data;
+        const authStore = useAuthStore.getState();
+        const nextUser = user ?? authStore.user;
+
+        if (!nextUser || !accessToken) {
+          throw new Error('Invalid refresh response');
+        }
+
+        authStore.setAuth(nextUser, accessToken, newRefreshToken || refreshToken, expiresIn);
 
         // Retry the original request with new token
         if (originalRequest.headers) {
@@ -146,8 +146,8 @@ apiClient.interceptors.response.use(
         return apiClient(originalRequest);
       } catch (refreshError) {
         // Refresh failed, clear tokens and redirect to login
-        localStorage.removeItem('auth-storage');
-        window.location.href = '/login';
+        useAuthStore.getState().clearAuth();
+        redirectToLogin();
         return Promise.reject(refreshError);
       }
     }

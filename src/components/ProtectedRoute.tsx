@@ -9,11 +9,11 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, accessToken, hasHydrated } = useAuth();
   const location = useLocation();
 
   // Show loading while checking authentication
-  if (isAuthenticated === undefined) {
+  if (!hasHydrated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-primary-darker">
         <Loading />
@@ -22,12 +22,12 @@ export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) 
   }
 
   // Redirect to login if not authenticated
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !user || !accessToken) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   // Check role-based access
-  if (allowedRoles && user && !allowedRoles.includes(user.role)) {
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
     return <Navigate to="/unauthorized" replace />;
   }
 

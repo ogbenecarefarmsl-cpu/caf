@@ -1,19 +1,13 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui';
 import { useAuthStore } from '../../stores/auth-store';
+import { getDefaultRouteForRole } from '../../lib/role-routes';
 
 export const NotFoundPage = () => {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
 
-  const homePath =
-    user?.role === 'cashier' || user?.role === 'pharmacist'
-      ? '/pos'
-      : user?.role === 'marketer'
-        ? '/marketer/dashboard'
-        : user?.role === 'branch_manager' || user?.role === 'super_admin' || user?.role === 'auditor'
-          ? '/admin/dashboard'
-          : '/login';
+  const homePath = getDefaultRouteForRole(user?.role);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-primary-darker">

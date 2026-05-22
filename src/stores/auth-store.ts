@@ -17,6 +17,7 @@ interface AuthState {
   refreshToken: string | null;
   sessionExpiresAt: number | null;
   isAuthenticated: boolean;
+  hasHydrated: boolean;
   
   // Actions
   setAuth: (
@@ -28,6 +29,7 @@ interface AuthState {
   ) => void;
   clearAuth: () => void;
   updateUser: (user: Partial<User>) => void;
+  setHasHydrated: (hasHydrated: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -38,6 +40,7 @@ export const useAuthStore = create<AuthState>()(
       refreshToken: null,
       sessionExpiresAt: null,
       isAuthenticated: false,
+      hasHydrated: false,
 
       setAuth: (user, accessToken, refreshToken, expiresInSeconds = 14 * 60 * 60, sessionExpiresAt) => {
         set({
@@ -63,9 +66,16 @@ export const useAuthStore = create<AuthState>()(
         set((state) => ({
           user: state.user ? { ...state.user, ...userData } : null,
         })),
+
+      setHasHydrated: (hasHydrated) => {
+        set({ hasHydrated });
+      },
     }),
     {
       name: 'auth-storage',
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
       partialize: (state) => ({
         user: state.user,
         accessToken: state.accessToken,

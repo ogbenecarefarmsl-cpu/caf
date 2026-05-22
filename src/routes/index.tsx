@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import { useAuthStore } from '../stores/auth-store';
+import { getDefaultRouteForRole } from '../lib/role-routes';
 import {
   LoginPage,
   DashboardPage,
@@ -57,27 +58,9 @@ import {
   RequestAnalysisPage,
 } from '../pages';
 
-const getDefaultRoute = (
-  role?: 'super_admin' | 'branch_manager' | 'pharmacist' | 'cashier' | 'auditor' | 'marketer',
-) => {
-  if (role === 'cashier' || role === 'pharmacist') {
-    return '/pos';
-  }
-
-  if (role === 'marketer') {
-    return '/marketer/dashboard';
-  }
-
-  if (role === 'branch_manager' || role === 'super_admin' || role === 'auditor') {
-    return '/admin/dashboard';
-  }
-
-  return '/login';
-};
-
 const RoleAwareHomeRedirect = () => {
   const user = useAuthStore((state) => state.user);
-  return <Navigate to={getDefaultRoute(user?.role)} replace />;
+  return <Navigate to={getDefaultRouteForRole(user?.role)} replace />;
 };
 
 export const router = createBrowserRouter([

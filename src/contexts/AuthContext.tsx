@@ -5,6 +5,8 @@ import apiClient from '../lib/api-client';
 export interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
+  accessToken: string | null;
+  hasHydrated: boolean;
   logout: () => Promise<void>;
   refreshAccessToken: () => Promise<void>;
 }
@@ -32,20 +34,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     accessToken,
     refreshToken,
     sessionExpiresAt,
+    hasHydrated,
   } = useAuthStore();
 
   const expireSession = useCallback(() => {
     clearAuth();
-    window.location.href = '/login';
+    if (window.location.pathname !== '/login') {
+      window.location.href = '/login';
+    }
   }, [clearAuth]);
 
   const refreshAccessToken = useCallback(async () => {
     try {
-      if (sessionExpiresAt && Date.now() >= sessionExpiresAt) {
-        expireSession();
-        return;
-      }
-
       if (!refreshToken) {
         throw new Error('No refresh token available');
       }
@@ -58,22 +58,20 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         accessToken: newAccessToken,
         refreshToken: newRefreshToken,
         user: updatedUser,
+        expiresIn,
       } = response.data;
 
-      if (user && updatedUser) {
-        setAuth(
-          updatedUser,
-          newAccessToken,
-          newRefreshToken || refreshToken,
-          undefined,
-          sessionExpiresAt ?? undefined,
-        );
+      const nextUser = updatedUser ?? user;
+      if (!nextUser || !newAccessToken) {
+        throw new Error('Invalid refresh response');
       }
+
+      setAuth(nextUser, newAccessToken, newRefreshToken || refreshToken, expiresIn);
     } catch (error) {
       console.error('Token refresh failed:', error);
       expireSession();
     }
-  }, [expireSession, refreshToken, sessionExpiresAt, setAuth, user]);
+  }, [expireSession, refreshToken, setAuth, user]);
 
   const logout = async () => {
     try {
@@ -86,27 +84,23 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   useEffect(() => {
-    if (!isAuthenticated || !accessToken || !sessionExpiresAt) {
+    if (!hasHydrated || !isAuthenticated || !accessToken || !sessionExpiresAt) {
       return;
     }
 
-    const timeoutMs = Math.max(sessionExpiresAt - Date.now(), 0);
-    if (timeoutMs === 0) {
-      expireSession();
-      return;
-    }
+    const refreshBeforeExpiryMs = 60 * 1000;
+    const timeoutMs = Math.max(sessionExpiresAt - Date.now() - refreshBeforeExpiryMs, 0);
 
     const expiryTimeout = window.setTimeout(() => {
-      expireSession();
+      void refreshAccessToken();
     }, timeoutMs);
 
     return () => window.clearTimeout(expiryTimeout);
-  }, [accessToken, expireSession, isAuthenticated, sessionExpiresAt]);
+  }, [accessToken, hasHydrated, isAuthenticated, refreshAccessToken, sessionExpiresAt]);
 
   useEffect(() => {
     const validateToken = async () => {
-      if (sessionExpiresAt && Date.now() >= sessionExpiresAt) {
-        expireSession();
+      if (!hasHydrated) {
         return;
       }
 
@@ -120,11 +114,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     };
 
     void validateToken();
-  }, [accessToken, expireSession, isAuthenticated, refreshAccessToken, sessionExpiresAt]);
+  }, [accessToken, hasHydrated, isAuthenticated, refreshAccessToken]);
 
   const value: AuthContextType = {
     isAuthenticated,
     user,
+    accessToken,
+    hasHydrated,
     logout,
     refreshAccessToken,
   };
