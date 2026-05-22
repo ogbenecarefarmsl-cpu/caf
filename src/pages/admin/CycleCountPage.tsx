@@ -12,15 +12,16 @@ import { buildApiUrl } from '../../lib/api-utils';
 import { useToast } from '../../hooks/useToast';
 
 const CycleCountStatus = {
-  DRAFT: 'DRAFT',
-  SUBMITTED: 'SUBMITTED',
-  APPROVED: 'APPROVED',
-  CANCELLED: 'CANCELLED',
+  DRAFT: 'draft',
+  SUBMITTED: 'submitted',
+  APPROVED: 'approved',
+  CANCELLED: 'cancelled',
 } as const;
 type CycleCountStatus = typeof CycleCountStatus[keyof typeof CycleCountStatus];
 
 interface CycleCountLine {
   productId: { _id: string; name: string; sku: string } | string;
+  // Legacy backend field name; now represents the product-level count line id.
   batchId: string;
   lotNumber: string;
   systemQuantity: number;
@@ -123,8 +124,8 @@ export function CycleCountPage() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.cycleCounts.lists() });
       queryClient.invalidateQueries({ queryKey: queryKeys.cycleCounts.detail(data._id) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.batches.lists() });
-      showSuccess('Cycle count approved — stock levels adjusted');
+      queryClient.invalidateQueries({ queryKey: queryKeys.products.all(), exact: false });
+      showSuccess('Cycle count approved - product stock levels adjusted');
       setSelectedCount(data);
     },
     onError: (err: any) => {
@@ -185,7 +186,7 @@ export function CycleCountPage() {
                   <thead className="bg-gray-50 text-gray-600 uppercase text-xs">
                     <tr>
                       <th className="px-4 py-3 text-left">Product</th>
-                      <th className="px-4 py-3 text-left">Lot #</th>
+                      <th className="px-4 py-3 text-left">SKU</th>
                       <th className="px-4 py-3 text-right">System Qty</th>
                       <th className="px-4 py-3 text-right">Counted Qty</th>
                       {activeDetail.status !== CycleCountStatus.DRAFT && (
@@ -199,12 +200,16 @@ export function CycleCountPage() {
                         typeof line.productId === 'object'
                           ? line.productId.name
                           : line.productId;
+                      const productSku =
+                        typeof line.productId === 'object'
+                          ? line.productId.sku
+                          : '-';
                       const variance = line.variance;
 
                       return (
                         <tr key={line.batchId} className="hover:bg-gray-50">
                           <td className="px-4 py-3">{productName}</td>
-                          <td className="px-4 py-3 font-mono text-xs">{line.lotNumber}</td>
+                          <td className="px-4 py-3 font-mono text-xs">{productSku}</td>
                           <td className="px-4 py-3 text-right">{line.systemQuantity}</td>
                           <td className="px-4 py-3 text-right">
                             {activeDetail.status === CycleCountStatus.DRAFT ? (

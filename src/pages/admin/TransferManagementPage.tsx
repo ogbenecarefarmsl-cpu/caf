@@ -12,7 +12,6 @@ import { Modal } from '../../components/ui/Modal';
 import { Select } from '../../components/ui/Select';
 import { Table } from '../../components/ui/Table';
 import { useToast } from '../../hooks/useToast';
-import { useAuth } from '../../contexts/AuthContext';
 import { buildApiUrl } from '../../lib/api-utils';
 import { queryKeys } from '../../lib/query-keys';
 import { getBranchId, useBranchStore } from '../../stores/branch-store';
@@ -75,7 +74,6 @@ export default function TransferManagementPage() {
   const [approvalNotes, setApprovalNotes] = useState('');
   const [rejectionReason, setRejectionReason] = useState('');
   const { selectedBranch } = useBranchStore();
-  const { user } = useAuth();
   const queryClient = useQueryClient();
   const { showSuccess, showError } = useToast();
   const {
@@ -119,7 +117,6 @@ export default function TransferManagementPage() {
       apiClient.post('/transfers', {
         ...data,
         sourceBranchId: branchId,
-        requestedBy: user?.id,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.transfers.all(), exact: false });
@@ -135,7 +132,6 @@ export default function TransferManagementPage() {
   const approveTransferMutation = useMutation({
     mutationFn: async ({ transferId, notes }: { transferId: string; notes?: string }) =>
       apiClient.patch(`/transfers/${transferId}/approve`, {
-        approvedBy: user?.id,
         notes,
       }),
     onSuccess: () => {

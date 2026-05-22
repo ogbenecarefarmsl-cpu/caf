@@ -68,10 +68,11 @@ interface POFormData {
 interface ReceiveFormData {
   receivedItems: {
     productId: string;
-    quantityReceived: number;
-    lotNumber: string;
+    receivedQuantity: number;
+    purchasePrice?: number;
     expiryDate: string;
     sellingPrice: number;
+    supplyDate?: string;
   }[];
 }
 
@@ -123,9 +124,13 @@ export default function PurchaseOrderPage() {
   const { data: products } = useQuery({
     queryKey: queryKeys.products.list(),
     queryFn: async () => {
-      const response = await apiClient.get('/products');
+      const branchId = getBranchId(selectedBranch);
+      const response = await apiClient.get('/products', {
+        params: branchId ? { branchId } : {},
+      });
       return unwrapArray<Product>(response.data);
     },
+    enabled: !!selectedBranch,
   });
 
   // Fetch purchase orders
@@ -191,10 +196,11 @@ export default function PurchaseOrderPage() {
     resetReceive({
       receivedItems: po.items.map(item => ({
         productId: item.productId._id,
-        quantityReceived: item.quantity,
-        lotNumber: '',
+        receivedQuantity: item.quantity,
+        purchasePrice: item.unitPrice,
         expiryDate: '',
         sellingPrice: 0,
+        supplyDate: new Date().toISOString().slice(0, 10),
       })),
     });
     setIsReceiveModalOpen(true);
@@ -263,7 +269,7 @@ export default function PurchaseOrderPage() {
     { 
       key: 'totalAmount', 
       header: 'Total Amount',
-      render: (po: PurchaseOrder) => `$${po.totalAmount.toFixed(2)}`
+      render: (po: PurchaseOrder) => `${symbol}${po.totalAmount.toFixed(2)}`
     },
     { 
       key: 'expectedDeliveryDate', 
@@ -445,14 +451,22 @@ export default function PurchaseOrderPage() {
                         type="number"
                         min="0"
                         max={item.quantity}
-                        {...registerReceive(`receivedItems.${index}.quantityReceived`, {
+                        {...registerReceive(`receivedItems.${index}.receivedQuantity`, {
                           required: 'Quantity is required',
                           max: { value: item.quantity, message: `Max ${item.quantity}` }
                         })}
                       />
                       <Input
-                        label="Lot Number"
-                        {...registerReceive(`receivedItems.${index}.lotNumber`, { required: 'Lot number is required' })}
+                        label="Purchase Price"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        {...registerReceive(`receivedItems.${index}.purchasePrice`)}
+                      />
+                      <Input
+                        label="Supply Date"
+                        type="date"
+                        {...registerReceive(`receivedItems.${index}.supplyDate`)}
                       />
                       <Input
                         label="Expiry Date"
