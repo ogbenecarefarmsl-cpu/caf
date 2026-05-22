@@ -23,13 +23,20 @@ interface ProductPricing {
   suggestedRetailPrice: number;
   markupPercentage: number;
   effectiveSellingPrice: number;
-  batchPrices: {
-    batchId: string;
-    lotNumber: string;
+  packSizes: {
+    name: string;
+    unit: string;
+    quantityPerPack: number;
     sellingPrice: number;
-    purchasePrice: number;
-    expiryDate: Date;
+    barcode?: string;
   }[];
+}
+
+interface ProductOption {
+  _id: string;
+  name: string;
+  sku: string;
+  packSizes?: ProductPricing['packSizes'];
 }
 
 interface BulkPriceUpdate {
@@ -63,7 +70,7 @@ export const PricingManagementPage = () => {
       const response = await apiClient.get('/products', {
         params: branchId ? { branchId } : {},
       });
-      return response.data.data;
+      return (response.data?.data || []) as ProductOption[];
     },
     enabled: !!branchId,
   });
@@ -76,7 +83,7 @@ export const PricingManagementPage = () => {
       const response = await apiClient.get(buildApiUrl(`/products/${selectedProductId}/pricing`, {
         branchId,
       }));
-      console.log('Product pricing data:', response.data);
+      const selectedProduct = products?.find((product) => product._id === selectedProductId);
       
       // Transform data to ensure all required fields exist
       const data = response.data;
@@ -88,10 +95,10 @@ export const PricingManagementPage = () => {
         suggestedRetailPrice: data.suggestedRetailPrice || data.sellingPrice || 0,
         markupPercentage: data.markupPercentage || 0,
         effectiveSellingPrice: data.effectiveSellingPrice || data.sellingPrice || data.basePrice || 0,
-        batchPrices: data.batchPrices || [],
+        packSizes: selectedProduct?.packSizes || [],
       } as ProductPricing;
     },
-    enabled: !!selectedProductId && !!branchId,
+    enabled: !!selectedProductId && !!branchId && !!products,
   });
 
   // Fetch pricing analytics
@@ -120,21 +127,6 @@ export const PricingManagementPage = () => {
       showSuccess('Prices updated successfully');
     },
     onError: (err: any) => showError(err?.response?.data?.message ?? 'Failed to update prices'),
-  });
-
-  // Sync batch prices mutation
-  const syncBatchPricesMutation = useMutation({
-    mutationFn: async (productId: string) => {
-      const response = await apiClient.post(buildApiUrl(`/products/${productId}/sync-batch-prices`, {
-        branchId,
-      }));
-      return response.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.pricing.all(), exact: false });
-      showSuccess('Batch prices synced');
-    },
-    onError: (err: any) => showError(err?.response?.data?.message ?? 'Failed to sync prices'),
   });
 
   const handleBulkUpdate = (data: BulkPriceUpdate) => {
@@ -203,7 +195,7 @@ export const PricingManagementPage = () => {
             onChange={(e) => setSelectedProductId(e.target.value)}
           >
             <option value="">Select a product...</option>
-            {products?.map((product: { _id: string; name: string; sku: string; sellingPrice: number }) => (
+            {products?.map((product) => (
               <option key={product._id} value={product._id}>
                 {product.name} ({product.sku})
               </option>
@@ -243,44 +235,40 @@ export const PricingManagementPage = () => {
                     </p>
                   </div>
 
-                  <div className="flex justify-between items-center">
-                    <h3 className="text-md font-semibold text-white">Batch Prices</h3>
-                    <Button
-                      onClick={() => syncBatchPricesMutation.mutate(selectedProductId)}
-                      disabled={syncBatchPricesMutation.isPending}
-                      size="sm"
-                    >
-                      Sync Batch Prices
-                    </Button>
+                  <div>
+                    <h3 className="text-md font-semibold text-white">Pack / Unit Prices</h3>
+                    <p className="mt-1 text-sm text-gray-400">
+                      Pack prices come from the product's unit conversion setup.
+                    </p>
                   </div>
 
-                  {productPricing.batchPrices.length > 0 ? (
+                  {productPricing.packSizes.length > 0 ? (
                     <div className="overflow-x-auto">
                       <table className="w-full">
                         <thead className="bg-white/5 border-b border-white/10">
                           <tr>
-                            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-400">Lot Number</th>
-                            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-400">Purchase Price</th>
+                            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-400">Pack</th>
+                            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-400">Unit</th>
+                            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-400">Base Units</th>
                             <th className="px-4 py-3 text-left text-sm font-semibold text-gray-400">Selling Price</th>
-                            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-400">Expiry Date</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
-                          {productPricing.batchPrices.map((batch) => (
-                            <tr key={batch.batchId}>
-                              <td className="px-4 py-3 text-sm text-white">{batch.lotNumber}</td>
-                              <td className="px-4 py-3 text-sm text-white">{format(batch.purchasePrice)}</td>
-                              <td className="px-4 py-3 text-sm text-accent-green font-semibold">{format(batch.sellingPrice)}</td>
-                              <td className="px-4 py-3 text-sm text-gray-400">
-                                {new Date(batch.expiryDate).toLocaleDateString()}
-                              </td>
+                          {productPricing.packSizes.map((pack) => (
+                            <tr key={`${pack.unit}-${pack.name}`}>
+                              <td className="px-4 py-3 text-sm text-white">{pack.name}</td>
+                              <td className="px-4 py-3 text-sm text-white">{pack.unit}</td>
+                              <td className="px-4 py-3 text-sm text-white">{pack.quantityPerPack}</td>
+                              <td className="px-4 py-3 text-sm text-accent-green font-semibold">{format(pack.sellingPrice)}</td>
                             </tr>
                           ))}
                         </tbody>
                       </table>
                     </div>
                   ) : (
-                    <p className="text-gray-400 text-center py-4">No batches found for this product</p>
+                    <p className="text-gray-400 text-center py-4">
+                      No pack sizes configured. Edit the product to add unit-level prices.
+                    </p>
                   )}
                 </div>
               ) : (

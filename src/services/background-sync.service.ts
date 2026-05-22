@@ -132,43 +132,6 @@ async function syncBranches(): Promise<void> {
 }
 
 /**
- * Upload unsynced product images to server
- */
-async function syncProductImages(): Promise<void> {
-  try {
-    const unsynced = await offlineDb.productImages
-      .where('synced')
-      .equals(0)
-      .toArray();
-
-    for (const image of unsynced) {
-      try {
-        // Convert base64 to blob
-        const response = await fetch(image.imageData);
-        const blob = await response.blob();
-
-        const formData = new FormData();
-        formData.append('image', blob, `product-${image.productId}.jpg`);
-        formData.append('productId', image.productId);
-
-        await apiClient.post('/products/upload-image', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
-
-        await offlineDb.productImages.update(image.id!, {
-          synced: true,
-          syncedAt: Date.now(),
-        });
-      } catch (error) {
-        console.warn(`[BackgroundSync] Failed to upload image for product ${image.productId}:`, error);
-      }
-    }
-  } catch (error) {
-    console.warn('[BackgroundSync] Failed to sync product images:', error);
-  }
-}
-
-/**
  * Full sync: download fresh data from server
  */
 export async function fullSync(branchId?: string): Promise<void> {
@@ -182,7 +145,6 @@ export async function fullSync(branchId?: string): Promise<void> {
       branch ? syncProducts(branch) : Promise.resolve(),
       branch ? syncBatches(branch) : Promise.resolve(),
       syncCustomers(),
-      syncProductImages(),
     ]);
     console.log('[BackgroundSync] Full sync complete');
   } finally {
@@ -213,8 +175,6 @@ export async function quickSync(branchId?: string): Promise<void> {
     if (await isStale('customers', STALE_THRESHOLD)) {
       tasks.push(syncCustomers());
     }
-
-    tasks.push(syncProductImages());
 
     await Promise.all(tasks);
   } finally {
