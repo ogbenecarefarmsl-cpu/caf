@@ -8,7 +8,10 @@ import {
   CreditCard,
   Percent,
   WalletCards,
-  Upload
+  Upload,
+  ClipboardList,
+  FileInvoice,
+  Truck
 } from 'lucide-react';
 
 export function SalesPage() {
@@ -68,6 +71,27 @@ export function SalesPage() {
       icon: DollarSign,
       path: '/pos/shifts',
       color: 'bg-teal-500'
+    },
+    {
+      title: 'Customer Orders',
+      description: 'Upload customer POs and process items with AI',
+      icon: ClipboardList,
+      path: '/admin/customer-orders',
+      color: 'bg-indigo-500'
+    },
+    {
+      title: 'Proforma Invoices',
+      description: 'Create, approve, and convert proforma invoices to sales',
+      icon: FileInvoice,
+      path: '/admin/proforma-invoices',
+      color: 'bg-violet-500'
+    },
+    {
+      title: 'Delivery Notes',
+      description: 'Track deliveries for customer orders',
+      icon: Truck,
+      path: '/admin/delivery-notes',
+      color: 'bg-rose-500'
     }
   ];
 

@@ -36,3 +36,6 @@ export { ExpensesPage } from './ExpensesPage';
 export { FinanceTransactionsPage } from './FinanceTransactionsPage';
 export { ValuationReportPage } from './ValuationReportPage';
 export { RequestAnalysisPage } from './RequestAnalysisPage';
+export { CustomerOrdersPage } from './CustomerOrdersPage';
+export { ProformaInvoicesPage } from './ProformaInvoicesPage';
+export { DeliveryNotesPage } from './DeliveryNotesPage';

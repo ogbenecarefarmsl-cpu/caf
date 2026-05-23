@@ -311,6 +311,35 @@ export const queryKeys = {
     report: (branchId?: string, method?: string) => [...queryKeys.valuation.all(), branchId, method] as const,
   },
 
+  // Customer Orders
+  customerOrders: {
+    all: () => [...queryKeys.all(), 'customer-orders'] as const,
+    lists: () => [...queryKeys.customerOrders.all(), 'list'] as const,
+    list: (filters?: BaseFilters & { status?: string }) => [...queryKeys.customerOrders.lists(), filters] as const,
+    details: () => [...queryKeys.customerOrders.all(), 'detail'] as const,
+    detail: (id: string) => [...queryKeys.customerOrders.details(), id] as const,
+  },
+
+  // Proforma Invoices
+  proformas: {
+    all: () => [...queryKeys.all(), 'proformas'] as const,
+    lists: () => [...queryKeys.proformas.all(), 'list'] as const,
+    list: (filters?: BaseFilters & { status?: string; customerId?: string }) =>
+      [...queryKeys.proformas.lists(), filters] as const,
+    details: () => [...queryKeys.proformas.all(), 'detail'] as const,
+    detail: (id: string) => [...queryKeys.proformas.details(), id] as const,
+  },
+
+  // Delivery Notes
+  deliveryNotes: {
+    all: () => [...queryKeys.all(), 'delivery-notes'] as const,
+    lists: () => [...queryKeys.deliveryNotes.all(), 'list'] as const,
+    list: (filters?: BaseFilters & { status?: string; proformaInvoiceId?: string }) =>
+      [...queryKeys.deliveryNotes.lists(), filters] as const,
+    details: () => [...queryKeys.deliveryNotes.all(), 'detail'] as const,
+    detail: (id: string) => [...queryKeys.deliveryNotes.details(), id] as const,
+  },
+
   // Marketer
   marketer: {
     all: () => [...queryKeys.all(), 'marketer'] as const,

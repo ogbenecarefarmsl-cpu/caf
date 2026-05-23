@@ -56,6 +56,9 @@ import {
   FinanceTransactionsPage,
   ValuationReportPage,
   RequestAnalysisPage,
+  CustomerOrdersPage,
+  ProformaInvoicesPage,
+  DeliveryNotesPage,
 } from '../pages';
 
 const RoleAwareHomeRedirect = () => {
@@ -417,6 +420,30 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute allowedRoles={['super_admin', 'branch_manager']}>
         <SupplierManagementPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/admin/customer-orders',
+    element: (
+      <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'pharmacist', 'cashier']}>
+        <CustomerOrdersPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/admin/proforma-invoices',
+    element: (
+      <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'pharmacist']}>
+        <ProformaInvoicesPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/admin/delivery-notes',
+    element: (
+      <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'pharmacist', 'cashier']}>
+        <DeliveryNotesPage />
       </ProtectedRoute>
     ),
   },
