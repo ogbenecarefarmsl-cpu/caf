@@ -11,8 +11,22 @@ import { getErrorMessage } from '../../lib/error-utils';
 import { useAuthStore } from '../../stores/auth-store';
 import { queryKeys } from '../../lib/query-keys';
 
-type PaymentMethod = 'cash' | 'card' | 'mobile' | 'split' | 'credit';
-type CreditCollectionMethod = 'cash' | 'card' | 'mobile' | 'bank_transfer';
+type PaymentMethod =
+  | 'cash'
+  | 'card'
+  | 'orange_money'
+  | 'africell_money'
+  | 'qmoney'
+  | 'bank_transfer'
+  | 'insurance'
+  | 'credit';
+type CreditCollectionMethod =
+  | 'cash'
+  | 'card'
+  | 'orange_money'
+  | 'africell_money'
+  | 'qmoney'
+  | 'bank_transfer';
 
 interface Shift {
   _id: string;
@@ -151,15 +165,20 @@ export const PaymentPage = () => {
       const paymentMethodMap: Record<PaymentMethod, string> = {
         cash: 'cash',
         card: 'card',
-        mobile: 'orange_money',
-        split: 'bank_transfer',
+        orange_money: 'orange_money',
+        africell_money: 'africell_money',
+        qmoney: 'qmoney',
+        bank_transfer: 'bank_transfer',
+        insurance: 'insurance',
         credit: 'credit',
       };
 
       const creditInitialMethodMap: Record<CreditCollectionMethod, string> = {
         cash: 'cash',
         card: 'card',
-        mobile: 'orange_money',
+        orange_money: 'orange_money',
+        africell_money: 'africell_money',
+        qmoney: 'qmoney',
         bank_transfer: 'bank_transfer',
       };
 
@@ -259,14 +278,29 @@ export const PaymentPage = () => {
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
       </svg>
     )},
-    { id: 'mobile', label: 'Mobile Pay', icon: (
+    { id: 'orange_money', label: 'Orange Money', icon: (
       <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
       </svg>
     )},
-    { id: 'split', label: 'Split Payment', icon: (
+    { id: 'africell_money', label: 'Africell Money', icon: (
+      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+      </svg>
+    )},
+    { id: 'qmoney', label: 'QMoney', icon: (
+      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-2.21 0-4 1.343-4 3s1.79 3 4 3 4 1.343 4 3-1.79 3-4 3m0-12v12m0-12c1.657 0 3 .895 3 2m-6 8c0 1.105 1.343 2 3 2" />
+      </svg>
+    )},
+    { id: 'bank_transfer', label: 'Bank Transfer', icon: (
       <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+      </svg>
+    )},
+    { id: 'insurance', label: 'Insurance', icon: (
+      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5-2.5V12c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V7.5L12 4l8 3.5z" />
       </svg>
     )},
     { id: 'credit', label: 'Credit Sale', icon: (
@@ -403,7 +437,9 @@ export const PaymentPage = () => {
                 >
                   <option value="cash">Cash</option>
                   <option value="card">Card</option>
-                  <option value="mobile">Orange Money</option>
+                  <option value="orange_money">Orange Money</option>
+                  <option value="africell_money">Africell Money</option>
+                  <option value="qmoney">QMoney</option>
                   <option value="bank_transfer">Bank Transfer</option>
                 </select>
               </div>
