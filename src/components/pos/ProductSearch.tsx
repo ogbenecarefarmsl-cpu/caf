@@ -18,6 +18,15 @@ interface Product {
   sellingPrice: number;
   requiresPrescription: boolean;
   stockAvailable: number;
+  packSizes?: PackSize[];
+}
+
+interface PackSize {
+  name: string;
+  unit: string;
+  quantityPerPack: number;
+  sellingPrice: number;
+  barcode?: string;
 }
 
 type ProductResponse = Partial<Product> & {
@@ -62,24 +71,29 @@ export const ProductSearch = ({ branchId }: ProductSearchProps) => {
       0,
     requiresPrescription: Boolean(product.requiresPrescription),
     stockAvailable: product.stockAvailable ?? product.stock ?? 0,
+    packSizes: product.packSizes || [],
   });
 
-  const handleProductSelect = useCallback((product: Product) => {
+  const handleProductSelect = useCallback((product: Product, packSize?: PackSize) => {
     if (product.stockAvailable <= 0) {
       alertWarning('Product is out of stock');
       return;
     }
 
+    const selectedPrice = packSize?.sellingPrice ?? product.sellingPrice;
+    const quantityPerPack = packSize?.quantityPerPack ?? 1;
+
     addItem({
       productId: product._id,
-      productName: product.name,
+      productName: packSize ? `${product.name} (${packSize.name})` : product.name,
       sku: product.sku,
-      barcode: product.barcode,
+      barcode: packSize?.barcode || product.barcode,
       quantity: 1,
-      unitPrice: product.sellingPrice,
+      unitPrice: selectedPrice,
       requiresPrescription: product.requiresPrescription,
       baseUnit: product.unit || 'unit',
-      quantityInBaseUnits: 1,
+      quantityInBaseUnits: quantityPerPack,
+      packSize,
     });
 
     setSearchQuery('');
@@ -234,7 +248,11 @@ export const ProductSearch = ({ branchId }: ProductSearchProps) => {
                 <li key={product._id}>
                   <button
                     type="button"
-                    onClick={() => handleProductSelect(product)}
+                    onClick={() => {
+                      if (!product.packSizes?.length) {
+                        handleProductSelect(product);
+                      }
+                    }}
                     className={`w-full px-4 py-3 text-left transition-all border-b border-gray-700 last:border-b-0 ${
                       product.stockAvailable <= 0
                         ? 'opacity-60 cursor-not-allowed'
@@ -254,6 +272,33 @@ export const ProductSearch = ({ branchId }: ProductSearchProps) => {
                         <p className="text-xs text-gray-600 mt-1">
                           SKU: {product.sku} - {product.barcode}
                         </p>
+                        {product.packSizes && product.packSizes.length > 0 && (
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                handleProductSelect(product);
+                              }}
+                              className="rounded-lg border border-gray-600 px-2.5 py-1 text-xs font-semibold text-gray-200 hover:border-accent-green hover:text-accent-green"
+                            >
+                              {product.unit || 'Unit'} - {format(product.sellingPrice)}
+                            </button>
+                            {product.packSizes.map((pack) => (
+                              <button
+                                key={`${pack.unit}-${pack.name}`}
+                                type="button"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  handleProductSelect(product, pack);
+                                }}
+                                className="rounded-lg border border-accent-green/30 bg-accent-green/10 px-2.5 py-1 text-xs font-semibold text-accent-green hover:bg-accent-green hover:text-primary-dark"
+                              >
+                                {pack.name} - {format(pack.sellingPrice)}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </div>
                       <div className="text-right ml-4 shrink-0">
                         <p className="text-base font-bold text-accent-green">

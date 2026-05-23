@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 export interface PackSize {
   name: string;           // "Box", "Strip", "Tablet"
@@ -52,12 +53,14 @@ export function itemKey(productId: string, packSizeUnit?: string): string {
   return packSizeUnit ? `${productId}:${packSizeUnit}` : productId;
 }
 
-export const useCartStore = create<CartState>((set, get) => ({
-  items: [],
-  discount: 0,
-  prescriptionUrl: undefined,
-  subtotal: 0,
-  total: 0,
+export const useCartStore = create<CartState>()(
+  persist(
+    (set, get) => ({
+      items: [],
+      discount: 0,
+      prescriptionUrl: undefined,
+      subtotal: 0,
+      total: 0,
 
   addItem: (item) => {
     const items = get().items;
@@ -174,4 +177,19 @@ export const useCartStore = create<CartState>((set, get) => ({
 
     set({ subtotal, total });
   },
-}));
+    }),
+    {
+      name: 'pos-cart-storage',
+      partialize: (state) => ({
+        items: state.items,
+        discount: state.discount,
+        prescriptionUrl: state.prescriptionUrl,
+        subtotal: state.subtotal,
+        total: state.total,
+      }),
+      onRehydrateStorage: () => (state) => {
+        state?.calculateTotals();
+      },
+    },
+  ),
+);

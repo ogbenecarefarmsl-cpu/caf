@@ -28,6 +28,7 @@ export const LoginPage = () => {
   const [fieldErrors, setFieldErrors] = useState<{
     username?: string;
     password?: string;
+    branch?: string;
   }>({});
   const [showBiometricPrompt, setShowBiometricPrompt] = useState(false);
 
@@ -90,10 +91,17 @@ export const LoginPage = () => {
 
       if (user.branchId) {
         try {
-          const branchResponse = await apiClient.get(`/branches/${user.branchId}`);
-          setSelectedBranch(branchResponse.data);
+          const branchResponse = await apiClient.get(`/branches/${user.branchId}`, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          });
+          setSelectedBranch(branchResponse.data?.data ?? branchResponse.data);
         } catch (branchError) {
-          console.error('Failed to fetch branch:', branchError);
+          setFieldErrors((prev) => ({
+            ...prev,
+            branch:
+              'Login worked, but your assigned branch could not be loaded. Please refresh or contact an administrator.',
+          }));
+          return;
         }
       }
 
@@ -157,6 +165,12 @@ export const LoginPage = () => {
               <p className="text-sm text-red-500">
                 {getLoginErrorMessage(loginMutation.error)}
               </p>
+            </div>
+          )}
+
+          {fieldErrors.branch && (
+            <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/50">
+              <p className="text-sm text-yellow-300">{fieldErrors.branch}</p>
             </div>
           )}
 
