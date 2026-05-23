@@ -58,7 +58,7 @@ interface Product {
 
 const getDisplayBrand = (brand?: string) => {
   const trimmed = brand?.trim();
-  return trimmed && trimmed.toLowerCase() !== 'unknown' ? trimmed : null;
+  return trimmed && trimmed.toLowerCase() !== 'unknown' ? trimmed : 'No brand set';
 };
 
 export const POSPage = () => {
@@ -136,6 +136,7 @@ export const POSPage = () => {
   const [scanFeedback, setScanFeedback] = useState<{ message: string; ok: boolean } | null>(null);
   const [showPackSizeModal, setShowPackSizeModal] = useState(false);
   const [selectedProductForPack, setSelectedProductForPack] = useState<Product | null>(null);
+  const [productViewMode, setProductViewMode] = useState<'grid' | 'list'>('grid');
   const scanFeedbackTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { isAvailable: cameraAvailable, startContinuousScan, stopContinuousScan } = useBarcodeScanner();
@@ -672,7 +673,7 @@ export const POSPage = () => {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search products, SKU, or barcode..."
+                  placeholder="Search drug name, brand, SKU, or barcode..."
                   className="w-full pl-12 pr-4 py-3 bg-primary-dark border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-accent-green focus:ring-1 focus:ring-accent-green/20 transition-all"
                 />
               </div>
@@ -697,21 +698,40 @@ export const POSPage = () => {
               )}
             </div>
 
-            {/* Category Filter */}
-            <div className="flex gap-2 overflow-x-auto pb-2">
-              {categories.map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => setSelectedCategory(cat.id)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
-                    selectedCategory === cat.id
-                      ? 'bg-accent-green text-primary-dark shadow-lg shadow-accent-green/30'
-                      : 'bg-primary-dark border border-gray-700 text-gray-300 hover:border-accent-green/50'
-                  }`}
-                >
-                  {cat.label}
-                </button>
-              ))}
+            <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+              {/* Category Filter */}
+              <div className="flex gap-2 overflow-x-auto pb-2 xl:pb-0">
+                {categories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setSelectedCategory(cat.id)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
+                      selectedCategory === cat.id
+                        ? 'bg-accent-green text-primary-dark shadow-lg shadow-accent-green/30'
+                        : 'bg-primary-dark border border-gray-700 text-gray-300 hover:border-accent-green/50'
+                    }`}
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex rounded-xl border border-gray-700 bg-primary-dark p-1">
+                {(['grid', 'list'] as const).map((mode) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => setProductViewMode(mode)}
+                    className={`rounded-lg px-4 py-2 text-sm font-semibold capitalize transition-all ${
+                      productViewMode === mode
+                        ? 'bg-accent-green text-primary-dark'
+                        : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                    }`}
+                  >
+                    {mode}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -732,6 +752,7 @@ export const POSPage = () => {
                   </div>
                 )}
 
+                {productViewMode === 'grid' ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-3 gap-3 md:gap-4">
                 {products.map((product) => (
                   <button
@@ -766,13 +787,15 @@ export const POSPage = () => {
                       <div className="absolute inset-0 bg-linear-to-t from-black/40 to-transparent group-hover:from-black/60 transition-all" />
                     </div>
                     <div className="p-3 bg-primary-dark rounded-b-xl border-t border-gray-700">
-                      <h3 className="text-white font-semibold text-sm leading-snug text-left whitespace-normal break-words">{product.name}</h3>
-                      {getDisplayBrand(product.brand) && (
-                        <p className="mt-1 rounded-md bg-accent-green/10 px-2 py-1 text-left text-xs font-semibold text-accent-green whitespace-normal break-words">
-                          Brand: {getDisplayBrand(product.brand)}
-                        </p>
-                      )}
-                      <p className="mt-1 text-left text-xs text-gray-400 whitespace-normal break-words">{product.category}</p>
+                      <h3 className="line-clamp-2 min-h-10 text-left text-sm font-semibold leading-snug text-white break-words">
+                        {product.name}
+                      </h3>
+                      <p className="mt-2 rounded-md bg-accent-green/10 px-2 py-1 text-left text-xs font-semibold text-accent-green whitespace-normal break-words">
+                        Brand: {getDisplayBrand(product.brand)}
+                      </p>
+                      <p className="mt-1 text-left text-xs text-gray-400 whitespace-normal break-words">
+                        {product.category || 'Uncategorized'} • {product.sku || 'No SKU'}
+                      </p>
                       <div className="flex items-center justify-between mt-2">
                         <p className="text-accent-green font-bold text-base">{format(product.price)}</p>
                         {product.stock > 0 && (
@@ -785,6 +808,64 @@ export const POSPage = () => {
                   </button>
                 ))}
                 </div>
+                ) : (
+                  <div className="space-y-3">
+                    {products.map((product) => (
+                      <button
+                        key={product._id}
+                        type="button"
+                        onClick={() => handleAddToCart(product)}
+                        disabled={product.stock <= 0}
+                        className={`group flex w-full gap-4 rounded-2xl border border-gray-700 bg-primary-dark p-3 text-left transition-all ${
+                          product.stock <= 0
+                            ? 'cursor-not-allowed opacity-50'
+                            : 'hover:border-accent-green/50 hover:bg-primary-dark/80 hover:shadow-lg hover:shadow-accent-green/10'
+                        }`}
+                      >
+                        <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-primary-darker sm:h-28 sm:w-28">
+                          <img
+                            src={getProductImage(product)}
+                            alt={product.name}
+                            onError={handleImageError}
+                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                          {product.stock <= 0 && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/55">
+                              <span className="rounded-lg bg-red-600 px-2 py-1 text-xs font-semibold text-white">
+                                Out
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                            <div className="min-w-0">
+                              <h3 className="text-base font-bold leading-snug text-white break-words">
+                                {product.name}
+                              </h3>
+                              <p className="mt-1 inline-flex rounded-lg bg-accent-green/10 px-2.5 py-1 text-sm font-semibold text-accent-green">
+                                Brand: {getDisplayBrand(product.brand)}
+                              </p>
+                            </div>
+                            <p className="shrink-0 text-lg font-bold text-accent-green">
+                              {format(product.price)}
+                            </p>
+                          </div>
+                          <div className="mt-3 grid gap-2 text-sm text-gray-400 sm:grid-cols-3">
+                            <span>Category: {product.category || 'Uncategorized'}</span>
+                            <span>SKU: {product.sku || 'No SKU'}</span>
+                            <span>Stock: {getStockDisplay(product.stock, product.unit, product.packSizes)}</span>
+                          </div>
+                          {product.packSizes && product.packSizes.length > 0 && (
+                            <p className="mt-2 text-xs font-medium text-gray-500">
+                              Packs: {product.packSizes.map((pack) => pack.name).join(', ')}
+                            </p>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
 
                 {hasNextPage && (
                   <button
