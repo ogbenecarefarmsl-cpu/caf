@@ -10,6 +10,13 @@ import apiClient from '../../lib/api-client';
 import { getErrorMessage } from '../../lib/error-utils';
 import { getDefaultRouteForRole } from '../../lib/role-routes';
 
+const getLoginErrorMessage = (error: unknown) => {
+  const message = getErrorMessage(error, 'Invalid username or password');
+  return message.toLowerCase().includes('invalid credentials')
+    ? 'Invalid username or password. Use the username, not the email address.'
+    : message;
+};
+
 export const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -148,7 +155,7 @@ export const LoginPage = () => {
           {loginMutation.isError && (
             <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/50">
               <p className="text-sm text-red-500">
-                {getErrorMessage(loginMutation.error, 'Invalid username or password')}
+                {getLoginErrorMessage(loginMutation.error)}
               </p>
             </div>
           )}

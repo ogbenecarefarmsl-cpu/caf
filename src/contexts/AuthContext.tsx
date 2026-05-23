@@ -47,7 +47,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const refreshAccessToken = useCallback(async () => {
     try {
       if (!refreshToken) {
-        throw new Error('No refresh token available');
+        expireSession();
+        return;
       }
 
       const response = await apiClient.post('/auth/refresh', {
@@ -67,8 +68,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
 
       setAuth(nextUser, newAccessToken, newRefreshToken || refreshToken, expiresIn);
-    } catch (error) {
-      console.error('Token refresh failed:', error);
+    } catch {
       expireSession();
     }
   }, [expireSession, refreshToken, setAuth, user]);
@@ -108,13 +108,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         try {
           await apiClient.get('/auth/me');
         } catch {
-          await refreshAccessToken();
+          if (refreshToken) {
+            await refreshAccessToken();
+          } else {
+            expireSession();
+          }
         }
       }
     };
 
     void validateToken();
-  }, [accessToken, hasHydrated, isAuthenticated, refreshAccessToken]);
+  }, [accessToken, expireSession, hasHydrated, isAuthenticated, refreshAccessToken, refreshToken]);
 
   const value: AuthContextType = {
     isAuthenticated,
