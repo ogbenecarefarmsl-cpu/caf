@@ -10,20 +10,20 @@ export const ShoppingCart = ({ onCheckout }: ShoppingCartProps) => {
   const { items, subtotal, discount, total, updateQuantity, removeItem } = useCartStore();
   const { format } = useCurrency();
 
-  const handleQuantityChange = (productId: string, packSizeUnit: string | undefined, newQuantity: string) => {
+  const handleQuantityChange = (productId: string, packSize: typeof items[number]['packSize'], newQuantity: string) => {
     const quantity = parseInt(newQuantity, 10);
     if (!isNaN(quantity) && quantity > 0) {
-      updateQuantity(productId, quantity, packSizeUnit);
+      updateQuantity(productId, quantity, packSize);
     }
   };
 
-  const handleQuantityIncrement = (productId: string, packSizeUnit: string | undefined, currentQuantity: number) => {
-    updateQuantity(productId, currentQuantity + 1, packSizeUnit);
+  const handleQuantityIncrement = (productId: string, packSize: typeof items[number]['packSize'], currentQuantity: number) => {
+    updateQuantity(productId, currentQuantity + 1, packSize);
   };
 
-  const handleQuantityDecrement = (productId: string, packSizeUnit: string | undefined, currentQuantity: number) => {
+  const handleQuantityDecrement = (productId: string, packSize: typeof items[number]['packSize'], currentQuantity: number) => {
     if (currentQuantity > 1) {
-      updateQuantity(productId, currentQuantity - 1, packSizeUnit);
+      updateQuantity(productId, currentQuantity - 1, packSize);
     }
   };
 
@@ -64,7 +64,7 @@ export const ShoppingCart = ({ onCheckout }: ShoppingCartProps) => {
           <div className="space-y-3">
             {items.map((item) => (
               <div
-                key={itemKey(item.productId, item.packSize?.unit)}
+                key={itemKey(item.productId, item.packSize)}
                 className="bg-[--color-primary-darker] rounded-lg p-3 border border-gray-700"
               >
                 {/* Item Header */}
@@ -81,7 +81,7 @@ export const ShoppingCart = ({ onCheckout }: ShoppingCartProps) => {
                     </p>
                   </div>
                   <button
-                    onClick={() => removeItem(item.productId, item.packSize?.unit)}
+                    onClick={() => removeItem(item.productId, item.packSize)}
                     className="text-gray-400 hover:text-red-500 transition-colors ml-2"
                     title="Remove item"
                   >
@@ -106,7 +106,7 @@ export const ShoppingCart = ({ onCheckout }: ShoppingCartProps) => {
                   {/* Quantity Controls */}
                   <div className="flex items-center space-x-2">
                     <button
-                      onClick={() => handleQuantityDecrement(item.productId, item.packSize?.unit, item.quantity)}
+                      onClick={() => handleQuantityDecrement(item.productId, item.packSize, item.quantity)}
                       className="w-8 h-8 flex items-center justify-center bg-[--color-primary-dark] text-white rounded-lg hover:bg-gray-700 transition-colors"
                       disabled={item.quantity <= 1}
                     >
@@ -129,12 +129,12 @@ export const ShoppingCart = ({ onCheckout }: ShoppingCartProps) => {
                       type="number"
                       min="1"
                       value={item.quantity}
-                      onChange={(e) => handleQuantityChange(item.productId, item.packSize?.unit, e.target.value)}
+                      onChange={(e) => handleQuantityChange(item.productId, item.packSize, e.target.value)}
                       className="w-16 px-2 py-1 text-center bg-[--color-primary-dark] text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[--color-accent-green]"
                     />
 
                     <button
-                      onClick={() => handleQuantityIncrement(item.productId, item.packSize?.unit, item.quantity)}
+                      onClick={() => handleQuantityIncrement(item.productId, item.packSize, item.quantity)}
                       className="w-8 h-8 flex items-center justify-center bg-[--color-primary-dark] text-white rounded-lg hover:bg-gray-700 transition-colors"
                     >
                       <svg

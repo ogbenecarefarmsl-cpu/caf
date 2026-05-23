@@ -19,9 +19,11 @@ interface Product {
   requiresPrescription: boolean;
   stockAvailable: number;
   packSizes?: PackSize[];
+  matchedPackSize?: PackSize;
 }
 
 interface PackSize {
+  code?: string;
   name: string;
   unit: string;
   quantityPerPack: number;
@@ -72,6 +74,7 @@ export const ProductSearch = ({ branchId }: ProductSearchProps) => {
     requiresPrescription: Boolean(product.requiresPrescription),
     stockAvailable: product.stockAvailable ?? product.stock ?? 0,
     packSizes: product.packSizes || [],
+    matchedPackSize: product.matchedPackSize,
   });
 
   const handleProductSelect = useCallback((product: Product, packSize?: PackSize) => {
@@ -108,7 +111,8 @@ export const ProductSearch = ({ branchId }: ProductSearchProps) => {
       });
 
       if (response.data && response.data.length > 0) {
-        handleProductSelect(normalizeProduct(response.data[0]));
+        const product = normalizeProduct(response.data[0]);
+        handleProductSelect(product, product.matchedPackSize);
       } else {
         alertWarning('Product not found');
       }
@@ -284,19 +288,28 @@ export const ProductSearch = ({ branchId }: ProductSearchProps) => {
                             >
                               {product.unit || 'Unit'} - {format(product.sellingPrice)}
                             </button>
-                            {product.packSizes.map((pack) => (
+                            {product.packSizes.map((pack) => {
+                              const disabled = product.stockAvailable < pack.quantityPerPack;
+                              return (
                               <button
                                 key={`${pack.unit}-${pack.name}`}
                                 type="button"
                                 onClick={(event) => {
                                   event.stopPropagation();
+                                  if (disabled) return;
                                   handleProductSelect(product, pack);
                                 }}
-                                className="rounded-lg border border-accent-green/30 bg-accent-green/10 px-2.5 py-1 text-xs font-semibold text-accent-green hover:bg-accent-green hover:text-primary-dark"
+                                disabled={disabled}
+                                className={`rounded-lg border px-2.5 py-1 text-xs font-semibold ${
+                                  disabled
+                                    ? 'cursor-not-allowed border-gray-700 text-gray-500'
+                                    : 'border-accent-green/30 bg-accent-green/10 text-accent-green hover:bg-accent-green hover:text-primary-dark'
+                                }`}
                               >
                                 {pack.name} - {format(pack.sellingPrice)}
+                                {disabled ? ' (low stock)' : ''}
                               </button>
-                            ))}
+                            )})}
                           </div>
                         )}
                       </div>

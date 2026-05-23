@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 export interface PackSize {
+  code?: string;
   name: string;           // "Box", "Strip", "Tablet"
   unit: string;           // "box", "strip", "tablet"
   quantityPerPack: number; // 100, 10, 1
@@ -36,9 +37,9 @@ interface CartState {
 
   // Actions
   addItem: (item: Omit<CartItem, 'subtotal'>) => void;
-  removeItem: (productId: string, packSizeUnit?: string) => void;
-  updateQuantity: (productId: string, quantity: number, packSizeUnit?: string) => void;
-  updateItemPrice: (productId: string, unitPrice: number, packSizeUnit?: string) => void;
+  removeItem: (productId: string, packSize?: PackSize | string) => void;
+  updateQuantity: (productId: string, quantity: number, packSize?: PackSize | string) => void;
+  updateItemPrice: (productId: string, unitPrice: number, packSize?: PackSize | string) => void;
   setDiscount: (discount: number) => void;
   setPrescription: (url: string) => void;
   clearCart: () => void;
@@ -49,8 +50,19 @@ interface CartState {
  * Generate a unique key for cart items (productId + packSize)
  * This allows selling the same product in different pack sizes
  */
-export function itemKey(productId: string, packSizeUnit?: string): string {
-  return packSizeUnit ? `${productId}:${packSizeUnit}` : productId;
+export function packSizeKey(packSize?: PackSize | string): string | undefined {
+  if (!packSize) return undefined;
+  if (typeof packSize === 'string') return packSize;
+  return (
+    packSize.code ||
+    packSize.barcode ||
+    `${packSize.unit}:${packSize.quantityPerPack}:${packSize.name}`
+  );
+}
+
+export function itemKey(productId: string, packSize?: PackSize | string): string {
+  const key = packSizeKey(packSize);
+  return key ? `${productId}:${key}` : productId;
 }
 
 export const useCartStore = create<CartState>()(
@@ -64,16 +76,16 @@ export const useCartStore = create<CartState>()(
 
   addItem: (item) => {
     const items = get().items;
-    const key = itemKey(item.productId, item.packSize?.unit);
+    const key = itemKey(item.productId, item.packSize);
     const existingItem = items.find(
-      (i) => itemKey(i.productId, i.packSize?.unit) === key
+      (i) => itemKey(i.productId, i.packSize) === key
     );
 
     if (existingItem) {
       // Update quantity if same product + same pack size already in cart
       set({
         items: items.map((i) =>
-          itemKey(i.productId, i.packSize?.unit) === key
+          itemKey(i.productId, i.packSize) === key
             ? {
                 ...i,
                 quantity: i.quantity + item.quantity,
@@ -102,7 +114,7 @@ export const useCartStore = create<CartState>()(
     const key = itemKey(productId, packSizeUnit);
     set({
       items: get().items.filter(
-        (item) => itemKey(item.productId, item.packSize?.unit) !== key
+        (item) => itemKey(item.productId, item.packSize) !== key
       ),
     });
     get().calculateTotals();
@@ -117,7 +129,7 @@ export const useCartStore = create<CartState>()(
     const key = itemKey(productId, packSizeUnit);
     set({
       items: get().items.map((item) => {
-        if (itemKey(item.productId, item.packSize?.unit) !== key) return item;
+        if (itemKey(item.productId, item.packSize) !== key) return item;
 
         const quantityInBaseUnits = item.packSize
           ? quantity * item.packSize.quantityPerPack
@@ -138,7 +150,7 @@ export const useCartStore = create<CartState>()(
     const key = itemKey(productId, packSizeUnit);
     set({
       items: get().items.map((item) =>
-        itemKey(item.productId, item.packSize?.unit) === key
+        itemKey(item.productId, item.packSize) === key
           ? {
               ...item,
               unitPrice,

@@ -10,7 +10,6 @@ import {
   WalletCards,
   Upload,
   ClipboardList,
-  FileInvoice,
   Truck
 } from 'lucide-react';
 
@@ -82,7 +81,7 @@ export function SalesPage() {
     {
       title: 'Proforma Invoices',
       description: 'Create, approve, and convert proforma invoices to sales',
-      icon: FileInvoice,
+      icon: FileText,
       path: '/admin/proforma-invoices',
       color: 'bg-violet-500'
     },

@@ -34,6 +34,7 @@ interface ShiftSale {
 }
 
 interface PackSize {
+  code?: string;
   name: string;
   unit: string;
   quantityPerPack: number;
@@ -54,6 +55,7 @@ interface Product {
   requiresPrescription: boolean;
   unit: string;
   packSizes?: PackSize[];
+  matchedPackSize?: PackSize;
 }
 
 const getDisplayBrand = (brand?: string) => {
@@ -251,8 +253,15 @@ export const POSPage = () => {
 
     // 1. Look up in already-loaded products list first (fast path)
     let found: Product | undefined = products?.find(
-      (p) => p.barcode === barcode || p.sku === barcode,
+      (p) =>
+        p.barcode === barcode ||
+        p.sku === barcode ||
+        p.packSizes?.some((pack) => pack.barcode === barcode),
     );
+    if (found) {
+      const matchedPackSize = found.packSizes?.find((pack) => pack.barcode === barcode);
+      found = matchedPackSize ? { ...found, matchedPackSize } : found;
+    }
 
     // 2. Fallback: query API by barcode
     if (!found) {
@@ -277,8 +286,10 @@ export const POSPage = () => {
         setScanFeedback({ message: 'Open a shift before adding scanned products', ok: false });
       } else {
         // Check if product has pack sizes - if so, show selector
-        const hasPackSizes = found.packSizes && found.packSizes.length > 0;
-        if (hasPackSizes) {
+        if (found.matchedPackSize) {
+          handleAddToCart(found, found.matchedPackSize);
+          setScanFeedback({ message: `Added: ${found.name} (${found.matchedPackSize.name})`, ok: true });
+        } else if (found.packSizes && found.packSizes.length > 0) {
           setSelectedProductForPack(found);
           setShowPackSizeModal(true);
           setScanFeedback({ message: `Select pack size for: ${found.name}`, ok: true });
@@ -343,22 +354,22 @@ export const POSPage = () => {
   });
 
   // Cart handlers
-  const handleQuantityIncrement = (productId: string, packSizeUnit: string | undefined, currentQuantity: number) => {
-    updateQuantity(productId, currentQuantity + 1, packSizeUnit);
+  const handleQuantityIncrement = (productId: string, packSize: PackSize | undefined, currentQuantity: number) => {
+    updateQuantity(productId, currentQuantity + 1, packSize);
   };
 
-  const handleQuantityDecrement = (productId: string, packSizeUnit: string | undefined, currentQuantity: number) => {
+  const handleQuantityDecrement = (productId: string, packSize: PackSize | undefined, currentQuantity: number) => {
     if (currentQuantity > 1) {
-      updateQuantity(productId, currentQuantity - 1, packSizeUnit);
+      updateQuantity(productId, currentQuantity - 1, packSize);
     } else {
-      removeItem(productId, packSizeUnit);
+      removeItem(productId, packSize);
     }
   };
 
-  const handleQuantityChange = (productId: string, packSizeUnit: string | undefined, value: string) => {
+  const handleQuantityChange = (productId: string, packSize: PackSize | undefined, value: string) => {
     const qty = parseInt(value);
     if (!isNaN(qty) && qty > 0) {
-      updateQuantity(productId, qty, packSizeUnit);
+      updateQuantity(productId, qty, packSize);
     }
   };
 
@@ -514,6 +525,10 @@ export const POSPage = () => {
 
   const handleAddToCart = (product: Product, packSize?: PackSize) => {
     if (product.stock <= 0) return;
+    if (packSize && product.stock < packSize.quantityPerPack) {
+      alertWarning(`Not enough stock for ${packSize.name}. Available: ${getStockDisplay(product.stock, product.unit, product.packSizes)}.`);
+      return;
+    }
     if (!currentShift || currentShift.status !== 'open') {
       setShowShiftModal(true);
       return;
@@ -533,7 +548,7 @@ export const POSPage = () => {
 
     addItem({
       productId: product._id,
-      productName: product.name,
+      productName: packSize ? `${product.name} (${packSize.name})` : product.name,
       sku: product.sku,
       barcode: packSize?.barcode || product.barcode || '',
       quantity: 1,
@@ -921,7 +936,7 @@ export const POSPage = () => {
               </div>
             ) : (
               items.map((item) => (
-                <div key={itemKey(item.productId, item.packSize?.unit)} className="bg-primary-darker rounded-lg p-3 border border-gray-700 hover:border-accent-green/40 transition-colors group">
+                <div key={itemKey(item.productId, item.packSize)} className="bg-primary-darker rounded-lg p-3 border border-gray-700 hover:border-accent-green/40 transition-colors group">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1 min-w-0">
                       <h3 className="text-white font-semibold text-sm leading-snug whitespace-normal break-words">{item.productName}</h3>
@@ -935,7 +950,7 @@ export const POSPage = () => {
                       </p>
                     </div>
                     <button
-                      onClick={() => removeItem(item.productId, item.packSize?.unit)}
+                      onClick={() => removeItem(item.productId, item.packSize)}
                       className="text-gray-500 hover:text-red-400 transition-colors ml-2 shrink-0"
                       title="Remove item"
                     >
@@ -948,7 +963,7 @@ export const POSPage = () => {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2 bg-primary-dark rounded-lg p-1">
                       <button
-                        onClick={() => handleQuantityDecrement(item.productId, item.packSize?.unit, item.quantity)}
+                        onClick={() => handleQuantityDecrement(item.productId, item.packSize, item.quantity)}
                         className="w-6 h-6 flex items-center justify-center hover:bg-gray-700 rounded transition-colors text-gray-300"
                       >
                         −
@@ -956,11 +971,11 @@ export const POSPage = () => {
                       <input
                         type="text"
                         value={item.quantity}
-                        onChange={(e) => handleQuantityChange(item.productId, item.packSize?.unit, e.target.value)}
+                        onChange={(e) => handleQuantityChange(item.productId, item.packSize, e.target.value)}
                         className="w-8 h-6 bg-transparent text-center text-white font-semibold text-sm focus:outline-none"
                       />
                       <button
-                        onClick={() => handleQuantityIncrement(item.productId, item.packSize?.unit, item.quantity)}
+                        onClick={() => handleQuantityIncrement(item.productId, item.packSize, item.quantity)}
                         className="w-6 h-6 flex items-center justify-center hover:bg-gray-700 rounded transition-colors text-gray-300"
                       >
                         +
@@ -1052,7 +1067,7 @@ export const POSPage = () => {
           {/* Mobile Cart Items */}
           <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
             {items.map((item) => (
-              <div key={itemKey(item.productId, item.packSize?.unit)} className="bg-primary-dark rounded-xl p-4 border border-gray-700">
+              <div key={itemKey(item.productId, item.packSize)} className="bg-primary-dark rounded-xl p-4 border border-gray-700">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1 min-w-0">
                     <h3 className="text-white font-semibold text-base leading-snug whitespace-normal break-words">{item.productName}</h3>
@@ -1066,7 +1081,7 @@ export const POSPage = () => {
                     </p>
                   </div>
                   <button
-                    onClick={() => removeItem(item.productId, item.packSize?.unit)}
+                    onClick={() => removeItem(item.productId, item.packSize)}
                     className="text-gray-500 hover:text-red-400 transition-colors ml-3 shrink-0"
                   >
                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -1078,7 +1093,7 @@ export const POSPage = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2 bg-primary-darker rounded-lg p-1.5">
                     <button
-                      onClick={() => handleQuantityDecrement(item.productId, item.packSize?.unit, item.quantity)}
+                      onClick={() => handleQuantityDecrement(item.productId, item.packSize, item.quantity)}
                       className="w-8 h-8 flex items-center justify-center hover:bg-gray-700 rounded transition-colors text-gray-300"
                     >
                       <span className="text-lg">−</span>
@@ -1086,11 +1101,11 @@ export const POSPage = () => {
                     <input
                       type="text"
                       value={item.quantity}
-                      onChange={(e) => handleQuantityChange(item.productId, item.packSize?.unit, e.target.value)}
+                      onChange={(e) => handleQuantityChange(item.productId, item.packSize, e.target.value)}
                       className="w-10 h-8 bg-transparent text-center text-white font-semibold text-base focus:outline-none"
                     />
                     <button
-                      onClick={() => handleQuantityIncrement(item.productId, item.packSize?.unit, item.quantity)}
+                      onClick={() => handleQuantityIncrement(item.productId, item.packSize, item.quantity)}
                       className="w-8 h-8 flex items-center justify-center hover:bg-gray-700 rounded transition-colors text-gray-300"
                     >
                       <span className="text-lg">+</span>
@@ -1373,15 +1388,24 @@ export const POSPage = () => {
                 <button
                   key={pack.unit}
                   onClick={() => {
+                    if (selectedProductForPack.stock < pack.quantityPerPack) return;
                     handleAddToCart(selectedProductForPack, pack);
                     setShowPackSizeModal(false);
                   }}
-                  className="w-full p-4 bg-primary-darker border border-gray-600 rounded-xl text-left hover:border-accent-green transition-colors"
+                  disabled={selectedProductForPack.stock < pack.quantityPerPack}
+                  className={`w-full p-4 bg-primary-darker border rounded-xl text-left transition-colors ${
+                    selectedProductForPack.stock < pack.quantityPerPack
+                      ? 'cursor-not-allowed border-red-500/30 opacity-60'
+                      : 'border-gray-600 hover:border-accent-green'
+                  }`}
                 >
                   <div className="flex justify-between items-center">
                     <div>
                       <p className="text-white font-semibold">{pack.name}</p>
                       <p className="text-gray-400 text-sm">{pack.quantityPerPack} {selectedProductForPack.unit}s per {pack.name.toLowerCase()}</p>
+                      {selectedProductForPack.stock < pack.quantityPerPack && (
+                        <p className="mt-1 text-xs text-red-400">Not enough stock for this pack</p>
+                      )}
                     </div>
                     <p className="text-accent-green font-bold">{format(pack.sellingPrice)}</p>
                   </div>

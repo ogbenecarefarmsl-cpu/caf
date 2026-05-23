@@ -25,6 +25,7 @@ import { useToast } from '../../hooks/useToast';
 import { getErrorMessage } from '../../lib/error-utils';
 
 interface PackSize {
+  code?: string;
   name: string;
   unit: string;
   quantityPerPack: number;
@@ -184,11 +185,17 @@ export const ProductManagementPage = () => {
 
   const normalizePackSizes = (packSizes: PackSize[] = []) =>
     packSizes
-      .map((pack) => {
+      .map((pack, index) => {
         const name = pack.name.trim();
         const unit = (pack.unit || name.toLowerCase().replace(/\s+/g, '-')).trim();
+        const code =
+          pack.code?.trim() ||
+          `${unit || 'pack'}-${Number(pack.quantityPerPack) || 1}-${index + 1}`
+            .toLowerCase()
+            .replace(/[^a-z0-9-]/g, '-');
 
         return {
+          code,
           name,
           unit,
           quantityPerPack: Number(pack.quantityPerPack) || 1,
@@ -313,10 +320,25 @@ export const ProductManagementPage = () => {
   };
 
   const onSubmit = (data: ProductFormData) => {
+    const packSizes = normalizePackSizes(data.packSizes);
+    const duplicatePackBarcode = packSizes.find(
+      (pack, index) =>
+        pack.barcode &&
+        packSizes.some(
+          (other, otherIndex) =>
+            otherIndex !== index && other.barcode === pack.barcode,
+        ),
+    );
+
+    if (duplicatePackBarcode) {
+      showError(`Pack barcode "${duplicatePackBarcode.barcode}" is used more than once.`);
+      return;
+    }
+
     const normalizedData: ProductFormData = {
       ...data,
       sku: data.sku?.trim() || generateSku(data.name),
-      packSizes: data.packSizes || [],
+      packSizes,
     };
 
     if (editingProduct) {
@@ -1049,6 +1071,9 @@ export const ProductManagementPage = () => {
                       {showPackSizeEditor ? 'Done' : 'Edit Pack Sizes'}
                     </button>
                   </div>
+                  <div className="rounded-xl border border-accent-green/20 bg-accent-green/10 p-3 text-xs text-gray-300">
+                    Add pack sizes when the same product is sold in larger or alternate units. Keep stock in the smallest unit above, then define conversions here: example base unit `tablet`, pack `Strip`, qty per pack `10`, selling price for one strip. If a box/strip/bottle has its own barcode, add it here so POS scans select that pack automatically.
+                  </div>
 
                   {!showPackSizeEditor && watch('packSizes') && watch('packSizes').length > 0 && (
                     <div className="flex flex-wrap gap-2">
@@ -1121,6 +1146,16 @@ export const ProductManagementPage = () => {
                                 className="px-2 py-1.5 bg-primary-dark border border-gray-600 rounded text-white text-sm"
                               />
                               <input
+                                placeholder="Stable code (optional)"
+                                value={pack.code || ''}
+                                onChange={(e) => {
+                                  const updated = [...watch('packSizes')];
+                                  updated[idx] = { ...updated[idx], code: e.target.value };
+                                  setValue('packSizes', updated as any);
+                                }}
+                                className="px-2 py-1.5 bg-primary-dark border border-gray-600 rounded text-white text-sm"
+                              />
+                              <input
                                 type="number"
                                 placeholder="Qty per pack"
                                 value={pack.quantityPerPack}
@@ -1152,6 +1187,9 @@ export const ProductManagementPage = () => {
                                 }}
                                 className="px-2 py-1.5 bg-primary-dark border border-gray-600 rounded text-white text-sm"
                               />
+                              <div className="md:col-span-2 rounded-lg bg-black/20 px-3 py-2 text-xs text-gray-400">
+                                {pack.name || 'Pack'} deducts {Number(pack.quantityPerPack) || 1} {watch('unit') || 'base units'} per sale. Unit price per {watch('unit') || 'base unit'}: {format((Number(pack.sellingPrice) || 0) / Math.max(1, Number(pack.quantityPerPack) || 1))}
+                              </div>
                             </div>
                             <button
                               type="button"
@@ -1172,7 +1210,7 @@ export const ProductManagementPage = () => {
                           type="button"
                           onClick={() => {
                             const current = watch('packSizes') || [];
-                            setValue('packSizes', [...current, { name: '', unit: '', quantityPerPack: 1, sellingPrice: 0 }] as any);
+                            setValue('packSizes', [...current, { code: '', name: '', unit: '', quantityPerPack: 1, sellingPrice: 0 }] as any);
                           }}
                           className="w-full py-2 border-2 border-dashed border-gray-600 rounded-lg text-gray-400 hover:text-white hover:border-gray-500 transition-colors text-sm"
                         >

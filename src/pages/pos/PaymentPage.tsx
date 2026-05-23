@@ -191,9 +191,11 @@ export const PaymentPage = () => {
           quantity: item.quantity,
           unitPrice: item.unitPrice,
           packSize: item.packSize ? {
+            code: item.packSize.code,
             name: item.packSize.name,
             unit: item.packSize.unit,
             quantityPerPack: item.packSize.quantityPerPack,
+            barcode: item.packSize.barcode,
           } : null,
           quantityInBaseUnits: item.quantityInBaseUnits,
         })),
