@@ -83,7 +83,7 @@ export const POSSidebar = () => {
         </svg>
       ),
       path: '/pos/returns',
-      roles: ['pharmacist', 'branch_manager', 'super_admin', 'auditor'],
+      roles: ['branch_manager', 'super_admin', 'auditor'],
     },
     {
       id: 'customers',
@@ -248,3 +248,4 @@ export const POSSidebar = () => {
     </>
   );
 };
+

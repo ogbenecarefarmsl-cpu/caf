@@ -104,7 +104,7 @@ export function SalesPage() {
               Process transactions, analyze sales performance, manage customer balances, and respond to uploaded requests.
             </p>
             <p className="mt-2 text-sm text-gray-500">
-              Cashiers, pharmacists, branch managers, and super admins can all create credit sales from POS. Admin tools are for oversight and follow-up.
+              Cashiers, branch managers, and super admins can all create credit sales from POS. Admin tools are for oversight and follow-up.
             </p>
           </div>
 
@@ -181,3 +181,4 @@ export function SalesPage() {
     </AdminLayout>
   );
 }
+
