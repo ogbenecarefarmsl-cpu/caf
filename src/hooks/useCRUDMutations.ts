@@ -3,6 +3,13 @@ import apiClient from '../lib/api-client';
 import { useToast } from './useToast';
 import { getErrorMessage } from '../lib/error-utils';
 
+const unwrapResponseData = <T,>(payload: unknown): T => {
+  if (payload && typeof payload === 'object' && 'data' in payload) {
+    return (payload as { data: T }).data;
+  }
+  return payload as T;
+};
+
 /**
  * Generic CRUD mutation hook factory
  * 
@@ -49,7 +56,7 @@ export const useCRUDMutations = <T extends { _id?: string; id?: string }>(
   const createMutation = useMutation({
     mutationFn: async (data: Omit<T, '_id' | 'id'>) => {
       const response = await apiClient.post(`/${resource}`, data);
-      return response.data as T;
+      return unwrapResponseData<T>(response.data);
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey, exact: false });
@@ -65,7 +72,7 @@ export const useCRUDMutations = <T extends { _id?: string; id?: string }>(
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<T> }) => {
       const response = await apiClient.patch(`/${resource}/${id}`, data);
-      return response.data as T;
+      return unwrapResponseData<T>(response.data);
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey, exact: false });
@@ -129,7 +136,7 @@ export const useBranchAwareCRUDMutations = <T extends { _id?: string; id?: strin
     mutationFn: async (data: Omit<T, '_id' | 'id'>) => {
       const payload = { ...data, branchId };
       const response = await apiClient.post(`/${resource}`, payload);
-      return response.data as T;
+      return unwrapResponseData<T>(response.data);
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey, exact: false });
@@ -145,7 +152,7 @@ export const useBranchAwareCRUDMutations = <T extends { _id?: string; id?: strin
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<T> }) => {
       const response = await apiClient.patch(`/${resource}/${id}`, data);
-      return response.data as T;
+      return unwrapResponseData<T>(response.data);
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey, exact: false });

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
 import apiClient from '../../lib/api-client';
 import { AdminLayout } from '../../components/AdminLayout';
 import { Button } from '../../components/ui/Button';
@@ -12,7 +13,6 @@ import { Loading } from '../../components/ui/Loading';
 import { Error } from '../../components/ui/Error';
 import { useToast } from '../../hooks/useToast';
 import { useBranchStore, getBranchId } from '../../stores/branch-store';
-import { useAuth } from '../../contexts/AuthContext';
 import { queryKeys } from '../../lib/query-keys';
 import { buildApiUrl } from '../../lib/api-utils';
 import { useCurrency } from '../../hooks/useCurrency';
@@ -58,18 +58,16 @@ const paymentBadge = (status: string) => {
 
 export function ProformaInvoicesPage() {
   const { symbol } = useCurrency();
+  const navigate = useNavigate();
   const [selectedPf, setSelectedPf] = useState<ProformaInvoice | null>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isConvertModalOpen, setIsConvertModalOpen] = useState(false);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const { selectedBranch } = useBranchStore();
-  const { user } = useAuth();
   const queryClient = useQueryClient();
   const { showSuccess, showError } = useToast();
 
   const branchId = getBranchId(selectedBranch);
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm();
   const { register: registerPayment, handleSubmit: handleSubmitPayment, reset: resetPayment } = useForm();
   const { register: registerConvert, handleSubmit: handleSubmitConvert, reset: resetConvert } = useForm();
 
@@ -104,7 +102,7 @@ export function ProformaInvoicesPage() {
   const handlePaymentSubmit = async (data: any) => {
     if (!selectedPf) return;
     try {
-      await apiClient.post(`/proforma-invoices/${selectedPf._id}/pay`, {
+      await apiClient.post(`/proforma-invoices/${selectedPf._id}/payments`, {
         amount: parseFloat(data.amount),
         method: data.method,
         reference: data.reference,
@@ -112,6 +110,7 @@ export function ProformaInvoicesPage() {
       showSuccess('Payment recorded');
       setIsPaymentModalOpen(false);
       setSelectedPf(null);
+      resetPayment();
       queryClient.invalidateQueries({ queryKey: queryKeys.proformas.all() });
     } catch (err: any) {
       showError(err?.response?.data?.message || 'Payment failed');
@@ -121,13 +120,14 @@ export function ProformaInvoicesPage() {
   const handleConvertSubmit = async (data: any) => {
     if (!selectedPf) return;
     try {
-      const res = await apiClient.post(`/proforma-invoices/${selectedPf._id}/convert`, {
+      await apiClient.post(`/proforma-invoices/${selectedPf._id}/convert`, {
         paymentMethod: data.paymentMethod,
         amountPaid: data.amountPaid ? parseFloat(data.amountPaid) : undefined,
       });
       showSuccess('Converted to sale successfully');
       setIsConvertModalOpen(false);
       setSelectedPf(null);
+      resetConvert();
       queryClient.invalidateQueries({ queryKey: queryKeys.proformas.all() });
     } catch (err: any) {
       showError(err?.response?.data?.message || 'Conversion failed');
@@ -190,10 +190,10 @@ export function ProformaInvoicesPage() {
   return (
     <AdminLayout title="Proforma Invoices">
       <div className="mb-6 flex items-center justify-between">
-        <p className="text-gray-400">Create and manage proforma invoices for customer orders</p>
-        <Button onClick={() => setIsCreateModalOpen(true)}>
+        <p className="text-gray-400">Create and manage proforma invoices generated from customer order requests</p>
+        <Button onClick={() => navigate('/admin/customer-orders')}>
           <FileText className="w-4 h-4 mr-2" />
-          New Proforma
+          Upload Customer Order
         </Button>
       </div>
 
@@ -210,7 +210,7 @@ export function ProformaInvoicesPage() {
         />
       )}
 
-      <Modal isOpen={!!selectedPf && !isPaymentModalOpen && !isConvertModalOpen && !isCreateModalOpen}
+      <Modal isOpen={!!selectedPf && !isPaymentModalOpen && !isConvertModalOpen}
              onClose={() => setSelectedPf(null)} title={selectedPf?.proformaNumber || 'Proforma Detail'} size="lg">
         {selectedPf && (
           <div className="space-y-6">
@@ -307,9 +307,8 @@ export function ProformaInvoicesPage() {
           <Select label="Payment Method" required {...registerPayment('method', { required: true })}>
             <option value="">Select method</option>
             <option value="cash">Cash</option>
-            <option value="card">Card</option>
-            <option value="transfer">Bank Transfer</option>
-            <option value="mobile_money">Mobile Money</option>
+            <option value="cheque">Cheque</option>
+            <option value="credit">Credit</option>
           </Select>
           <Input label="Reference (optional)" {...registerPayment('reference')} />
           <div className="flex justify-end gap-3">
@@ -324,8 +323,6 @@ export function ProformaInvoicesPage() {
           <Select label="Payment Method" required {...registerConvert('paymentMethod', { required: true })}>
             <option value="">Select method</option>
             <option value="cash">Cash</option>
-            <option value="card">Card</option>
-            <option value="transfer">Bank Transfer</option>
             <option value="credit">Credit</option>
           </Select>
           <Input label="Amount Paid" type="number" step="0.01" {...registerConvert('amountPaid')} />

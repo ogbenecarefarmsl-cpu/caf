@@ -113,7 +113,7 @@ export function RequestAnalysisPage() {
       };
 
       const response = await apiClient.post('/products', payload);
-      return response.data as MatchedProduct;
+      return (response.data?.data ?? response.data) as MatchedProduct;
     },
     onSuccess: (product) => {
       showSuccess('Product created from request item');
