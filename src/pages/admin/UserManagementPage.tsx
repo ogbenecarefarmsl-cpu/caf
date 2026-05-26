@@ -27,7 +27,7 @@ interface User {
   email: string;
   firstName: string;
   lastName: string;
-  role: 'super_admin' | 'branch_manager' | 'cashier' | 'auditor';
+  role: 'super_admin' | 'branch_manager' | 'cashier' | 'auditor' | 'marketer';
   branchId?: string;
   branchName?: string;
   isActive: boolean;
@@ -191,6 +191,7 @@ export const UserManagementPage = () => {
     branch_manager: 'Branch Manager',
     cashier: 'Cashier',
     auditor: 'Auditor',
+    marketer: 'Marketer',
   };
 
   const roleColors: Record<string, string> = {
@@ -198,6 +199,7 @@ export const UserManagementPage = () => {
     branch_manager: 'bg-blue-600',
     cashier: 'bg-yellow-600',
     auditor: 'bg-gray-600',
+    marketer: 'bg-orange-600',
   };
 
   // Check if role requires branch assignment
@@ -358,6 +360,7 @@ export const UserManagementPage = () => {
                   error={errors.role?.message}
                   options={[
                     { value: 'cashier', label: 'Cashier' },
+                    { value: 'marketer', label: 'Marketer' },
                     { value: 'branch_manager', label: 'Branch Manager' },
                     { value: 'auditor', label: 'Auditor' },
                     { value: 'super_admin', label: 'Super Admin' },

@@ -105,7 +105,7 @@ export const requiredValidation = (fieldName: string) => ({
 });
 
 // Roles that require branch assignment
-export const rolesRequiringBranch = ['branch_manager', 'cashier'];
+export const rolesRequiringBranch = ['branch_manager', 'cashier', 'marketer'];
 
 // Check if a role requires branch assignment
 export const requiresBranchAssignment = (role: string): boolean => {

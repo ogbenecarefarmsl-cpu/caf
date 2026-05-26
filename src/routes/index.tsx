@@ -45,7 +45,11 @@ import {
   UnauthorizedPage,
   NotFoundPage,
   HQDashboardPage,
+  MarketerDashboardPage,
+  MarketerAssignmentsPage,
   CycleCountPage,
+  MarketerSalesPage,
+  MarketerReviewAssignmentsPage,
   PrintersPage,
   PricingManagementPage,
   ExpensesPage,
@@ -374,6 +378,42 @@ export const router = createBrowserRouter([
         <HQDashboardPage />
       </ProtectedRoute>
     ),
+  },
+  {
+    path: '/marketer/dashboard',
+    element: (
+      <ProtectedRoute allowedRoles={['marketer']}>
+        <MarketerDashboardPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/marketer/sales',
+    element: (
+      <ProtectedRoute allowedRoles={['marketer']}>
+        <MarketerSalesPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/marketer/review',
+    element: (
+      <ProtectedRoute allowedRoles={['marketer']}>
+        <MarketerReviewAssignmentsPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/marketer/assignments',
+    element: (
+      <ProtectedRoute allowedRoles={['super_admin', 'branch_manager']}>
+        <MarketerAssignmentsPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/admin/marketer-dashboard',
+    element: <Navigate to="/marketer/dashboard" replace />,
   },
   {
     path: '/admin/suppliers',
