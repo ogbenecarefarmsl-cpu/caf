@@ -39,6 +39,10 @@ export const MarketerLayout = ({ children, title = 'Marketer Dashboard' }: Marke
       name: 'Sell',
       path: '/marketer/sales',
     },
+    {
+      name: 'Settings',
+      path: '/settings/security',
+    },
   ];
 
   return (

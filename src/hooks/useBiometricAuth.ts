@@ -99,13 +99,13 @@ export function useBiometricAuth(
         biometricToken,
       });
 
-      const { user, accessToken, refreshToken, expiresIn } = response.data;
-      setAuth(user, accessToken, refreshToken, expiresIn);
+      const { user, accessToken, refreshToken, expiresIn, refreshExpiresIn } = response.data;
+      setAuth(user, accessToken, refreshToken, expiresIn, undefined, refreshExpiresIn);
 
       if (user.branchId) {
         try {
           const branchResponse = await apiClient.get(`/branches/${user.branchId}`);
-          setSelectedBranch(branchResponse.data);
+          setSelectedBranch(branchResponse.data?.data ?? branchResponse.data);
         } catch {
           // non-fatal
         }

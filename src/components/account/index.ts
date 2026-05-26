@@ -1,0 +1,1 @@
+export { BiometricSettingsPanel } from './BiometricSettingsPanel';

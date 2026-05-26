@@ -85,9 +85,9 @@ export const LoginPage = () => {
       return response.data;
     },
     onSuccess: async (data) => {
-      const { user, accessToken, refreshToken, expiresIn } = data;
+      const { user, accessToken, refreshToken, expiresIn, refreshExpiresIn } = data;
 
-      setAuth(user, accessToken, refreshToken, expiresIn);
+      setAuth(user, accessToken, refreshToken, expiresIn, undefined, refreshExpiresIn);
 
       if (user.branchId) {
         try {

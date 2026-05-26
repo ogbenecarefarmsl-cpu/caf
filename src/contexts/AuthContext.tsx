@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { createContext, useCallback, useContext, useEffect, type ReactNode } from 'react';
 import { useAuthStore, type User } from '../stores/auth-store';
 import apiClient from '../lib/api-client';
@@ -12,6 +13,14 @@ export interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const isNetworkError = (error: unknown) => axios.isAxiosError(error) && !error.response;
+
+const isUnauthorizedError = (error: unknown) =>
+  axios.isAxiosError(error) && error.response?.status === 401;
+
+const isCredentialError = (error: unknown) =>
+  axios.isAxiosError(error) && [400, 401, 403].includes(error.response?.status ?? 0);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -34,6 +43,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     accessToken,
     refreshToken,
     sessionExpiresAt,
+    refreshExpiresAt,
     hasHydrated,
   } = useAuthStore();
 
@@ -46,7 +56,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const refreshAccessToken = useCallback(async () => {
     try {
-      if (!refreshToken) {
+      if (!refreshToken || (refreshExpiresAt && refreshExpiresAt <= Date.now())) {
         expireSession();
         return;
       }
@@ -60,6 +70,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         refreshToken: newRefreshToken,
         user: updatedUser,
         expiresIn,
+        refreshExpiresIn,
       } = response.data;
 
       const nextUser = updatedUser ?? user;
@@ -67,11 +78,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         throw new Error('Invalid refresh response');
       }
 
-      setAuth(nextUser, newAccessToken, newRefreshToken || refreshToken, expiresIn);
-    } catch {
-      expireSession();
+      setAuth(nextUser, newAccessToken, newRefreshToken || refreshToken, expiresIn, undefined, refreshExpiresIn);
+    } catch (error) {
+      if (isNetworkError(error)) {
+        console.warn('Token refresh postponed because the network is unavailable.');
+        return;
+      }
+
+      if (isCredentialError(error)) {
+        expireSession();
+      }
     }
-  }, [expireSession, refreshToken, setAuth, user]);
+  }, [expireSession, refreshExpiresAt, refreshToken, setAuth, user]);
 
   const logout = async () => {
     try {
@@ -104,13 +122,22 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         return;
       }
 
+      if (!accessToken && isAuthenticated && refreshToken) {
+        await refreshAccessToken();
+        return;
+      }
+
       if (accessToken && isAuthenticated) {
         try {
           await apiClient.get('/auth/me');
-        } catch {
+        } catch (error) {
+          if (isNetworkError(error)) {
+            return;
+          }
+
           if (refreshToken) {
             await refreshAccessToken();
-          } else {
+          } else if (isUnauthorizedError(error)) {
             expireSession();
           }
         }

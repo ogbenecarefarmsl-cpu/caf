@@ -45,6 +45,10 @@ function redirectToLogin(): void {
   }
 }
 
+function isRefreshCredentialError(error: unknown): boolean {
+  return axios.isAxiosError(error) && [400, 401, 403].includes(error.response?.status ?? 0);
+}
+
 // Request interceptor to add auth token and idempotency keys
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
@@ -129,6 +133,7 @@ apiClient.interceptors.response.use(
           refreshToken: newRefreshToken,
           user,
           expiresIn,
+          refreshExpiresIn,
         } = response.data;
         const authStore = useAuthStore.getState();
         const nextUser = user ?? authStore.user;
@@ -137,7 +142,7 @@ apiClient.interceptors.response.use(
           throw new Error('Invalid refresh response');
         }
 
-        authStore.setAuth(nextUser, accessToken, newRefreshToken || refreshToken, expiresIn);
+        authStore.setAuth(nextUser, accessToken, newRefreshToken || refreshToken, expiresIn, undefined, refreshExpiresIn);
 
         // Retry the original request with new token
         if (originalRequest.headers) {
@@ -145,9 +150,10 @@ apiClient.interceptors.response.use(
         }
         return apiClient(originalRequest);
       } catch (refreshError) {
-        // Refresh failed, clear tokens and redirect to login
-        useAuthStore.getState().clearAuth();
-        redirectToLogin();
+        if (isRefreshCredentialError(refreshError)) {
+          useAuthStore.getState().clearAuth();
+          redirectToLogin();
+        }
         return Promise.reject(refreshError);
       }
     }

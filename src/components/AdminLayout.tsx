@@ -49,6 +49,16 @@ export const AdminLayout = ({ children, title = 'Admin' }: AdminLayoutProps) => 
       roles: ['super_admin', 'branch_manager', 'auditor'],
     },
     {
+      name: 'Account Security',
+      path: '/settings/security',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 11c1.657 0 3-1.567 3-3.5S13.657 4 12 4 9 5.567 9 7.5 10.343 11 12 11zm0 2c-3.314 0-6 1.79-6 4v1a2 2 0 002 2h8a2 2 0 002-2v-1c0-2.21-2.686-4-6-4z" />
+        </svg>
+      ),
+      roles: ['super_admin', 'branch_manager', 'cashier', 'auditor', 'marketer'],
+    },
+    {
       name: 'Inventory',
       path: '/admin/inventory',
       icon: (
