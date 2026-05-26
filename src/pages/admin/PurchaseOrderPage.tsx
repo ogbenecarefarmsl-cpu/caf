@@ -199,7 +199,7 @@ export default function PurchaseOrderPage() {
         receivedQuantity: item.quantity,
         purchasePrice: item.unitPrice,
         expiryDate: '',
-        sellingPrice: 0,
+        sellingPrice: item.unitPrice,
         supplyDate: new Date().toISOString().slice(0, 10),
       })),
     });

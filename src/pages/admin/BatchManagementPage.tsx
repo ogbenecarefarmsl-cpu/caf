@@ -17,10 +17,11 @@ import { useCurrency } from '../../hooks/useCurrency';
 
 interface Batch {
   id: string;
-  productId: string;
+  _id?: string;
+  productId: string | { _id?: string; name?: string; sku?: string };
   productName: string;
   productSku: string;
-  branchId: string;
+  branchId: string | { _id?: string; name?: string; code?: string };
   branchName: string;
   lotNumber: string;
   expiryDate: string;
@@ -37,13 +38,15 @@ interface Batch {
 }
 
 interface Product {
-  id: string;
+  id?: string;
+  _id?: string;
   name: string;
   sku: string;
 }
 
 interface Supplier {
-  id: string;
+  id?: string;
+  _id?: string;
   name: string;
 }
 
@@ -62,13 +65,33 @@ interface BatchFormData {
   quantity: number;
   purchasePrice: number;
   sellingPrice: number;
-  supplierId: string;
+  supplierId: string | { _id?: string; name?: string };
 }
 
 const unwrapArray = <T,>(value: unknown): T[] => {
   if (Array.isArray(value)) return value as T[];
   const data = (value as { data?: unknown })?.data;
   return Array.isArray(data) ? (data as T[]) : [];
+};
+
+const getEntityId = (value?: string | { _id?: string; id?: string }) =>
+  typeof value === 'string' ? value : value?._id || value?.id || '';
+
+const getOptionId = (value: { _id?: string; id?: string }) => value._id || value.id || '';
+
+const normalizeBatch = (batch: any): Batch => {
+  const product = batch.productId;
+  const branch = batch.branchId;
+  const supplier = batch.supplierId;
+
+  return {
+    ...batch,
+    id: batch.id || batch._id,
+    productName: batch.productName || (typeof product === 'object' ? product?.name : '') || '-',
+    productSku: batch.productSku || (typeof product === 'object' ? product?.sku : '') || '-',
+    branchName: batch.branchName || (typeof branch === 'object' ? branch?.name : '') || '-',
+    supplierName: batch.supplierName || (typeof supplier === 'object' ? supplier?.name : '') || '-',
+  };
 };
 
 export const BatchManagementPage = () => {
@@ -105,7 +128,7 @@ export const BatchManagementPage = () => {
       if (showExpiring) params.expiring = '90'; // Show batches expiring in 90 days
       const response = await apiClient.get('/batches', { params });
       const payload = response.data?.data ?? response.data;
-      return (Array.isArray(payload) ? payload : []) as Batch[];
+      return (Array.isArray(payload) ? payload : []).map(normalizeBatch);
     },
     enabled: !!branchId,
   });
@@ -176,14 +199,14 @@ export const BatchManagementPage = () => {
     if (batch) {
       setEditingBatch(batch);
       reset({
-        productId: batch.productId,
-        branchId: batch.branchId,
+        productId: getEntityId(batch.productId),
+        branchId: getEntityId(batch.branchId),
         lotNumber: batch.lotNumber,
         expiryDate: batch.expiryDate.split('T')[0],
         quantity: batch.quantityAvailable,
         purchasePrice: batch.purchasePrice,
         sellingPrice: batch.sellingPrice,
-        supplierId: batch.supplierId,
+        supplierId: getEntityId(batch.supplierId),
       });
     } else {
       setEditingBatch(null);
@@ -369,7 +392,7 @@ export const BatchManagementPage = () => {
             options={[
               { value: '', label: 'All Products' },
               ...(products || []).map(product => ({
-                value: product.id,
+                value: getOptionId(product),
                 label: `${product.name} (${product.sku})`,
               })),
             ]}
@@ -413,7 +436,7 @@ export const BatchManagementPage = () => {
                 options={[
                   { value: '', label: 'Select a product' },
                   ...(products || []).map(product => ({
-                    value: product.id,
+                    value: getOptionId(product),
                     label: `${product.name} (${product.sku})`,
                   })),
                 ]}
@@ -502,7 +525,7 @@ export const BatchManagementPage = () => {
               options={[
                 { value: '', label: 'Select a supplier' },
                 ...(suppliers || []).map(supplier => ({
-                  value: supplier.id,
+                  value: getOptionId(supplier),
                   label: supplier.name,
                 })),
               ]}

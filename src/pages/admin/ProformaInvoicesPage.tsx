@@ -62,6 +62,8 @@ export function ProformaInvoicesPage() {
   const [selectedPf, setSelectedPf] = useState<ProformaInvoice | null>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isConvertModalOpen, setIsConvertModalOpen] = useState(false);
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState('');
   const { selectedBranch } = useBranchStore();
   const queryClient = useQueryClient();
   const { showSuccess, showError } = useToast();
@@ -95,7 +97,13 @@ export function ProformaInvoicesPage() {
 
   const rejectMutation = useMutation({
     mutationFn: ({ id, reason }: { id: string; reason: string }) => apiClient.patch(`/proforma-invoices/${id}/reject`, { reason }),
-    onSuccess: () => { showSuccess('Proforma rejected'); queryClient.invalidateQueries({ queryKey: queryKeys.proformas.all() }); },
+    onSuccess: () => {
+      showSuccess('Proforma rejected');
+      setIsRejectModalOpen(false);
+      setSelectedPf(null);
+      setRejectionReason('');
+      queryClient.invalidateQueries({ queryKey: queryKeys.proformas.all() });
+    },
     onError: (err: any) => showError(err?.response?.data?.message || 'Failed to reject'),
   });
 
@@ -210,7 +218,7 @@ export function ProformaInvoicesPage() {
         />
       )}
 
-      <Modal isOpen={!!selectedPf && !isPaymentModalOpen && !isConvertModalOpen}
+      <Modal isOpen={!!selectedPf && !isPaymentModalOpen && !isConvertModalOpen && !isRejectModalOpen}
              onClose={() => setSelectedPf(null)} title={selectedPf?.proformaNumber || 'Proforma Detail'} size="lg">
         {selectedPf && (
           <div className="space-y-6">
@@ -275,10 +283,7 @@ export function ProformaInvoicesPage() {
                   <Button onClick={() => approveMutation.mutate(selectedPf._id)} variant="primary">
                     <CheckCircle className="w-4 h-4 mr-2" />Approve
                   </Button>
-                  <Button onClick={() => {
-                    const reason = prompt('Rejection reason:');
-                    if (reason) rejectMutation.mutate({ id: selectedPf._id, reason });
-                  }} variant="danger">
+                  <Button onClick={() => setIsRejectModalOpen(true)} variant="danger">
                     <XCircle className="w-4 h-4 mr-2" />Reject
                   </Button>
                 </>
@@ -299,6 +304,38 @@ export function ProformaInvoicesPage() {
             </div>
           </div>
         )}
+      </Modal>
+
+      <Modal
+        isOpen={isRejectModalOpen}
+        onClose={() => setIsRejectModalOpen(false)}
+        title="Reject Proforma"
+      >
+        <div className="space-y-4">
+          <Input
+            label="Reason"
+            value={rejectionReason}
+            onChange={(event) => setRejectionReason(event.target.value)}
+            placeholder="Explain why this proforma is being rejected"
+          />
+          <div className="flex justify-end gap-3">
+            <Button type="button" variant="ghost" onClick={() => setIsRejectModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="danger"
+              isLoading={rejectMutation.isPending}
+              disabled={!selectedPf || !rejectionReason.trim()}
+              onClick={() => selectedPf && rejectMutation.mutate({
+                id: selectedPf._id,
+                reason: rejectionReason.trim(),
+              })}
+            >
+              Reject Proforma
+            </Button>
+          </div>
+        </div>
       </Modal>
 
       <Modal isOpen={isPaymentModalOpen} onClose={() => setIsPaymentModalOpen(false)} title="Record Payment">
