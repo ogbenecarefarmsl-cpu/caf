@@ -208,6 +208,9 @@ export const ProductManagementPage = () => {
   const toIsoDate = (value?: string) =>
     value ? new Date(`${value}T00:00:00.000Z`).toISOString() : undefined;
 
+  const getEffectiveSellingPrice = (data: ProductFormData) =>
+    Number(data.initialSellingPrice || data.suggestedRetailPrice || data.basePrice || 0);
+
   const { data: productsData, isLoading, error } = useQuery({
     queryKey: [
       'products',
@@ -254,6 +257,8 @@ export const ProductManagementPage = () => {
 
   const handleCreateProduct = async (data: ProductFormData) => {
     const packSizes = normalizePackSizes(data.packSizes);
+    const sellingPrice = getEffectiveSellingPrice(data);
+    const costPrice = Number(data.initialPurchasePrice || data.costPrice || 0);
     const payload = {
       name: data.name,
       sku: data.sku,
@@ -274,8 +279,8 @@ export const ProductManagementPage = () => {
       initialExpiryDate: toIsoDate(data.initialExpiryDate),
       initialSupplierId: data.initialSupplierId || undefined,
       initialSupplyDate: data.initialSupplyDate || undefined,
-      initialPurchasePrice: data.initialPurchasePrice,
-      initialSellingPrice: data.initialSellingPrice,
+      initialPurchasePrice: costPrice,
+      initialSellingPrice: sellingPrice,
       maxStockLevel: data.maxStockLevel,
     };
 
@@ -294,6 +299,8 @@ export const ProductManagementPage = () => {
   const handleUpdateProduct = (data: ProductFormData) => {
     if (!editingProduct) return;
 
+    const sellingPrice = getEffectiveSellingPrice(data);
+    const costPrice = Number(data.initialPurchasePrice || data.costPrice || 0);
     const payload = {
       name: data.name,
       sku: data.sku,
@@ -303,9 +310,9 @@ export const ProductManagementPage = () => {
       unit: data.unit,
       reorderLevel: data.reorderLevel,
       maxStockLevel: data.maxStockLevel,
-      basePrice: data.basePrice,
-      costPrice: data.costPrice,
-      suggestedRetailPrice: data.suggestedRetailPrice,
+      basePrice: sellingPrice,
+      costPrice,
+      suggestedRetailPrice: sellingPrice,
       markupPercentage: data.markupPercentage,
       requiresPrescription: data.requiresPrescription,
       isControlled: data.isControlled,
@@ -338,6 +345,11 @@ export const ProductManagementPage = () => {
     const normalizedData: ProductFormData = {
       ...data,
       sku: data.sku?.trim() || generateSku(data.name),
+      basePrice: getEffectiveSellingPrice(data),
+      suggestedRetailPrice: getEffectiveSellingPrice(data),
+      initialSellingPrice: getEffectiveSellingPrice(data),
+      costPrice: Number(data.initialPurchasePrice || data.costPrice || 0),
+      initialPurchasePrice: Number(data.initialPurchasePrice || data.costPrice || 0),
       packSizes,
     };
 
@@ -566,7 +578,7 @@ export const ProductManagementPage = () => {
     { key: 'brand', header: 'Brand' },
     { 
       key: 'basePrice', 
-      header: 'Base Price',
+      header: 'Selling Price',
       render: (product: Product) => format(product.basePrice || 0)
     },
     { 
@@ -856,11 +868,11 @@ export const ProductManagementPage = () => {
 
                 <div className="grid grid-cols-2 gap-4">
                   <Input
-                    label="Base Price (per unit)"
+                    label="Selling Price (per base unit)"
                     type="number"
                     step="0.01"
                     {...register('basePrice', {
-                      required: 'Base price is required',
+                      required: 'Selling price is required',
                       min: { value: 0, message: 'Must be 0 or greater' },
                     })}
                     error={errors.basePrice?.message}
@@ -880,7 +892,7 @@ export const ProductManagementPage = () => {
 
                 <div className="grid grid-cols-2 gap-4">
                   <Input
-                    label="Suggested Retail Price"
+                    label="Retail Price Override"
                     type="number"
                     step="0.01"
                     {...register('suggestedRetailPrice', {
@@ -1050,14 +1062,14 @@ export const ProductManagementPage = () => {
                 </Select>
 
                 <Input
-                  label="Initial Selling Price"
+                  label={editingProduct ? 'Latest Selling Price' : 'Opening Selling Price'}
                   type="number"
                   step="0.01"
                   {...register('initialSellingPrice', {
                     min: { value: 0, message: 'Must be 0 or greater' },
                   })}
                   error={errors.initialSellingPrice?.message}
-                  placeholder="Defaults to Suggested Retail or Base Price"
+                  placeholder="Defaults to selling price above"
                 />
 
                 <div className="space-y-3 p-4 bg-white/5 rounded-xl border border-white/5">
