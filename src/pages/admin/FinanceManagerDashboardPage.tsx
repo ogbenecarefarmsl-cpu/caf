@@ -75,6 +75,12 @@ interface UnifiedDashboard {
     count: number;
     total: number;
   }[];
+  externalServices: {
+    caf: { revenue: number; expenses: number; profit: number; outstanding: number; orders: number; byPaymentMethod: { method: string; count: number; total: number }[] };
+    emr: { revenue: number; expenses: number; profit: number; outstanding: number; orders: number; byPaymentMethod: { method: string; count: number; total: number }[] };
+    lab: { revenue: number; expenses: number; profit: number; outstanding: number; orders: number; byPaymentMethod: { method: string; count: number; total: number }[] };
+    combined: { totalRevenue: number; totalExpenses: number; totalProfit: number; totalOutstanding: number };
+  };
 }
 
 function fmt(amount: number) {
@@ -126,6 +132,73 @@ export function FinanceManagerDashboardPage() {
         <span className="text-gray-400">to</span>
         <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)}
           className="px-3 py-2 rounded-xl bg-white/5 text-white border border-white/10 text-sm" />
+      </div>
+
+      {/* ═══ SECTION 0: CAF / EMR / LAB Breakdown ═══ */}
+      <div className="mb-8">
+        <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+          <Activity className="w-5 h-5 text-accent-green" /> Revenue by Source (CAF / EMR / LAB)
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+          {[
+            { label: 'CAF (Pharmacy)', revenue: d.externalServices.caf.revenue, expenses: d.externalServices.caf.expenses, profit: d.externalServices.caf.profit, color: 'border-blue-500/30 bg-blue-500/5', accent: 'text-blue-400' },
+            { label: 'EMR (Medical)', revenue: d.externalServices.emr.revenue, expenses: d.externalServices.emr.expenses, profit: d.externalServices.emr.profit, color: 'border-purple-500/30 bg-purple-500/5', accent: 'text-purple-400' },
+            { label: 'LAB (Laboratory)', revenue: d.externalServices.lab.revenue, expenses: d.externalServices.lab.expenses, profit: d.externalServices.lab.profit, color: 'border-cyan-500/30 bg-cyan-500/5', accent: 'text-cyan-400' },
+            { label: 'Combined Total', revenue: d.externalServices.combined.totalRevenue, expenses: d.externalServices.combined.totalExpenses, profit: d.externalServices.combined.totalProfit, color: 'border-green-500/30 bg-green-500/5', accent: 'text-green-400' },
+          ].map((s) => (
+            <div key={s.label} className={`rounded-xl border p-4 ${s.color}`}>
+              <p className={`text-sm font-semibold mb-3 ${s.accent}`}>{s.label}</p>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400">Revenue</span>
+                  <span className="text-white font-medium">{fmt(s.revenue)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400">Expenses</span>
+                  <span className="text-red-400 font-medium">{fmt(s.expenses)}</span>
+                </div>
+                <div className="flex justify-between text-sm border-t border-white/10 pt-2">
+                  <span className="text-gray-400">Profit</span>
+                  <span className={`font-bold ${s.profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>{fmt(s.profit)}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        {/* Per-source order counts and outstanding */}
+        <div className="grid grid-cols-3 gap-4">
+          {[
+            { label: 'CAF', orders: d.externalServices.caf.orders, outstanding: d.externalServices.caf.outstanding, methods: d.externalServices.caf.byPaymentMethod },
+            { label: 'EMR', orders: d.externalServices.emr.orders, outstanding: d.externalServices.emr.outstanding, methods: d.externalServices.emr.byPaymentMethod },
+            { label: 'LAB', orders: d.externalServices.lab.orders, outstanding: d.externalServices.lab.outstanding, methods: d.externalServices.lab.byPaymentMethod },
+          ].map((s) => (
+            <div key={s.label} className="bg-white/5 rounded-xl border border-white/10 p-4">
+              <div className="flex justify-between items-center mb-3">
+                <span className="text-sm font-medium text-gray-400">{s.label}</span>
+                <span className="text-xs text-gray-500">{s.orders} orders</span>
+              </div>
+              {s.outstanding > 0 && (
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-gray-400">Outstanding</span>
+                  <span className="text-amber-400">{fmt(s.outstanding)}</span>
+                </div>
+              )}
+              {s.methods.length > 0 && (
+                <div className="space-y-1">
+                  {s.methods.map((m) => (
+                    <div key={m.method} className="flex justify-between text-xs">
+                      <span className="text-gray-500">{paymentMethodLabels[m.method] || m.method}</span>
+                      <span className="text-gray-300">{fmt(m.total)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {s.methods.length === 0 && s.orders === 0 && (
+                <p className="text-xs text-gray-500 italic">No data available</p>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* ═══ SECTION 1: Profit & Loss ═══ */}
