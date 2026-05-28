@@ -8,73 +8,25 @@ import { queryKeys } from '../../lib/query-keys';
 import apiClient from '../../lib/api-client';
 import { buildApiUrl } from '../../lib/api-utils';
 import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend,
+} from 'recharts';
+import {
   DollarSign, TrendingUp, TrendingDown, AlertTriangle, CheckCircle,
   CreditCard, Users, ShoppingCart, Package, Wallet, ArrowRightLeft,
-  BarChart3, Activity,
+  BarChart3, Activity, ChevronDown, ChevronRight,
 } from 'lucide-react';
 
 interface UnifiedDashboard {
-  revenue: {
-    totalSales: number;
-    totalRevenue: number;
-    totalReturns: number;
-    netRevenue: number;
-    salesCount: number;
-  };
-  expenses: {
-    totalShiftExpenses: number;
-    totalFinanceExpenses: number;
-    totalExpenses: number;
-    byCategory: { category: string; total: number; count: number }[];
-  };
-  cashPosition: {
-    totalOpeningCash: number;
-    totalClosingCash: number;
-    totalExpectedCash: number;
-    totalVariance: number;
-    openShifts: number;
-    closedShifts: number;
-  };
-  creditOutstanding: {
-    totalCreditSales: number;
-    totalBalanceDue: number;
-    overdueCount: number;
-    overdueAmount: number;
-  };
-  marketer: {
-    totalAssignedValue: number;
-    totalSoldValue: number;
-    totalOutstanding: number;
-    unitsAssigned: number;
-    unitsSold: number;
-    unitsRemaining: number;
-  };
-  purchases: {
-    totalPurchaseValue: number;
-    receivedValue: number;
-    pendingValue: number;
-  };
-  profitLoss: {
-    grossRevenue: number;
-    costOfGoods: number;
-    grossProfit: number;
-    operatingExpenses: number;
-    netProfit: number;
-    margin: number;
-  };
-  byBranch: {
-    branchId: string;
-    branchName: string;
-    revenue: number;
-    expenses: number;
-    profit: number;
-    salesCount: number;
-  }[];
-  byPaymentMethod: {
-    method: string;
-    count: number;
-    total: number;
-  }[];
+  revenue: { totalSales: number; totalRevenue: number; totalReturns: number; netRevenue: number; salesCount: number };
+  expenses: { totalShiftExpenses: number; totalFinanceExpenses: number; totalExpenses: number; byCategory: { category: string; total: number; count: number }[] };
+  cashPosition: { totalOpeningCash: number; totalClosingCash: number; totalExpectedCash: number; totalVariance: number; openShifts: number; closedShifts: number };
+  creditOutstanding: { totalCreditSales: number; totalBalanceDue: number; overdueCount: number; overdueAmount: number };
+  marketer: { totalAssignedValue: number; totalSoldValue: number; totalOutstanding: number; unitsAssigned: number; unitsSold: number; unitsRemaining: number };
+  purchases: { totalPurchaseValue: number; receivedValue: number; pendingValue: number };
+  profitLoss: { grossRevenue: number; costOfGoods: number; grossProfit: number; operatingExpenses: number; netProfit: number; margin: number };
+  byBranch: { branchId: string; branchName: string; revenue: number; expenses: number; profit: number; salesCount: number }[];
+  byPaymentMethod: { method: string; count: number; total: number }[];
   externalServices: {
     caf: { revenue: number; expenses: number; profit: number; outstanding: number; orders: number; byPaymentMethod: { method: string; count: number; total: number }[]; reconciliation: any };
     emr: { revenue: number; expenses: number; profit: number; outstanding: number; orders: number; byPaymentMethod: { method: string; count: number; total: number }[]; reconciliation: any };
@@ -84,21 +36,67 @@ interface UnifiedDashboard {
 }
 
 function fmt(amount: number) {
-  return `Le ${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `Le ${amount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 }
 
-function pct(value: number, total: number) {
-  if (total === 0) return '0%';
-  return `${((value / total) * 100).toFixed(1)}%`;
-}
-
-const paymentMethodLabels: Record<string, string> = {
+const COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#14b8a6'];
+const paymentLabels: Record<string, string> = {
   cash: 'Cash', card: 'Card', credit: 'Credit', orange_money: 'Orange Money',
   africell_money: 'Africell Money', qmoney: 'QMoney', bank_transfer: 'Bank Transfer',
-  mobile: 'Mobile Money', insurance: 'Insurance', split: 'Split',
+  mobile: 'Mobile', insurance: 'Insurance', split: 'Split',
 };
 
+type Tab = 'overview' | 'reconciliation' | 'profitloss' | 'branches';
+
+function VarianceBar({ expected, actual, label }: { expected: number; actual: number; label: string }) {
+  const variance = expected - actual;
+  const pct = expected > 0 ? Math.min((actual / expected) * 100, 120) : 0;
+  const color = Math.abs(variance) < 1 ? 'bg-green-500' : variance > 0 ? 'bg-red-500' : 'bg-amber-500';
+  return (
+    <div className="mb-2">
+      <div className="flex justify-between text-xs mb-1">
+        <span className="text-gray-400">{label}</span>
+        <span className="text-gray-300">{fmt(actual)} / {fmt(expected)}</span>
+      </div>
+      <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+        <div className={`h-full ${color} rounded-full transition-all`} style={{ width: `${Math.min(pct, 100)}%` }} />
+      </div>
+      <div className="flex justify-end mt-0.5">
+        <span className={`text-xs font-medium ${Math.abs(variance) < 1 ? 'text-green-400' : variance > 0 ? 'text-red-400' : 'text-amber-400'}`}>
+          {Math.abs(variance) < 1 ? 'Balanced' : variance > 0 ? `Short ${fmt(variance)}` : `Surplus ${fmt(Math.abs(variance))}`}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function StatCard({ label, value, icon, color }: { label: string; value: string; icon: React.ReactNode; color: string }) {
+  return (
+    <div className={`rounded-xl border p-4 ${color}`}>
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs text-gray-400">{label}</span>
+        {icon}
+      </div>
+      <p className="text-xl font-bold text-white">{value}</p>
+    </div>
+  );
+}
+
+function CollapsibleSection({ title, icon, children, defaultOpen = true }: { title: string; icon: React.ReactNode; children: React.ReactNode; defaultOpen?: boolean }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="mb-6 bg-white/5 rounded-xl border border-white/10 overflow-hidden">
+      <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/5 transition">
+        <span className="flex items-center gap-2 text-lg font-semibold text-white">{icon}{title}</span>
+        {open ? <ChevronDown className="w-5 h-5 text-gray-400" /> : <ChevronRight className="w-5 h-5 text-gray-400" />}
+      </button>
+      {open && <div className="px-5 pb-5">{children}</div>}
+    </div>
+  );
+}
+
 export function FinanceManagerDashboardPage() {
+  const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const { selectedBranch } = useBranchStore();
@@ -122,401 +120,354 @@ export function FinanceManagerDashboardPage() {
 
   const d = data!;
   const pl = d.profitLoss;
+  const tabs: { key: Tab; label: string }[] = [
+    { key: 'overview', label: 'Overview' },
+    { key: 'reconciliation', label: 'Reconciliation' },
+    { key: 'profitloss', label: 'P&L' },
+    { key: 'branches', label: 'Branches' },
+  ];
+
+  const sourceRevenueData = [
+    { name: 'CAF', value: d.externalServices.caf.revenue },
+    { name: 'EMR', value: d.externalServices.emr.revenue },
+    { name: 'LAB', value: d.externalServices.lab.revenue },
+  ].filter((d) => d.value > 0);
+
+  const expensePieData = d.expenses.byCategory.map((c) => ({ name: c.category.replace('_', ' '), value: c.total }));
+
+  const branchBarData = d.byBranch.map((b) => ({ name: b.branchName.slice(0, 12), Revenue: b.revenue, Expenses: b.expenses, Profit: b.profit }));
 
   return (
     <AdminLayout title="Finance Dashboard">
-      {/* Date Range Filter */}
-      <div className="mb-6 flex items-center gap-3 flex-wrap">
-        <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}
-          className="px-3 py-2 rounded-xl bg-white/5 text-white border border-white/10 text-sm" />
-        <span className="text-gray-400">to</span>
-        <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)}
-          className="px-3 py-2 rounded-xl bg-white/5 text-white border border-white/10 text-sm" />
-      </div>
-
-      {/* ═══ SECTION 0: CAF / EMR / LAB Breakdown ═══ */}
-      <div className="mb-8">
-        <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <Activity className="w-5 h-5 text-accent-green" /> Revenue by Source (CAF / EMR / LAB)
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-          {[
-            { label: 'CAF (Pharmacy)', revenue: d.externalServices.caf.revenue, expenses: d.externalServices.caf.expenses, profit: d.externalServices.caf.profit, color: 'border-blue-500/30 bg-blue-500/5', accent: 'text-blue-400' },
-            { label: 'EMR (Medical)', revenue: d.externalServices.emr.revenue, expenses: d.externalServices.emr.expenses, profit: d.externalServices.emr.profit, color: 'border-purple-500/30 bg-purple-500/5', accent: 'text-purple-400' },
-            { label: 'LAB (Laboratory)', revenue: d.externalServices.lab.revenue, expenses: d.externalServices.lab.expenses, profit: d.externalServices.lab.profit, color: 'border-cyan-500/30 bg-cyan-500/5', accent: 'text-cyan-400' },
-            { label: 'Combined Total', revenue: d.externalServices.combined.totalRevenue, expenses: d.externalServices.combined.totalExpenses, profit: d.externalServices.combined.totalProfit, color: 'border-green-500/30 bg-green-500/5', accent: 'text-green-400' },
-          ].map((s) => (
-            <div key={s.label} className={`rounded-xl border p-4 ${s.color}`}>
-              <p className={`text-sm font-semibold mb-3 ${s.accent}`}>{s.label}</p>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-400">Revenue</span>
-                  <span className="text-white font-medium">{fmt(s.revenue)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-400">Expenses</span>
-                  <span className="text-red-400 font-medium">{fmt(s.expenses)}</span>
-                </div>
-                <div className="flex justify-between text-sm border-t border-white/10 pt-2">
-                  <span className="text-gray-400">Profit</span>
-                  <span className={`font-bold ${s.profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>{fmt(s.profit)}</span>
-                </div>
-              </div>
-            </div>
+      {/* Top Bar: Date Filter + Tabs */}
+      <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          {tabs.map((t) => (
+            <button key={t.key} onClick={() => setActiveTab(t.key)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition ${activeTab === t.key ? 'bg-accent-green text-white' : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'}`}>
+              {t.label}
+            </button>
           ))}
         </div>
-        {/* Per-source order counts and outstanding */}
-        <div className="grid grid-cols-3 gap-4">
-          {[
-            { label: 'CAF', orders: d.externalServices.caf.orders, outstanding: d.externalServices.caf.outstanding, methods: d.externalServices.caf.byPaymentMethod },
-            { label: 'EMR', orders: d.externalServices.emr.orders, outstanding: d.externalServices.emr.outstanding, methods: d.externalServices.emr.byPaymentMethod },
-            { label: 'LAB', orders: d.externalServices.lab.orders, outstanding: d.externalServices.lab.outstanding, methods: d.externalServices.lab.byPaymentMethod },
-          ].map((s) => (
-            <div key={s.label} className="bg-white/5 rounded-xl border border-white/10 p-4">
-              <div className="flex justify-between items-center mb-3">
-                <span className="text-sm font-medium text-gray-400">{s.label}</span>
-                <span className="text-xs text-gray-500">{s.orders} orders</span>
+        <div className="flex items-center gap-2">
+          <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}
+            className="px-3 py-1.5 rounded-lg bg-white/5 text-white border border-white/10 text-sm" />
+          <span className="text-gray-500 text-sm">to</span>
+          <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)}
+            className="px-3 py-1.5 rounded-lg bg-white/5 text-white border border-white/10 text-sm" />
+        </div>
+      </div>
+
+      {/* ═══ TAB: OVERVIEW ═══ */}
+      {activeTab === 'overview' && (
+        <>
+          {/* Source Revenue Chart + P&L Mini */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <CollapsibleSection title="Revenue by Source" icon={<BarChart3 className="w-5 h-5 text-accent-green" />}>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={sourceRevenueData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                      {sourceRevenueData.map((_, i) => <Cell key={i} fill={COLORS[i]} />)}
+                    </Pie>
+                    <Tooltip formatter={(v: number) => fmt(v)} />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
-              {s.outstanding > 0 && (
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="text-gray-400">Outstanding</span>
-                  <span className="text-amber-400">{fmt(s.outstanding)}</span>
+              <div className="grid grid-cols-3 gap-3 mt-4">
+                {[
+                  { label: 'CAF', val: d.externalServices.caf.revenue, color: 'text-blue-400' },
+                  { label: 'EMR', val: d.externalServices.emr.revenue, color: 'text-purple-400' },
+                  { label: 'LAB', val: d.externalServices.lab.revenue, color: 'text-cyan-400' },
+                ].map((s) => (
+                  <div key={s.label} className="text-center">
+                    <p className={`text-lg font-bold ${s.color}`}>{fmt(s.val)}</p>
+                    <p className="text-xs text-gray-400">{s.label}</p>
+                  </div>
+                ))}
+              </div>
+            </CollapsibleSection>
+
+            <CollapsibleSection title="Quick P&L" icon={<DollarSign className="w-5 h-5 text-cyan-400" />}>
+              <div className="space-y-3">
+                {[
+                  { label: 'Gross Revenue', value: pl.grossRevenue, color: 'text-green-400' },
+                  { label: 'Cost of Goods', value: pl.costOfGoods, color: 'text-red-400' },
+                  { label: 'Gross Profit', value: pl.grossProfit, color: 'text-blue-400' },
+                  { label: 'Operating Expenses', value: pl.operatingExpenses, color: 'text-orange-400' },
+                ].map((item) => (
+                  <div key={item.label} className="flex justify-between items-center py-2 border-b border-white/5">
+                    <span className="text-sm text-gray-400">{item.label}</span>
+                    <span className={`text-sm font-semibold ${item.color}`}>{fmt(item.value)}</span>
+                  </div>
+                ))}
+                <div className="flex justify-between items-center py-3 bg-white/5 rounded-lg px-3">
+                  <span className="text-white font-semibold">Net Profit</span>
+                  <span className={`text-xl font-bold ${pl.netProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>{fmt(pl.netProfit)}</span>
                 </div>
-              )}
-              {s.methods.length > 0 && (
-                <div className="space-y-1">
-                  {s.methods.map((m) => (
-                    <div key={m.method} className="flex justify-between text-xs">
-                      <span className="text-gray-500">{paymentMethodLabels[m.method] || m.method}</span>
-                      <span className="text-gray-300">{fmt(m.total)}</span>
+                <div className="flex justify-between items-center py-2">
+                  <span className="text-sm text-gray-400">Margin</span>
+                  <span className="text-sm font-semibold text-purple-400">{pl.margin}%</span>
+                </div>
+              </div>
+            </CollapsibleSection>
+          </div>
+
+          {/* Top Stats Row */}
+          <CollapsibleSection title="Key Metrics" icon={<Activity className="w-5 h-5 text-amber-400" />}>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              <StatCard label="Net Revenue" value={fmt(d.revenue.netRevenue)} icon={<TrendingUp className="w-4 h-4 text-green-400" />} color="bg-green-500/10 border-green-500/20" />
+              <StatCard label="Total Expenses" value={fmt(d.expenses.totalExpenses)} icon={<TrendingDown className="w-4 h-4 text-red-400" />} color="bg-red-500/10 border-red-500/20" />
+              <StatCard label="Cash Variance" value={fmt(d.cashPosition.totalVariance)} icon={<AlertTriangle className="w-4 h-4 text-amber-400" />} color={d.cashPosition.totalVariance === 0 ? 'bg-green-500/10 border-green-500/20' : 'bg-amber-500/10 border-amber-500/20'} />
+              <StatCard label="Credit Outstanding" value={fmt(d.creditOutstanding.totalBalanceDue)} icon={<CreditCard className="w-4 h-4 text-orange-400" />} color="bg-orange-500/10 border-orange-500/20" />
+              <StatCard label="Transactions" value={d.revenue.salesCount.toLocaleString()} icon={<ShoppingCart className="w-4 h-4 text-blue-400" />} color="bg-blue-500/10 border-blue-500/20" />
+              <StatCard label="Open Shifts" value={String(d.cashPosition.openShifts)} icon={<Wallet className="w-4 h-4 text-cyan-400" />} color="bg-cyan-500/10 border-cyan-500/20" />
+            </div>
+          </CollapsibleSection>
+
+          {/* Payment Methods + Credit + Marketer */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <CollapsibleSection title="Payment Methods" icon={<ArrowRightLeft className="w-5 h-5 text-cyan-400" />}>
+              {d.byPaymentMethod.length === 0 ? (
+                <p className="text-gray-400 text-sm">No data</p>
+              ) : (
+                <div className="space-y-2">
+                  {d.byPaymentMethod.map((pm) => (
+                    <div key={pm.method} className="flex items-center justify-between bg-white/5 rounded-lg p-2">
+                      <span className="text-sm text-gray-300">{paymentLabels[pm.method] || pm.method}</span>
+                      <div className="text-right">
+                        <span className="text-sm font-semibold text-white">{fmt(pm.total)}</span>
+                        <span className="text-xs text-gray-500 ml-2">{pm.count}</span>
+                      </div>
                     </div>
                   ))}
                 </div>
               )}
-              {s.methods.length === 0 && s.orders === 0 && (
-                <p className="text-xs text-gray-500 italic">No data available</p>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
+            </CollapsibleSection>
 
-      {/* ═══ SECTION 0B: Daily Reconciliation (CAF / EMR / LAB) ═══ */}
-      <div className="mb-8">
-        <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <CheckCircle className="w-5 h-5 text-amber-400" /> Daily Reconciliation — Cash & Mobile Money
-        </h2>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {[
-            { label: 'CAF', source: d.externalServices.caf, color: 'border-blue-500/30', accent: 'text-blue-400' },
-            { label: 'EMR', source: d.externalServices.emr, color: 'border-purple-500/30', accent: 'text-purple-400' },
-            { label: 'LAB', source: d.externalServices.lab, color: 'border-cyan-500/30', accent: 'text-cyan-400' },
-          ].map((s) => {
-            const r = s.source.reconciliation;
-            const hasRecon = r && r.submitted;
-            const hasVariance = hasRecon && r.variance.total !== 0;
-            return (
-              <div key={s.label} className={`rounded-xl border p-4 ${s.color} bg-white/5`}>
-                <div className="flex items-center justify-between mb-3">
-                  <span className={`text-sm font-semibold ${s.accent}`}>{s.label}</span>
-                  {hasRecon ? (
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${
-                      r.status === 'approved' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
-                      r.status === 'rejected' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
-                      'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                    }`}>{r.status}</span>
+            <CollapsibleSection title="Credit Outstanding" icon={<CreditCard className="w-5 h-5 text-amber-400" />}>
+              <div className="space-y-3">
+                <div className="bg-white/5 rounded-lg p-3">
+                  <p className="text-xs text-gray-400">Total Credit Sales</p>
+                  <p className="text-lg font-bold text-white">{fmt(d.creditOutstanding.totalCreditSales)}</p>
+                </div>
+                <div className="bg-white/5 rounded-lg p-3">
+                  <p className="text-xs text-gray-400">Balance Due</p>
+                  <p className="text-lg font-bold text-amber-400">{fmt(d.creditOutstanding.totalBalanceDue)}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-white/5 rounded-lg p-3">
+                    <p className="text-xs text-gray-400">Overdue</p>
+                    <p className="text-lg font-bold text-red-400">{d.creditOutstanding.overdueCount}</p>
+                  </div>
+                  <div className="bg-white/5 rounded-lg p-3">
+                    <p className="text-xs text-gray-400">Overdue Amt</p>
+                    <p className="text-lg font-bold text-red-400">{fmt(d.creditOutstanding.overdueAmount)}</p>
+                  </div>
+                </div>
+              </div>
+            </CollapsibleSection>
+
+            <CollapsibleSection title="Marketer Activity" icon={<Users className="w-5 h-5 text-purple-400" />}>
+              <div className="space-y-3">
+                <div className="bg-white/5 rounded-lg p-3">
+                  <p className="text-xs text-gray-400">Assigned Value</p>
+                  <p className="text-lg font-bold text-white">{fmt(d.marketer.totalAssignedValue)}</p>
+                </div>
+                <div className="bg-white/5 rounded-lg p-3">
+                  <p className="text-xs text-gray-400">Sold Value</p>
+                  <p className="text-lg font-bold text-green-400">{fmt(d.marketer.totalSoldValue)}</p>
+                </div>
+                <div className="bg-white/5 rounded-lg p-3">
+                  <p className="text-xs text-gray-400">Outstanding</p>
+                  <p className="text-lg font-bold text-amber-400">{fmt(d.marketer.totalOutstanding)}</p>
+                </div>
+                <div className="flex justify-between text-xs text-gray-400">
+                  <span>Units: {d.marketer.unitsSold}/{d.marketer.unitsAssigned} sold</span>
+                  <span>{d.marketer.unitsRemaining} remaining</span>
+                </div>
+              </div>
+            </CollapsibleSection>
+          </div>
+        </>
+      )}
+
+      {/* ═══ TAB: RECONCILIATION ═══ */}
+      {activeTab === 'reconciliation' && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {[
+              { label: 'CAF (Pharmacy)', source: d.externalServices.caf, accent: 'text-blue-400', border: 'border-blue-500/30' },
+              { label: 'EMR (Medical)', source: d.externalServices.emr, accent: 'text-purple-400', border: 'border-purple-500/30' },
+              { label: 'LAB (Laboratory)', source: d.externalServices.lab, accent: 'text-cyan-400', border: 'border-cyan-500/30' },
+            ].map((s) => {
+              const r = s.source.reconciliation;
+              const hasRecon = r && r.submitted;
+              return (
+                <div key={s.label} className={`rounded-xl border p-5 ${s.border} bg-white/5`}>
+                  <div className="flex items-center justify-between mb-4">
+                    <span className={`text-base font-semibold ${s.accent}`}>{s.label}</span>
+                    {hasRecon ? (
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium border ${
+                        r.status === 'approved' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
+                        r.status === 'rejected' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
+                        r.status === 'balanced' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
+                        'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                      }`}>{r.status}</span>
+                    ) : (
+                      <span className="px-3 py-1 rounded-full text-xs font-medium border bg-gray-500/10 text-gray-400 border-gray-500/20">not submitted</span>
+                    )}
+                  </div>
+
+                  {!hasRecon ? (
+                    <p className="text-sm text-gray-500 italic">No reconciliation submitted today</p>
                   ) : (
-                    <span className="px-2 py-0.5 rounded-full text-xs font-medium border bg-gray-500/10 text-gray-400 border-gray-500/20">not submitted</span>
+                    <div className="space-y-4">
+                      <VarianceBar expected={r.netExpected.cash} actual={r.actual.cash} label="Cash" />
+                      <VarianceBar expected={r.netExpected.orangeMoney} actual={r.actual.orangeMoney} label="Orange Money" />
+                      <VarianceBar expected={r.netExpected.afrimoney} actual={r.actual.afrimoney} label="Africell Money" />
+
+                      <div className="border-t border-white/10 pt-3 mt-3">
+                        <div className="flex justify-between text-sm mb-1">
+                          <span className="text-gray-400">Income</span>
+                          <span className="text-green-400">{fmt(r.income.total)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span className="text-gray-400">Expenditures</span>
+                          <span className="text-red-400">{fmt(r.expenditures.total)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm font-semibold border-t border-white/10 pt-2 mt-2">
+                          <span className="text-gray-400">Net Expected</span>
+                          <span className="text-white">{fmt(r.netExpected.total)}</span>
+                        </div>
+                        <div className="flex justify-between text-base font-bold mt-2">
+                          <span className="text-gray-400">Total Variance</span>
+                          <span className={r.variance.total === 0 ? 'text-green-400' : 'text-red-400'}>
+                            {r.variance.total === 0 ? 'Balanced' : r.variance.total > 0 ? `Short ${fmt(r.variance.total)}` : `Surplus ${fmt(Math.abs(r.variance.total))}`}
+                          </span>
+                        </div>
+                      </div>
+
+                      {r.submittedBy && <p className="text-xs text-gray-500 mt-2">Submitted by {r.submittedBy}</p>}
+                      {r.notes && <p className="text-xs text-gray-500 italic">"{r.notes}"</p>}
+                    </div>
                   )}
                 </div>
-
-                {!hasRecon ? (
-                  <p className="text-xs text-gray-500 italic">No reconciliation submitted today</p>
-                ) : (
-                  <div className="space-y-3">
-                    {/* Expected vs Actual */}
-                    <div>
-                      <p className="text-xs text-gray-400 mb-1 font-medium">Expected → Actual (Variance)</p>
-                      {(['cash', 'orangeMoney', 'afrimoney'] as const).map((method) => {
-                        const label = method === 'cash' ? 'Cash' : method === 'orangeMoney' ? 'Orange Money' : 'Africell Money';
-                        const expected = r.netExpected[method];
-                        const actual = r.actual[method];
-                        const variance = r.variance[method];
-                        return (
-                          <div key={method} className="flex items-center justify-between text-xs py-0.5">
-                            <span className="text-gray-400">{label}</span>
-                            <span className="text-gray-300">
-                              {fmt(expected)} → {fmt(actual)}
-                              <span className={`ml-2 font-semibold ${variance === 0 ? 'text-green-400' : variance > 0 ? 'text-red-400' : 'text-amber-400'}`}>
-                                {variance > 0 ? `−${fmt(variance)}` : variance < 0 ? `+${fmt(Math.abs(variance))}` : '= 0'}
-                              </span>
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {/* Income vs Expenditures */}
-                    <div className="border-t border-white/10 pt-2">
-                      <div className="flex justify-between text-xs">
-                        <span className="text-gray-400">Income</span>
-                        <span className="text-green-400">{fmt(r.income.total)}</span>
-                      </div>
-                      <div className="flex justify-between text-xs">
-                        <span className="text-gray-400">Expenditures</span>
-                        <span className="text-red-400">{fmt(r.expenditures.total)}</span>
-                      </div>
-                      <div className="flex justify-between text-xs font-semibold border-t border-white/10 pt-1 mt-1">
-                        <span className="text-gray-400">Net Expected</span>
-                        <span className="text-white">{fmt(r.netExpected.total)}</span>
-                      </div>
-                    </div>
-
-                    {/* Total Variance */}
-                    <div className="border-t border-white/10 pt-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Total Variance</span>
-                        <span className={`font-bold ${r.variance.total === 0 ? 'text-green-400' : 'text-red-400'}`}>
-                          {r.variance.total === 0 ? 'Balanced' : r.variance.total > 0 ? `Short ${fmt(r.variance.total)}` : `Surplus ${fmt(Math.abs(r.variance.total))}`}
-                        </span>
-                      </div>
-                      {r.submittedBy && (
-                        <p className="text-xs text-gray-500 mt-1">Submitted by {r.submittedBy}</p>
-                      )}
-                      {r.notes && (
-                        <p className="text-xs text-gray-500 mt-1 italic">"{r.notes}"</p>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* ═══ SECTION 1: Profit & Loss ═══ */}
-      <div className="mb-8">
-        <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <BarChart3 className="w-5 h-5 text-accent-green" /> Profit & Loss
-        </h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-          {[
-            { label: 'Gross Revenue', value: pl.grossRevenue, icon: <TrendingUp className="w-4 h-4 text-green-400" />, color: 'bg-green-500/10 border-green-500/20' },
-            { label: 'Cost of Goods', value: pl.costOfGoods, icon: <Package className="w-4 h-4 text-red-400" />, color: 'bg-red-500/10 border-red-500/20' },
-            { label: 'Gross Profit', value: pl.grossProfit, icon: <DollarSign className="w-4 h-4 text-blue-400" />, color: 'bg-blue-500/10 border-blue-500/20' },
-            { label: 'Operating Expenses', value: pl.operatingExpenses, icon: <TrendingDown className="w-4 h-4 text-orange-400" />, color: 'bg-orange-500/10 border-orange-500/20' },
-            { label: 'Net Profit', value: pl.netProfit, icon: <Wallet className="w-4 h-4 text-cyan-400" />, color: pl.netProfit >= 0 ? 'bg-cyan-500/10 border-cyan-500/20' : 'bg-red-500/10 border-red-500/20' },
-            { label: 'Margin', value: null, display: `${pl.margin}%`, icon: <Activity className="w-4 h-4 text-purple-400" />, color: 'bg-purple-500/10 border-purple-500/20' },
-          ].map((c) => (
-            <div key={c.label} className={`rounded-xl border p-4 ${c.color}`}>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-gray-400">{c.label}</span>
-                {c.icon}
-              </div>
-              <p className="text-xl font-bold text-white">{c.display ?? fmt(c.value!)}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ═══ SECTION 2: Revenue & Sales ═══ */}
-      <div className="mb-8">
-        <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-green-400" /> Revenue & Sales
-        </h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {[
-            { label: 'Total Revenue', value: d.revenue.totalRevenue, color: 'bg-green-500/10 border-green-500/20' },
-            { label: 'Returns', value: d.revenue.totalReturns, color: 'bg-red-500/10 border-red-500/20' },
-            { label: 'Net Revenue', value: d.revenue.netRevenue, color: 'bg-blue-500/10 border-blue-500/20' },
-            { label: 'Transactions', value: null, display: d.revenue.salesCount.toLocaleString(), color: 'bg-purple-500/10 border-purple-500/20' },
-          ].map((c) => (
-            <div key={c.label} className={`rounded-xl border p-4 ${c.color}`}>
-              <span className="text-xs text-gray-400">{c.label}</span>
-              <p className="text-xl font-bold text-white mt-1">{c.display ?? fmt(c.value!)}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ═══ SECTION 3: Cash Position & Shifts ═══ */}
-      <div className="mb-8">
-        <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <Wallet className="w-5 h-5 text-cyan-400" /> Cash Position
-        </h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-          {[
-            { label: 'Opening Cash', value: d.cashPosition.totalOpeningCash, color: 'bg-blue-500/10 border-blue-500/20' },
-            { label: 'Expected Cash', value: d.cashPosition.totalExpectedCash, color: 'bg-green-500/10 border-green-500/20' },
-            { label: 'Actual Closing', value: d.cashPosition.totalClosingCash, color: 'bg-cyan-500/10 border-cyan-500/20' },
-            { label: 'Variance', value: d.cashPosition.totalVariance, color: d.cashPosition.totalVariance === 0 ? 'bg-green-500/10 border-green-500/20' : 'bg-amber-500/10 border-amber-500/20' },
-            { label: 'Open Shifts', value: null, display: String(d.cashPosition.openShifts), color: 'bg-amber-500/10 border-amber-500/20' },
-            { label: 'Closed Shifts', value: null, display: String(d.cashPosition.closedShifts), color: 'bg-gray-500/10 border-gray-500/20' },
-          ].map((c) => (
-            <div key={c.label} className={`rounded-xl border p-4 ${c.color}`}>
-              <span className="text-xs text-gray-400">{c.label}</span>
-              <p className="text-xl font-bold text-white mt-1">{c.display ?? fmt(c.value!)}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ═══ SECTION 4: Credit & Marketer ═══ */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        {/* Credit Outstanding */}
-        <div className="bg-white/5 rounded-xl border border-white/10 p-5">
-          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <CreditCard className="w-5 h-5 text-amber-400" /> Credit Outstanding
-          </h3>
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div className="bg-white/5 rounded-lg p-3">
-              <span className="text-xs text-gray-400">Total Credit Sales</span>
-              <p className="text-lg font-bold text-white">{fmt(d.creditOutstanding.totalCreditSales)}</p>
-            </div>
-            <div className="bg-white/5 rounded-lg p-3">
-              <span className="text-xs text-gray-400">Balance Due</span>
-              <p className="text-lg font-bold text-amber-400">{fmt(d.creditOutstanding.totalBalanceDue)}</p>
-            </div>
-            <div className="bg-white/5 rounded-lg p-3">
-              <span className="text-xs text-gray-400">Overdue Accounts</span>
-              <p className="text-lg font-bold text-red-400">{d.creditOutstanding.overdueCount}</p>
-            </div>
-            <div className="bg-white/5 rounded-lg p-3">
-              <span className="text-xs text-gray-400">Overdue Amount</span>
-              <p className="text-lg font-bold text-red-400">{fmt(d.creditOutstanding.overdueAmount)}</p>
-            </div>
+              );
+            })}
           </div>
         </div>
+      )}
 
-        {/* Marketer */}
-        <div className="bg-white/5 rounded-xl border border-white/10 p-5">
-          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <Users className="w-5 h-5 text-purple-400" /> Marketer Activity
-          </h3>
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div className="bg-white/5 rounded-lg p-3">
-              <span className="text-xs text-gray-400">Assigned Value</span>
-              <p className="text-lg font-bold text-white">{fmt(d.marketer.totalAssignedValue)}</p>
+      {/* ═══ TAB: P&L ═══ */}
+      {activeTab === 'profitloss' && (
+        <div className="space-y-6">
+          <CollapsibleSection title="Profit & Loss Statement" icon={<BarChart3 className="w-5 h-5 text-accent-green" />}>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              <StatCard label="Gross Revenue" value={fmt(pl.grossRevenue)} icon={<TrendingUp className="w-4 h-4 text-green-400" />} color="bg-green-500/10 border-green-500/20" />
+              <StatCard label="Cost of Goods" value={fmt(pl.costOfGoods)} icon={<Package className="w-4 h-4 text-red-400" />} color="bg-red-500/10 border-red-500/20" />
+              <StatCard label="Gross Profit" value={fmt(pl.grossProfit)} icon={<DollarSign className="w-4 h-4 text-blue-400" />} color="bg-blue-500/10 border-blue-500/20" />
+              <StatCard label="Op. Expenses" value={fmt(pl.operatingExpenses)} icon={<TrendingDown className="w-4 h-4 text-orange-400" />} color="bg-orange-500/10 border-orange-500/20" />
+              <StatCard label="Net Profit" value={fmt(pl.netProfit)} icon={<Wallet className="w-4 h-4 text-cyan-400" />} color={pl.netProfit >= 0 ? 'bg-cyan-500/10 border-cyan-500/20' : 'bg-red-500/10 border-red-500/20'} />
+              <StatCard label="Margin" value={`${pl.margin}%`} icon={<Activity className="w-4 h-4 text-purple-400" />} color="bg-purple-500/10 border-purple-500/20" />
             </div>
-            <div className="bg-white/5 rounded-lg p-3">
-              <span className="text-xs text-gray-400">Sold Value</span>
-              <p className="text-lg font-bold text-green-400">{fmt(d.marketer.totalSoldValue)}</p>
-            </div>
-            <div className="bg-white/5 rounded-lg p-3">
-              <span className="text-xs text-gray-400">Outstanding</span>
-              <p className="text-lg font-bold text-amber-400">{fmt(d.marketer.totalOutstanding)}</p>
-            </div>
-            <div className="bg-white/5 rounded-lg p-3">
-              <span className="text-xs text-gray-400">Units Remaining</span>
-              <p className="text-lg font-bold text-white">{d.marketer.unitsRemaining.toLocaleString()}</p>
-            </div>
-          </div>
-        </div>
-      </div>
+          </CollapsibleSection>
 
-      {/* ═══ SECTION 5: Purchases ═══ */}
-      <div className="mb-8">
-        <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <Package className="w-5 h-5 text-blue-400" /> Purchases
-        </h2>
-        <div className="grid grid-cols-3 gap-4">
-          <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
-            <span className="text-xs text-gray-400">Total PO Value</span>
-            <p className="text-xl font-bold text-white mt-1">{fmt(d.purchases.totalPurchaseValue)}</p>
-          </div>
-          <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-4">
-            <span className="text-xs text-gray-400">Received Value</span>
-            <p className="text-xl font-bold text-white mt-1">{fmt(d.purchases.receivedValue)}</p>
-          </div>
-          <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4">
-            <span className="text-xs text-gray-400">Pending Delivery</span>
-            <p className="text-xl font-bold text-white mt-1">{fmt(d.purchases.pendingValue)}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* ═══ SECTION 6: Expense Breakdown + Payment Methods ═══ */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        {/* Expenses by Category */}
-        <div className="bg-white/5 rounded-xl border border-white/10 p-5">
-          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <TrendingDown className="w-5 h-5 text-red-400" /> Expenses by Category
-          </h3>
-          <div className="mb-3 bg-white/5 rounded-lg p-3">
-            <span className="text-xs text-gray-400">Total Expenses</span>
-            <p className="text-xl font-bold text-red-400">{fmt(d.expenses.totalExpenses)}</p>
-          </div>
-          {d.expenses.byCategory.length === 0 ? (
-            <p className="text-gray-400 text-sm">No expenses recorded</p>
-          ) : (
-            <div className="space-y-2 max-h-60 overflow-y-auto">
-              {d.expenses.byCategory.map((c) => (
-                <div key={c.category} className="flex items-center justify-between bg-white/5 rounded-lg p-2">
-                  <div>
-                    <p className="text-white text-sm capitalize">{c.category.replace('_', ' ')}</p>
-                    <p className="text-xs text-gray-400">{c.count} entries</p>
-                  </div>
-                  <span className="text-red-400 font-semibold text-sm">{fmt(c.total)}</span>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <CollapsibleSection title="Expenses by Category" icon={<TrendingDown className="w-5 h-5 text-red-400" />}>
+              {expensePieData.length === 0 ? (
+                <p className="text-gray-400 text-sm">No expenses</p>
+              ) : (
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={expensePieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                        {expensePieData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                      </Pie>
+                      <Tooltip formatter={(v: number) => fmt(v)} />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Payment Methods */}
-        <div className="bg-white/5 rounded-xl border border-white/10 p-5">
-          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <ArrowRightLeft className="w-5 h-5 text-cyan-400" /> Payment Methods
-          </h3>
-          {d.byPaymentMethod.length === 0 ? (
-            <p className="text-gray-400 text-sm">No sales recorded</p>
-          ) : (
-            <div className="space-y-2">
-              {d.byPaymentMethod.map((pm) => (
-                <div key={pm.method} className="flex items-center justify-between bg-white/5 rounded-lg p-3">
-                  <div>
-                    <p className="text-white text-sm font-medium">{paymentMethodLabels[pm.method] || pm.method}</p>
-                    <p className="text-xs text-gray-400">{pm.count} transactions ({pct(pm.total, d.revenue.totalRevenue)})</p>
+              )}
+              <div className="mt-3 space-y-1">
+                {d.expenses.byCategory.map((c) => (
+                  <div key={c.category} className="flex justify-between text-sm py-1">
+                    <span className="text-gray-400 capitalize">{c.category.replace('_', ' ')}</span>
+                    <span className="text-red-400">{fmt(c.total)}</span>
                   </div>
-                  <span className="text-white font-semibold">{fmt(pm.total)}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* ═══ SECTION 7: Per-Branch Breakdown ═══ */}
-      {d.byBranch.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <ShoppingCart className="w-5 h-5 text-blue-400" /> Performance by Branch
-          </h2>
-          <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-white/10">
-                  <th className="text-left text-gray-400 px-4 py-3 font-medium">Branch</th>
-                  <th className="text-right text-gray-400 px-4 py-3 font-medium">Revenue</th>
-                  <th className="text-right text-gray-400 px-4 py-3 font-medium">Expenses</th>
-                  <th className="text-right text-gray-400 px-4 py-3 font-medium">Profit</th>
-                  <th className="text-right text-gray-400 px-4 py-3 font-medium">Sales</th>
-                </tr>
-              </thead>
-              <tbody>
-                {d.byBranch.map((b) => (
-                  <tr key={b.branchId} className="border-b border-white/5 hover:bg-white/5">
-                    <td className="px-4 py-3 text-white font-medium">{b.branchName}</td>
-                    <td className="px-4 py-3 text-right text-green-400">{fmt(b.revenue)}</td>
-                    <td className="px-4 py-3 text-right text-red-400">{fmt(b.expenses)}</td>
-                    <td className={`px-4 py-3 text-right font-semibold ${b.profit >= 0 ? 'text-cyan-400' : 'text-red-400'}`}>{fmt(b.profit)}</td>
-                    <td className="px-4 py-3 text-right text-gray-300">{b.salesCount}</td>
-                  </tr>
                 ))}
-              </tbody>
-            </table>
+              </div>
+            </CollapsibleSection>
+
+            <CollapsibleSection title="Purchases" icon={<Package className="w-5 h-5 text-blue-400" />}>
+              <div className="space-y-3">
+                <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
+                  <span className="text-xs text-gray-400">Total PO Value</span>
+                  <p className="text-xl font-bold text-white mt-1">{fmt(d.purchases.totalPurchaseValue)}</p>
+                </div>
+                <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-4">
+                  <span className="text-xs text-gray-400">Received Value</span>
+                  <p className="text-xl font-bold text-white mt-1">{fmt(d.purchases.receivedValue)}</p>
+                </div>
+                <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4">
+                  <span className="text-xs text-gray-400">Pending Delivery</span>
+                  <p className="text-xl font-bold text-white mt-1">{fmt(d.purchases.pendingValue)}</p>
+                </div>
+              </div>
+            </CollapsibleSection>
           </div>
+        </div>
+      )}
+
+      {/* ═══ TAB: BRANCHES ═══ */}
+      {activeTab === 'branches' && (
+        <div className="space-y-6">
+          {branchBarData.length > 0 && (
+            <CollapsibleSection title="Revenue vs Expenses by Branch" icon={<BarChart3 className="w-5 h-5 text-blue-400" />}>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={branchBarData}>
+                    <XAxis dataKey="name" tick={{ fill: '#9ca3af', fontSize: 12 }} />
+                    <YAxis tick={{ fill: '#9ca3af', fontSize: 12 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`} />
+                    <Tooltip formatter={(v: number) => fmt(v)} contentStyle={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 8 }} />
+                    <Legend />
+                    <Bar dataKey="Revenue" fill="#22c55e" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="Expenses" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="Profit" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CollapsibleSection>
+          )}
+
+          <CollapsibleSection title="Branch Performance Table" icon={<ShoppingCart className="w-5 h-5 text-green-400" />}>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-white/10">
+                    <th className="text-left text-gray-400 px-4 py-3 font-medium">Branch</th>
+                    <th className="text-right text-gray-400 px-4 py-3 font-medium">Revenue</th>
+                    <th className="text-right text-gray-400 px-4 py-3 font-medium">Expenses</th>
+                    <th className="text-right text-gray-400 px-4 py-3 font-medium">Profit</th>
+                    <th className="text-right text-gray-400 px-4 py-3 font-medium">Sales</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {d.byBranch.map((b) => (
+                    <tr key={b.branchId} className="border-b border-white/5 hover:bg-white/5">
+                      <td className="px-4 py-3 text-white font-medium">{b.branchName}</td>
+                      <td className="px-4 py-3 text-right text-green-400">{fmt(b.revenue)}</td>
+                      <td className="px-4 py-3 text-right text-red-400">{fmt(b.expenses)}</td>
+                      <td className={`px-4 py-3 text-right font-semibold ${b.profit >= 0 ? 'text-cyan-400' : 'text-red-400'}`}>{fmt(b.profit)}</td>
+                      <td className="px-4 py-3 text-right text-gray-300">{b.salesCount}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CollapsibleSection>
         </div>
       )}
     </AdminLayout>
