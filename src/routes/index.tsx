@@ -60,6 +60,11 @@ import {
   ProformaInvoicesPage,
   DeliveryNotesPage,
   AccountSecurityPage,
+  FinanceManagerDashboardPage,
+  ReconciliationPage,
+  SalaryManagementPage,
+  CashManagementPage,
+  FinanceReportsPage,
 } from '../pages';
 
 const RoleAwareHomeRedirect = () => {
@@ -565,6 +570,46 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'auditor']}>
         <UserActivityLogsPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/admin/finance-dashboard',
+    element: (
+      <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'finance_manager']}>
+        <FinanceManagerDashboardPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/admin/reconciliations',
+    element: (
+      <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'finance_manager']}>
+        <ReconciliationPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/admin/salaries',
+    element: (
+      <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'finance_manager']}>
+        <SalaryManagementPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/admin/cash-management',
+    element: (
+      <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'finance_manager']}>
+        <CashManagementPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/admin/finance-reports',
+    element: (
+      <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'finance_manager']}>
+        <FinanceReportsPage />
       </ProtectedRoute>
     ),
   },

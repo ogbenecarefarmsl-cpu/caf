@@ -7,7 +7,7 @@ export interface User {
   email: string;
   firstName: string;
   lastName: string;
-  role: 'super_admin' | 'branch_manager' | 'cashier' | 'auditor' | 'marketer';
+  role: 'super_admin' | 'branch_manager' | 'cashier' | 'auditor' | 'marketer' | 'finance_manager';
   branchId?: string;
 }
 

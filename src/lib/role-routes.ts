@@ -10,6 +10,8 @@ export const getDefaultRouteForRole = (role?: User['role']) => {
     case 'super_admin':
     case 'auditor':
       return '/admin/dashboard';
+    case 'finance_manager':
+      return '/admin/finance-dashboard';
     default:
       return '/login';
   }

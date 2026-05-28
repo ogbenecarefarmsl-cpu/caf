@@ -350,4 +350,32 @@ export const queryKeys = {
     summary: (filters?: { branchId?: string; marketerId?: string }) =>
       [...queryKeys.marketer.all(), 'summary', filters] as const,
   },
+
+  // Finance Manager
+  financeManager: {
+    all: () => [...queryKeys.all(), 'finance-manager'] as const,
+    dashboard: (branchId?: string) => [...queryKeys.financeManager.all(), 'dashboard', branchId] as const,
+    reconciliations: {
+      all: () => [...queryKeys.financeManager.all(), 'reconciliations'] as const,
+      list: (filters?: { branchId?: string; source?: string; status?: string; period?: string }) =>
+        [...queryKeys.financeManager.reconciliations.all(), filters] as const,
+      detail: (id: string) => [...queryKeys.financeManager.reconciliations.all(), 'detail', id] as const,
+      stats: (branchId?: string) => [...queryKeys.financeManager.reconciliations.all(), 'stats', branchId] as const,
+    },
+    salaries: {
+      all: () => [...queryKeys.financeManager.all(), 'salaries'] as const,
+      list: (filters?: { branchId?: string; employeeId?: string; period?: string; status?: string }) =>
+        [...queryKeys.financeManager.salaries.all(), filters] as const,
+      detail: (id: string) => [...queryKeys.financeManager.salaries.all(), 'detail', id] as const,
+      stats: (branchId?: string, period?: string) => [...queryKeys.financeManager.salaries.all(), 'stats', branchId, period] as const,
+    },
+    cashEntries: {
+      all: () => [...queryKeys.financeManager.all(), 'cash-entries'] as const,
+      list: (filters?: { branchId?: string; type?: string; category?: string; startDate?: string; endDate?: string; page?: number; limit?: number }) =>
+        [...queryKeys.financeManager.cashEntries.all(), filters] as const,
+      detail: (id: string) => [...queryKeys.financeManager.cashEntries.all(), 'detail', id] as const,
+      summary: (branchId?: string, startDate?: string, endDate?: string) =>
+        [...queryKeys.financeManager.cashEntries.all(), 'summary', branchId, startDate, endDate] as const,
+    },
+  },
 };

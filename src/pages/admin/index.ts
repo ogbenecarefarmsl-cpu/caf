@@ -39,3 +39,8 @@ export { RequestAnalysisPage } from './RequestAnalysisPage';
 export { CustomerOrdersPage } from './CustomerOrdersPage';
 export { ProformaInvoicesPage } from './ProformaInvoicesPage';
 export { DeliveryNotesPage } from './DeliveryNotesPage';
+export { FinanceManagerDashboardPage } from './FinanceManagerDashboardPage';
+export { ReconciliationPage } from './ReconciliationPage';
+export { SalaryManagementPage } from './SalaryManagementPage';
+export { CashManagementPage } from './CashManagementPage';
+export { FinanceReportsPage } from './FinanceReportsPage';
