@@ -76,9 +76,9 @@ interface UnifiedDashboard {
     total: number;
   }[];
   externalServices: {
-    caf: { revenue: number; expenses: number; profit: number; outstanding: number; orders: number; byPaymentMethod: { method: string; count: number; total: number }[] };
-    emr: { revenue: number; expenses: number; profit: number; outstanding: number; orders: number; byPaymentMethod: { method: string; count: number; total: number }[] };
-    lab: { revenue: number; expenses: number; profit: number; outstanding: number; orders: number; byPaymentMethod: { method: string; count: number; total: number }[] };
+    caf: { revenue: number; expenses: number; profit: number; outstanding: number; orders: number; byPaymentMethod: { method: string; count: number; total: number }[]; reconciliation: any };
+    emr: { revenue: number; expenses: number; profit: number; outstanding: number; orders: number; byPaymentMethod: { method: string; count: number; total: number }[]; reconciliation: any };
+    lab: { revenue: number; expenses: number; profit: number; outstanding: number; orders: number; byPaymentMethod: { method: string; count: number; total: number }[]; reconciliation: any };
     combined: { totalRevenue: number; totalExpenses: number; totalProfit: number; totalOutstanding: number };
   };
 }
@@ -198,6 +198,100 @@ export function FinanceManagerDashboardPage() {
               )}
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* ═══ SECTION 0B: Daily Reconciliation (CAF / EMR / LAB) ═══ */}
+      <div className="mb-8">
+        <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+          <CheckCircle className="w-5 h-5 text-amber-400" /> Daily Reconciliation — Cash & Mobile Money
+        </h2>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {[
+            { label: 'CAF', source: d.externalServices.caf, color: 'border-blue-500/30', accent: 'text-blue-400' },
+            { label: 'EMR', source: d.externalServices.emr, color: 'border-purple-500/30', accent: 'text-purple-400' },
+            { label: 'LAB', source: d.externalServices.lab, color: 'border-cyan-500/30', accent: 'text-cyan-400' },
+          ].map((s) => {
+            const r = s.source.reconciliation;
+            const hasRecon = r && r.submitted;
+            const hasVariance = hasRecon && r.variance.total !== 0;
+            return (
+              <div key={s.label} className={`rounded-xl border p-4 ${s.color} bg-white/5`}>
+                <div className="flex items-center justify-between mb-3">
+                  <span className={`text-sm font-semibold ${s.accent}`}>{s.label}</span>
+                  {hasRecon ? (
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${
+                      r.status === 'approved' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
+                      r.status === 'rejected' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
+                      'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                    }`}>{r.status}</span>
+                  ) : (
+                    <span className="px-2 py-0.5 rounded-full text-xs font-medium border bg-gray-500/10 text-gray-400 border-gray-500/20">not submitted</span>
+                  )}
+                </div>
+
+                {!hasRecon ? (
+                  <p className="text-xs text-gray-500 italic">No reconciliation submitted today</p>
+                ) : (
+                  <div className="space-y-3">
+                    {/* Expected vs Actual */}
+                    <div>
+                      <p className="text-xs text-gray-400 mb-1 font-medium">Expected → Actual (Variance)</p>
+                      {(['cash', 'orangeMoney', 'afrimoney'] as const).map((method) => {
+                        const label = method === 'cash' ? 'Cash' : method === 'orangeMoney' ? 'Orange Money' : 'Africell Money';
+                        const expected = r.netExpected[method];
+                        const actual = r.actual[method];
+                        const variance = r.variance[method];
+                        return (
+                          <div key={method} className="flex items-center justify-between text-xs py-0.5">
+                            <span className="text-gray-400">{label}</span>
+                            <span className="text-gray-300">
+                              {fmt(expected)} → {fmt(actual)}
+                              <span className={`ml-2 font-semibold ${variance === 0 ? 'text-green-400' : variance > 0 ? 'text-red-400' : 'text-amber-400'}`}>
+                                {variance > 0 ? `−${fmt(variance)}` : variance < 0 ? `+${fmt(Math.abs(variance))}` : '= 0'}
+                              </span>
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Income vs Expenditures */}
+                    <div className="border-t border-white/10 pt-2">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-gray-400">Income</span>
+                        <span className="text-green-400">{fmt(r.income.total)}</span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-gray-400">Expenditures</span>
+                        <span className="text-red-400">{fmt(r.expenditures.total)}</span>
+                      </div>
+                      <div className="flex justify-between text-xs font-semibold border-t border-white/10 pt-1 mt-1">
+                        <span className="text-gray-400">Net Expected</span>
+                        <span className="text-white">{fmt(r.netExpected.total)}</span>
+                      </div>
+                    </div>
+
+                    {/* Total Variance */}
+                    <div className="border-t border-white/10 pt-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-400">Total Variance</span>
+                        <span className={`font-bold ${r.variance.total === 0 ? 'text-green-400' : 'text-red-400'}`}>
+                          {r.variance.total === 0 ? 'Balanced' : r.variance.total > 0 ? `Short ${fmt(r.variance.total)}` : `Surplus ${fmt(Math.abs(r.variance.total))}`}
+                        </span>
+                      </div>
+                      {r.submittedBy && (
+                        <p className="text-xs text-gray-500 mt-1">Submitted by {r.submittedBy}</p>
+                      )}
+                      {r.notes && (
+                        <p className="text-xs text-gray-500 mt-1 italic">"{r.notes}"</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 
