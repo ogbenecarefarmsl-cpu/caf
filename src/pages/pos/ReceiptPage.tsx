@@ -47,7 +47,7 @@ export const ReceiptPage = () => {
     queryKey: queryKeys.sales.detail(saleId),
     queryFn: async () => {
       const response = await apiClient.get(`/sales/${saleId}`);
-      return response.data.data as Sale;
+      return (response.data?.data ?? response.data) as Sale;
     },
     enabled: !!saleId && !passedSale,
     initialData: passedSale,
@@ -99,8 +99,8 @@ export const ReceiptPage = () => {
       showSuccess('Receipt sent successfully');
       setShowEmailModal(false);
       setEmailAddress('');
-    } catch (error: any) {
-      showError(error?.response?.data?.message || 'Failed to send receipt');
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'Failed to send receipt');
     } finally {
       setEmailSending(false);
     }

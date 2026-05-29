@@ -113,6 +113,7 @@ export const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => 
       await apiClient.post('/auth/logout');
     } catch (error) {
       console.error('Logout error:', error);
+      showError('Logout failed. Please try again.');
     } finally {
       // Always clear local state and redirect
       useAuthStore.getState().clearAuth();

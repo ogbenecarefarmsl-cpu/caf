@@ -84,7 +84,7 @@ export const TransactionHistoryPage = () => {
       if (paymentMethod && paymentMethod !== 'all') params.paymentMethod = paymentMethod;
       if (status && status !== 'all') params.status = status;
       const response = await apiClient.get('/sales', { params });
-      return response.data.data as Sale[];
+      return (response.data?.data ?? response.data) as Sale[];
     },
     enabled: isSuperAdmin || !!selectedBranchId,
   });

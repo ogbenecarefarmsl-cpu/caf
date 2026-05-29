@@ -12,6 +12,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { queryKeys } from '../../lib/query-keys';
 import apiClient from '../../lib/api-client';
 import { buildApiUrl } from '../../lib/api-utils';
+import { getErrorMessage } from '../../lib/error-utils';
 import { DollarSign, CheckCircle, Send } from 'lucide-react';
 
 interface Salary {
@@ -102,7 +103,7 @@ export function SalaryManagementPage() {
       setIsCreateOpen(false);
       setForm({ employeeId: '', baseSalary: '', allowances: '', deductions: '', paymentMethod: 'bank_transfer', notes: '' });
     },
-    onError: (err: any) => showError(err?.response?.data?.message || 'Failed to create'),
+    onError: (err: unknown) => showError(getErrorMessage(err, 'Failed to create salary record')),
   });
 
   const approveMutation = useMutation({
@@ -111,7 +112,7 @@ export function SalaryManagementPage() {
       showSuccess('Salary approved');
       queryClient.invalidateQueries({ queryKey: queryKeys.financeManager.salaries.all() });
     },
-    onError: (err: any) => showError(err?.response?.data?.message || 'Failed to approve'),
+    onError: (err: unknown) => showError(getErrorMessage(err, 'Failed to approve salary')),
   });
 
   const payMutation = useMutation({
@@ -120,7 +121,7 @@ export function SalaryManagementPage() {
       showSuccess('Salary marked as paid');
       queryClient.invalidateQueries({ queryKey: queryKeys.financeManager.salaries.all() });
     },
-    onError: (err: any) => showError(err?.response?.data?.message || 'Failed'),
+    onError: (err: unknown) => showError(getErrorMessage(err, 'Failed to mark salary as paid')),
   });
 
   const columns = [

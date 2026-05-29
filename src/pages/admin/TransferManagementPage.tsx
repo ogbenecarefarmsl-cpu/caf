@@ -13,6 +13,7 @@ import { Select } from '../../components/ui/Select';
 import { Table } from '../../components/ui/Table';
 import { useToast } from '../../hooks/useToast';
 import { buildApiUrl } from '../../lib/api-utils';
+import { getErrorMessage } from '../../lib/error-utils';
 import { queryKeys } from '../../lib/query-keys';
 import { getBranchId, useBranchStore } from '../../stores/branch-store';
 
@@ -127,8 +128,8 @@ export default function TransferManagementPage() {
       reset();
       showSuccess('Transfer request created');
     },
-    onError: (err: any) =>
-      showError(err?.response?.data?.message ?? 'Failed to create transfer'),
+    onError: (err: unknown) =>
+      showError(getErrorMessage(err, 'Failed to create transfer')),
   });
 
   const approveTransferMutation = useMutation({
@@ -144,8 +145,8 @@ export default function TransferManagementPage() {
       setApprovalNotes('');
       showSuccess('Transfer approved');
     },
-    onError: (err: any) =>
-      showError(err?.response?.data?.message ?? 'Failed to approve transfer'),
+    onError: (err: unknown) =>
+      showError(getErrorMessage(err, 'Failed to approve transfer')),
   });
 
   const rejectTransferMutation = useMutation({
@@ -170,8 +171,8 @@ export default function TransferManagementPage() {
       setRejectionReason('');
       showSuccess('Transfer rejected');
     },
-    onError: (err: any) =>
-      showError(err?.response?.data?.message ?? 'Failed to reject transfer'),
+    onError: (err: unknown) =>
+      showError(getErrorMessage(err, 'Failed to reject transfer')),
   });
 
   const onSubmit = (data: TransferFormData) => {

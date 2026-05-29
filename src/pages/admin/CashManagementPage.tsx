@@ -11,6 +11,7 @@ import { useBranchStore, getBranchId } from '../../stores/branch-store';
 import { queryKeys } from '../../lib/query-keys';
 import apiClient from '../../lib/api-client';
 import { buildApiUrl } from '../../lib/api-utils';
+import { getErrorMessage } from '../../lib/error-utils';
 import { Plus, TrendingUp, TrendingDown, DollarSign, ArrowRightLeft } from 'lucide-react';
 
 interface CashEntry {
@@ -92,7 +93,7 @@ export function CashManagementPage() {
       setIsCreateOpen(false);
       setForm({ type: 'expense', category: 'supplies', amount: '', description: '', notes: '', receiptNumber: '', entryDate: '' });
     },
-    onError: (err: any) => showError(err?.response?.data?.message || 'Failed'),
+    onError: (err: unknown) => showError(getErrorMessage(err, 'Failed to create cash entry')),
   });
 
   const deleteMutation = useMutation({
@@ -101,7 +102,7 @@ export function CashManagementPage() {
       showSuccess('Entry deleted');
       queryClient.invalidateQueries({ queryKey: queryKeys.financeManager.cashEntries.all() });
     },
-    onError: (err: any) => showError(err?.response?.data?.message || 'Failed'),
+    onError: (err: unknown) => showError(getErrorMessage(err, 'Failed to delete entry')),
   });
 
   const columns = [

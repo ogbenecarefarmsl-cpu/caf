@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../hooks/useToast';
 import { Button } from './ui/Button';
 import { ConfirmDialog } from './ui/ConfirmDialog';
 
@@ -11,6 +12,7 @@ interface HeaderProps {
 
 export const Header = ({ title, showNav = false }: HeaderProps) => {
   const { user, logout } = useAuth();
+  const { showError } = useToast();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const location = useLocation();
@@ -22,6 +24,7 @@ export const Header = ({ title, showNav = false }: HeaderProps) => {
       await logout();
     } catch (error) {
       console.error('Logout error:', error);
+      showError('Logout failed. Please try again.');
       setIsLoggingOut(false);
     }
   };

@@ -76,7 +76,7 @@ export const ProcessReturnPage = () => {
         params.search = searchQuery;
       }
       const response = await apiClient.get('/sales', { params });
-      return response.data.data as Sale[];
+      return (response.data?.data ?? response.data) as Sale[];
     },
     enabled: !!getBranchId(selectedBranch),
     retry: false,
@@ -98,8 +98,8 @@ export const ProcessReturnPage = () => {
       setReturnReason('');
       setShowReturnForm(false);
     },
-    onError: (error: any) => {
-      showError(error?.response?.data?.message || 'Failed to process return');
+    onError: (error: unknown) => {
+      showError(error instanceof Error ? error.message : 'Failed to process return');
     },
   });
 

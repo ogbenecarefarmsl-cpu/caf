@@ -57,7 +57,7 @@ export const ShiftLogsPage = () => {
       const response = await apiClient.get('/shifts/current', {
         params: { branchId, cashierId, terminalId },
       });
-      return response.data.data as Shift;
+      return (response.data?.data ?? response.data) as Shift;
     },
     enabled: !!getBranchId(selectedBranch) && !!user?.id,
     retry: false,
@@ -75,7 +75,7 @@ export const ShiftLogsPage = () => {
       const response = await apiClient.get('/shifts', {
         params: { branchId, limit: '10' },
       });
-      return response.data.data as Shift[];
+      return (response.data?.data ?? response.data) as Shift[];
     },
     enabled: !!getBranchId(selectedBranch),
     retry: false,
@@ -89,15 +89,15 @@ export const ShiftLogsPage = () => {
         `/shifts/${currentShift._id}/close`,
         data
       );
-      return response.data.data as Shift;
+      return (response.data?.data ?? response.data) as Shift;
     },
     onSuccess: () => {
       showSuccess('Shift closed successfully');
       setClosingCash('');
       queryClient.invalidateQueries({ queryKey: queryKeys.shifts.all(), exact: false });
     },
-    onError: (error: any) => {
-      showError(error?.response?.data?.message || 'Failed to close shift');
+    onError: (error: unknown) => {
+      showError(error instanceof Error ? error.message : 'Failed to close shift');
     },
   });
 

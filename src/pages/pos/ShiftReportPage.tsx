@@ -42,7 +42,7 @@ export const ShiftReportPage = () => {
     queryKey: queryKeys.shifts.report(shiftId),
     queryFn: async () => {
       const response = await apiClient.get(`/shifts/${shiftId}/report`);
-      return response.data.data as ShiftReport;
+      return (response.data?.data ?? response.data) as ShiftReport;
     },
     enabled: !!shiftId,
   });

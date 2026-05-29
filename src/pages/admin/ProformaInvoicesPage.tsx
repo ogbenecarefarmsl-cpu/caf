@@ -15,6 +15,7 @@ import { useToast } from '../../hooks/useToast';
 import { useBranchStore, getBranchId } from '../../stores/branch-store';
 import { queryKeys } from '../../lib/query-keys';
 import { buildApiUrl } from '../../lib/api-utils';
+import { getErrorMessage } from '../../lib/error-utils';
 import { useCurrency } from '../../hooks/useCurrency';
 import { FileText, CheckCircle, XCircle, DollarSign, ShoppingCart, Download } from 'lucide-react';
 
@@ -86,13 +87,13 @@ export function ProformaInvoicesPage() {
   const submitMutation = useMutation({
     mutationFn: (id: string) => apiClient.patch(`/proforma-invoices/${id}/submit`),
     onSuccess: () => { showSuccess('Submitted for approval'); queryClient.invalidateQueries({ queryKey: queryKeys.proformas.all() }); },
-    onError: (err: any) => showError(err?.response?.data?.message || 'Failed to submit'),
+    onError: (err: unknown) => showError(getErrorMessage(err, 'Failed to submit proforma')),
   });
 
   const approveMutation = useMutation({
     mutationFn: (id: string) => apiClient.patch(`/proforma-invoices/${id}/approve`),
     onSuccess: () => { showSuccess('Proforma approved'); queryClient.invalidateQueries({ queryKey: queryKeys.proformas.all() }); },
-    onError: (err: any) => showError(err?.response?.data?.message || 'Failed to approve'),
+    onError: (err: unknown) => showError(getErrorMessage(err, 'Failed to approve proforma')),
   });
 
   const rejectMutation = useMutation({
@@ -104,7 +105,7 @@ export function ProformaInvoicesPage() {
       setRejectionReason('');
       queryClient.invalidateQueries({ queryKey: queryKeys.proformas.all() });
     },
-    onError: (err: any) => showError(err?.response?.data?.message || 'Failed to reject'),
+    onError: (err: unknown) => showError(getErrorMessage(err, 'Failed to reject proforma')),
   });
 
   const handlePaymentSubmit = async (data: any) => {
@@ -120,8 +121,8 @@ export function ProformaInvoicesPage() {
       setSelectedPf(null);
       resetPayment();
       queryClient.invalidateQueries({ queryKey: queryKeys.proformas.all() });
-    } catch (err: any) {
-      showError(err?.response?.data?.message || 'Payment failed');
+    } catch (err: unknown) {
+      showError(getErrorMessage(err, 'Payment failed'));
     }
   };
 
@@ -137,8 +138,8 @@ export function ProformaInvoicesPage() {
       setSelectedPf(null);
       resetConvert();
       queryClient.invalidateQueries({ queryKey: queryKeys.proformas.all() });
-    } catch (err: any) {
-      showError(err?.response?.data?.message || 'Conversion failed');
+    } catch (err: unknown) {
+      showError(getErrorMessage(err, 'Conversion failed'));
     }
   };
 
@@ -151,8 +152,8 @@ export function ProformaInvoicesPage() {
       a.download = `proforma-${id}.pdf`;
       a.click();
       window.URL.revokeObjectURL(url);
-    } catch (err: any) {
-      showError('Failed to download PDF');
+    } catch (err: unknown) {
+      showError(getErrorMessage(err, 'Failed to download PDF'));
     }
   };
 

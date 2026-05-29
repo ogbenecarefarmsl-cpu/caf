@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../../lib/api-client';
 import { useDebounce } from '../../hooks/useDebounce';
+import { useToast } from '../../hooks/useToast';
 import { queryKeys } from '../../lib/query-keys';
 
 interface Customer {
@@ -19,6 +20,7 @@ export const CustomerLookupPage = () => {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  const { showError } = useToast();
   const [showAddModal, setShowAddModal] = useState(false);
   const [newCustomer, setNewCustomer] = useState({
     firstName: '',
@@ -46,6 +48,9 @@ export const CustomerLookupPage = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.customers.all(), exact: false });
       setShowAddModal(false);
       setNewCustomer({ firstName: '', lastName: '', phone: '', email: '' });
+    },
+    onError: (err: unknown) => {
+      showError(err instanceof Error ? err.message : 'Failed to create customer');
     },
   });
 

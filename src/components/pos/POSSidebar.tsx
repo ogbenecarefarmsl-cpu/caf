@@ -4,6 +4,7 @@ import { useAuthStore } from '../../stores/auth-store';
 import { useBranchStore, getBranchId } from '../../stores/branch-store';
 import { useQuery } from '@tanstack/react-query';
 import apiClient from '../../lib/api-client';
+import { useToast } from '../../hooks/useToast';
 import { queryKeys } from '../../lib/query-keys';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
 
@@ -22,6 +23,7 @@ export const POSSidebar = () => {
   const selectedBranch = useBranchStore((state) => state.selectedBranch);
   const [isExpanded, setIsExpanded] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const { showError } = useToast();
   const dashboardPath =
     user?.role === 'branch_manager' || user?.role === 'super_admin' || user?.role === 'auditor'
       ? '/admin/dashboard'
@@ -255,6 +257,7 @@ export const POSSidebar = () => {
             await apiClient.post('/auth/logout');
           } catch (error) {
             console.error('Logout error:', error);
+            showError('Logout failed. Please try again.');
           } finally {
             useAuthStore.getState().clearAuth();
             navigate('/login');

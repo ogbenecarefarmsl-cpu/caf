@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/auth-store';
 import { useBranchStore } from '../stores/branch-store';
 import apiClient from '../lib/api-client';
+import { useToast } from '../hooks/useToast';
 import { BranchSelector } from './BranchSelector';
 import { ConnectionStatus } from './ui/ConnectionStatus';
 import { OfflineNotification } from './ui/OfflineNotification';
@@ -25,6 +26,7 @@ export const AdminLayout = ({ children, title = 'Admin' }: AdminLayoutProps) => 
   const navigate = useNavigate();
   const { user, clearAuth } = useAuthStore();
   const { selectedBranch } = useBranchStore();
+  const { showError } = useToast();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
@@ -33,6 +35,7 @@ export const AdminLayout = ({ children, title = 'Admin' }: AdminLayoutProps) => 
       await apiClient.post('/auth/logout');
     } catch (error) {
       console.error('Logout error:', error);
+      showError('Logout failed. Please try again.');
     } finally {
       clearAuth();
       navigate('/login');

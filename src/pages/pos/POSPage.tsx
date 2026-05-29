@@ -215,7 +215,7 @@ export const POSPage = () => {
       const response = await apiClient.get('/shifts/current', {
         params: { branchId, cashierId, terminalId },
       });
-      return response.data.data as Shift;
+      return (response.data?.data ?? response.data) as Shift;
     },
     enabled: !!getBranchId(selectedBranch) && !!user?.id,
     retry: false,
@@ -271,7 +271,7 @@ export const POSPage = () => {
         const res = await apiClient.get('/products', {
           params: { branchId, barcode },
         });
-        const list = res.data.data as Product[];
+        const list = (res.data?.data ?? res.data) as Product[];
         found = list[0];
       } catch {
         // ignore
@@ -391,7 +391,7 @@ export const POSPage = () => {
         cashierId,
         openingCash: data.openingCash,
       });
-      return response.data.data as Shift;
+      return (response.data?.data ?? response.data) as Shift;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.shifts.all(), exact: false });
@@ -399,16 +399,21 @@ export const POSPage = () => {
       setOpeningCash('');
       refetchCurrentShift();
     },
-    onError: async (error: any) => {
-      if (error?.response?.status === 409) {
-        queryClient.invalidateQueries({ queryKey: queryKeys.shifts.all(), exact: false });
-        await refetchCurrentShift();
-        setShowShiftModal(false);
-        alertInfo('An active shift already exists for this cashier. Loaded existing shift.');
+    onError: async (error: unknown) => {
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { status?: number }; message?: string };
+        if (axiosError.response?.status === 409) {
+          queryClient.invalidateQueries({ queryKey: queryKeys.shifts.all(), exact: false });
+          await refetchCurrentShift();
+          setShowShiftModal(false);
+          alertInfo('An active shift already exists for this cashier. Loaded existing shift.');
+          return;
+        }
+        alertWarning(axiosError.message || 'Failed to open shift. Please try again.');
         return;
       }
 
-      alertWarning(error?.response?.data?.message || 'Failed to open shift. Please try again.');
+      alertWarning(error instanceof Error ? error.message : 'Failed to open shift. Please try again.');
     },
   });
 
@@ -428,7 +433,7 @@ export const POSPage = () => {
         notes: data.notes,
         totalSales,
       });
-      return response.data.data as Shift;
+      return (response.data?.data ?? response.data) as Shift;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.shifts.all(), exact: false });
@@ -438,8 +443,8 @@ export const POSPage = () => {
       refetchCurrentShift();
       alertInfo('Shift closed successfully');
     },
-    onError: (error: any) => {
-      alertWarning(error?.response?.data?.message || 'Failed to close shift. Please try again.');
+    onError: (error: unknown) => {
+      alertWarning(error instanceof Error ? error.message : 'Failed to close shift. Please try again.');
     },
   });
 
@@ -471,8 +476,8 @@ export const POSPage = () => {
       setExpenseDescription('');
       alertInfo('Expense recorded successfully');
     },
-    onError: (error: any) => {
-      alertWarning(error?.response?.data?.message || 'Failed to record expense. Please try again.');
+    onError: (error: unknown) => {
+      alertWarning(error instanceof Error ? error.message : 'Failed to record expense. Please try again.');
     },
   });
 
