@@ -64,6 +64,7 @@ export const PaymentPage = () => {
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailAddress, setEmailAddress] = useState('');
   const [lastSaleId, setLastSaleId] = useState<string | null>(null);
+  const [paymentReference, setPaymentReference] = useState('');
 
   const { data: currentShift } = useQuery({
     queryKey: queryKeys.shifts.current({
@@ -201,6 +202,9 @@ export const PaymentPage = () => {
         })),
         discount,
         paymentMethod: paymentMethodMap[paymentMethod],
+        paymentReference: ['orange_money', 'africell_money', 'qmoney'].includes(paymentMethod) && paymentReference.trim()
+          ? paymentReference.trim()
+          : undefined,
         saleType: paymentMethod === 'credit' ? 'credit' : 'cash',
         amountPaid: paymentMethod === 'credit' ? parsedCreditAmount : total,
         dueDate: paymentMethod === 'credit' ? creditDueDate : undefined,
@@ -371,6 +375,20 @@ export const PaymentPage = () => {
               <span className="text-gray-400">Change Due: </span>
               <span className="text-accent-green font-bold ml-2">{format(changeDue)}</span>
             </div>
+          </div>
+        )}
+
+        {['orange_money', 'africell_money', 'qmoney'].includes(paymentMethod) && (
+          <div>
+            <h2 className="text-white font-semibold mb-3">Payment Reference (Optional)</h2>
+            <input
+              type="text"
+              value={paymentReference}
+              onChange={(e) => setPaymentReference(e.target.value)}
+              placeholder="Enter transaction ID or reference number"
+              className="w-full px-4 py-4 bg-primary-dark border border-gray-700 rounded-xl text-white focus:outline-none focus:border-accent-green"
+            />
+            <p className="text-gray-500 text-xs mt-1">Optional: Enter the mobile money transaction reference for record keeping</p>
           </div>
         )}
 

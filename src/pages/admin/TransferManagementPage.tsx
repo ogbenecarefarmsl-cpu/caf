@@ -46,6 +46,7 @@ interface Transfer {
   };
   quantity: number;
   reason: string;
+  transferType: string;
   status: 'pending' | 'approved' | 'rejected' | 'completed';
   requestedBy: {
     firstName: string;
@@ -55,6 +56,7 @@ interface Transfer {
     firstName: string;
     lastName: string;
   };
+  rejectionReason?: string;
   createdAt: string;
   completedAt?: string;
   notes?: string;
@@ -398,6 +400,11 @@ export default function TransferManagementPage() {
                     <p className="mt-1 text-xs text-gray-500">
                       {new Date(transfer.createdAt).toLocaleString()}
                     </p>
+                    {transfer.status === 'rejected' && transfer.rejectionReason && (
+                      <p className="mt-1 text-xs text-red-400">
+                        Rejected: {transfer.rejectionReason}
+                      </p>
+                    )}
                   </div>
                   {transfer.status === 'pending' ? (
                     <Button
@@ -535,6 +542,8 @@ export default function TransferManagementPage() {
                 <p><span className="font-semibold text-white">Product:</span> {selectedTransfer.productId.name}</p>
                 <p><span className="font-semibold text-white">Quantity:</span> {selectedTransfer.quantity}</p>
                 <p><span className="font-semibold text-white">Reason:</span> {selectedTransfer.reason}</p>
+                {selectedTransfer.transferType && <p><span className="font-semibold text-white">Type:</span> {selectedTransfer.transferType}</p>}
+                {selectedTransfer.rejectionReason && <p><span className="font-semibold text-white">Rejection Reason:</span> {selectedTransfer.rejectionReason}</p>}
                 <p><span className="font-semibold text-white">Requested By:</span> {selectedTransfer.requestedBy.firstName} {selectedTransfer.requestedBy.lastName}</p>
                 <p><span className="font-semibold text-white">Date:</span> {new Date(selectedTransfer.createdAt).toLocaleString()}</p>
               </div>

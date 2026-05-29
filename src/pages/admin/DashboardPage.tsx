@@ -190,7 +190,7 @@ export const DashboardPage = () => {
               />
             </div>
 
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
               <div className="bg-primary-dark/50 backdrop-blur-sm rounded-2xl p-5 sm:p-6 border border-white/5">
                 <h3 className="text-white text-base sm:text-lg font-semibold mb-4 sm:mb-6 flex items-center gap-2">
                   <span className="w-1 h-6 bg-accent-green rounded-full"></span>
@@ -265,38 +265,6 @@ export const DashboardPage = () => {
                 )}
               </div>
 
-              <div className="bg-primary-dark/50 backdrop-blur-sm rounded-2xl p-5 sm:p-6 border border-white/5">
-                <h3 className="text-white text-base sm:text-lg font-semibold mb-4 sm:mb-6 flex items-center gap-2">
-                  <span className="w-1 h-6 bg-blue-500 rounded-full"></span>
-                  System Status
-                </h3>
-                <div className="space-y-3 sm:space-y-4">
-                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/5">
-                    <div className="flex items-center space-x-3">
-                      <div className="relative">
-                        <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full"></div>
-                        <div className="absolute inset-0 bg-emerald-500 rounded-full animate-ping opacity-75"></div>
-                      </div>
-                      <p className="text-sm font-medium text-gray-200">System Operational</p>
-                    </div>
-                    <span className="text-xs text-emerald-400 font-mono">99.9%</span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/5">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-2.5 h-2.5 bg-blue-500 rounded-full"></div>
-                      <p className="text-sm font-medium text-gray-200">Inventory Synced</p>
-                    </div>
-                    <span className="text-xs text-gray-400">Just now</span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/5">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-2.5 h-2.5 bg-purple-500 rounded-full"></div>
-                      <p className="text-sm font-medium text-gray-200">Reports Updated</p>
-                    </div>
-                    <span className="text-xs text-gray-400">2m ago</span>
-                  </div>
-                </div>
-              </div>
             </div>
           </>
         )}

@@ -50,11 +50,11 @@ interface FinanceTransaction {
 
 interface FinanceSummary {
   branchId: string;
-  totalCashIn: number;
-  totalCashOut: number;
-  totalExpenses: number;
-  totalMarketerRemittance: number;
-  net: number;
+  cashInTotal: number;
+  cashOutTotal: number;
+  expenseTotal: number;
+  remittanceTotal: number;
+  netCashFlow: number;
 }
 
 interface TxFormData {
@@ -138,23 +138,23 @@ export function FinanceTransactionsPage() {
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
             <div className="rounded-xl border border-green-500/20 bg-white/5 p-4">
               <p className="text-xs text-gray-400 uppercase font-semibold mb-1">Cash In</p>
-              <p className="text-xl font-bold text-green-600">{format(summary.totalCashIn)}</p>
+              <p className="text-xl font-bold text-green-600">{format(summary.cashInTotal)}</p>
             </div>
             <div className="rounded-xl border border-red-500/20 bg-white/5 p-4">
               <p className="text-xs text-gray-400 uppercase font-semibold mb-1">Cash Out</p>
-              <p className="text-xl font-bold text-red-600">{format(summary.totalCashOut)}</p>
+              <p className="text-xl font-bold text-red-600">{format(summary.cashOutTotal)}</p>
             </div>
             <div className="rounded-xl border border-orange-500/20 bg-white/5 p-4">
               <p className="text-xs text-gray-400 uppercase font-semibold mb-1">Expenses</p>
-              <p className="text-xl font-bold text-orange-600">{format(summary.totalExpenses)}</p>
+              <p className="text-xl font-bold text-orange-600">{format(summary.expenseTotal)}</p>
             </div>
             <div className="rounded-xl border border-purple-500/20 bg-white/5 p-4">
               <p className="text-xs text-gray-400 uppercase font-semibold mb-1">Remittance</p>
-              <p className="text-xl font-bold text-purple-600">{format(summary.totalMarketerRemittance)}</p>
+              <p className="text-xl font-bold text-purple-600">{format(summary.remittanceTotal)}</p>
             </div>
-            <div className={`rounded-xl border bg-white/5 p-4 ${summary.net >= 0 ? 'border-green-500/30' : 'border-red-500/30'}`}>
+            <div className={`rounded-xl border bg-white/5 p-4 ${summary.netCashFlow >= 0 ? 'border-green-500/30' : 'border-red-500/30'}`}>
               <p className="text-xs text-gray-400 uppercase font-semibold mb-1">Net</p>
-              <p className={`text-xl font-bold ${summary.net >= 0 ? 'text-green-300' : 'text-red-300'}`}>{format(summary.net)}</p>
+              <p className={`text-xl font-bold ${summary.netCashFlow >= 0 ? 'text-green-300' : 'text-red-300'}`}>{format(summary.netCashFlow)}</p>
             </div>
           </div>
         )}

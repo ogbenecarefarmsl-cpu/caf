@@ -56,7 +56,7 @@ export const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(
         <div className="mb-6 text-sm">
           <div className="flex justify-between mb-1">
             <span className="font-semibold">Receipt No:</span>
-            <span>{saleData._id.slice(-8).toUpperCase()}</span>
+            <span>{saleData.receiptNumber || saleData._id.slice(-8).toUpperCase()}</span>
           </div>
           <div className="flex justify-between mb-1">
             <span className="font-semibold">Date:</span>

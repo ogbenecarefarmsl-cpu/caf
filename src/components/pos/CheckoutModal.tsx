@@ -104,6 +104,8 @@ export const CheckoutModal = ({
         productId: item.productId,
         quantity: item.quantity,
         unitPrice: item.unitPrice,
+        packSize: item.packSize?.unit || undefined,
+        quantityInBaseUnits: item.quantityInBaseUnits,
       })),
       discount,
       paymentMethod,

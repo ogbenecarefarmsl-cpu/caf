@@ -25,6 +25,11 @@ interface Sale {
     unitPrice: number;
   }>;
   total: number;
+  paymentMethod: string;
+  saleType: string;
+  paymentStatus: string;
+  amountPaid: number;
+  balanceDue: number;
   status: 'completed' | 'partially_returned' | 'returned';
   createdAt: string;
 }
@@ -198,7 +203,7 @@ export const TransactionHistoryPage = () => {
                 <div className="flex-1">
                   <p className="text-white font-semibold truncate">REC-{sale.receiptNumber}</p>
                   <p className="text-gray-400 text-sm truncate">{sale.customerName || 'Walk-in Customer'}</p>
-                  <p className="text-gray-500 text-xs mt-1">{formatDateTime(sale.createdAt)}</p>
+                  <p className="text-gray-500 text-xs mt-1">{getPaymentMethodLabel(sale.paymentMethod)} &middot; {formatDateTime(sale.createdAt)}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-white font-bold">{format(sale.total)}</p>
@@ -274,8 +279,12 @@ export const TransactionHistoryPage = () => {
                 <option value="all">All Methods</option>
                 <option value="cash">Cash</option>
                 <option value="card">Card</option>
-                <option value="mobile">Mobile Money</option>
+                <option value="orange_money">Orange Money</option>
+                <option value="africell_money">Africell Money</option>
+                <option value="qmoney">QMoney</option>
                 <option value="bank_transfer">Bank Transfer</option>
+                <option value="insurance">Insurance</option>
+                <option value="credit">Credit</option>
               </select>
             </div>
 
