@@ -6,6 +6,7 @@ import apiClient from '../lib/api-client';
 import { BranchSelector } from './BranchSelector';
 import { ConnectionStatus } from './ui/ConnectionStatus';
 import { OfflineNotification } from './ui/OfflineNotification';
+import { ConfirmDialog } from './ui/ConfirmDialog';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -25,6 +26,7 @@ export const AdminLayout = ({ children, title = 'Admin' }: AdminLayoutProps) => 
   const { user, clearAuth } = useAuthStore();
   const { selectedBranch } = useBranchStore();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -301,7 +303,7 @@ export const AdminLayout = ({ children, title = 'Admin' }: AdminLayoutProps) => 
             </div>
           </div>
           <button
-            onClick={handleLogout}
+            onClick={() => setShowLogoutConfirm(true)}
             className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white rounded-lg transition-all duration-200 border border-white/5 hover:border-white/10"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -362,7 +364,7 @@ export const AdminLayout = ({ children, title = 'Admin' }: AdminLayoutProps) => 
             </div>
           </div>
           <button
-            onClick={handleLogout}
+            onClick={() => setShowLogoutConfirm(true)}
             className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white rounded-lg transition-all duration-200 border border-white/5 hover:border-white/10"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -372,6 +374,16 @@ export const AdminLayout = ({ children, title = 'Admin' }: AdminLayoutProps) => 
           </button>
         </div>
       </aside>
+
+      <ConfirmDialog
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={handleLogout}
+        title="Logout"
+        message="Are you sure you want to logout? You will need to sign in again."
+        confirmLabel="Logout"
+        variant="danger"
+      />
 
       <div className="flex-1 flex flex-col min-w-0 bg-primary-darker">
         <header className="bg-primary-dark/50 backdrop-blur-xl border-b border-white/5 px-4 py-4 sm:px-6 lg:px-8 lg:py-6 sticky top-0 z-30">

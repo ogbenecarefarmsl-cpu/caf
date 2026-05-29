@@ -1,4 +1,4 @@
-import { forwardRef, type SelectHTMLAttributes } from 'react';
+import { forwardRef, useId, type SelectHTMLAttributes } from 'react';
 
 interface SelectOption {
   value: string;
@@ -14,17 +14,25 @@ interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
 }
 
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(
-  ({ label, error, helperText, options, children, className = '', ...props }, ref) => {
+  ({ label, error, helperText, options, children, className = '', id: externalId, ...props }, ref) => {
+    const autoId = useId();
+    const selectId = externalId || autoId;
+    const errorId = error ? `${selectId}-error` : undefined;
+    const helperId = helperText && !error ? `${selectId}-helper` : undefined;
+
     return (
       <div className="w-full">
         {label && (
-          <label className="block text-sm font-medium text-white mb-1">
+          <label htmlFor={selectId} className="block text-sm font-medium text-white mb-1">
             {label}
             {props.required && <span className="text-red-500 ml-1">*</span>}
           </label>
         )}
         <select
           ref={ref}
+          id={selectId}
+          aria-invalid={!!error}
+          aria-describedby={errorId || helperId || undefined}
           className={`
             w-full px-4 py-2.5 rounded-xl
             bg-white/5 text-white
@@ -48,10 +56,10 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           )}
         </select>
         {error && (
-          <p className="mt-1 text-sm text-red-500">{error}</p>
+          <p id={errorId} className="mt-1 text-sm text-red-500">{error}</p>
         )}
         {helperText && !error && (
-          <p className="mt-1 text-sm text-gray-400">{helperText}</p>
+          <p id={helperId} className="mt-1 text-sm text-gray-400">{helperText}</p>
         )}
       </div>
     );

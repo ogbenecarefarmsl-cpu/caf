@@ -161,8 +161,8 @@ export const ReceiptModal = ({ isOpen, onClose, saleData }: ReceiptModalProps) =
             <div
               className={`p-4 rounded-lg ${
                 emailStatus.type === 'success'
-                  ? 'bg-green-50 text-green-800 border border-green-200'
-                  : 'bg-red-50 text-red-800 border border-red-200'
+                  ? 'bg-green-500/20 text-green-300 border border-green-500/30'
+                  : 'bg-red-500/20 text-red-300 border border-red-500/30'
               }`}
             >
               <div className="flex items-center">
@@ -197,11 +197,11 @@ export const ReceiptModal = ({ isOpen, onClose, saleData }: ReceiptModalProps) =
           )}
 
           {/* Receipt Preview */}
-          <div className="bg-white rounded-lg overflow-hidden">
+          <div className="bg-primary-darker rounded-lg overflow-hidden">
             <Receipt ref={receiptRef} saleData={receiptData} />
           </div>
 
-          {/* New Receipt Actions Component */}
+          {/* Receipt Actions */}
           <div className="bg-gray-50 p-4 rounded-lg">
             <ReceiptActions 
               saleId={saleData._id} 
@@ -210,7 +210,7 @@ export const ReceiptModal = ({ isOpen, onClose, saleData }: ReceiptModalProps) =
             />
           </div>
 
-          {/* Legacy Action Buttons */}
+          {/* Additional Actions */}
           <div className="flex space-x-3">
             <Button
               variant="secondary"
@@ -240,27 +240,6 @@ export const ReceiptModal = ({ isOpen, onClose, saleData }: ReceiptModalProps) =
                 />
               </svg>
               Email
-            </Button>
-            <Button
-              variant="primary"
-              size="lg"
-              onClick={handlePrint}
-              className="flex-1"
-            >
-              <svg
-                className="w-5 h-5 mr-2 inline"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
-                />
-              </svg>
-              Print
             </Button>
           </div>
         </div>

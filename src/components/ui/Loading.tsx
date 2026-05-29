@@ -40,7 +40,7 @@ export const Loading = ({
 
   // Default spinner variant
   const spinner = (
-    <div className="flex flex-col items-center justify-center gap-3">
+    <div className="flex flex-col items-center justify-center gap-3" role="status" aria-live="polite">
       <div
         className={`animate-spin rounded-full border-b-2 border-accent-green ${sizeStyles[size]}`}
       />
@@ -50,7 +50,7 @@ export const Loading = ({
 
   if (fullScreen) {
     return (
-      <div className="fixed inset-0 bg-primary-darker bg-opacity-90 flex items-center justify-center z-50">
+      <div className="fixed inset-0 bg-primary-darker/90 flex items-center justify-center z-50">
         {spinner}
       </div>
     );

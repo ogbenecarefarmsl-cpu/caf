@@ -6,9 +6,11 @@ import { useBranchStore, getBranchId } from '../../stores/branch-store';
 import { useAuthStore } from '../../stores/auth-store';
 import { useAlertReplacement } from '../../hooks/useAlertReplacement';
 import { useToast } from '../../hooks/useToast';
+import { useCurrency } from '../../hooks/useCurrency';
+import { useDebounce } from '../../hooks/useDebounce';
 import { QRScannerModal } from '../../components/pos/QRScannerModal';
 import { queryKeys } from '../../lib/query-keys';
-import { useCurrency } from '../../hooks/useCurrency';
+import { formatDate } from '../../lib/date-format';
 
 interface SaleItem {
   productId: string;
@@ -39,7 +41,7 @@ interface ReturnItem {
   selected: boolean;
 }
 
-type SearchMode = 'receipt' | 'product';
+type SearchMode = 'receipt';
 
 export const ProcessReturnPage = () => {
   const navigate = useNavigate();
@@ -49,7 +51,6 @@ export const ProcessReturnPage = () => {
   const { showSuccess, showError } = useToast();
   const { format } = useCurrency();
   const queryClient = useQueryClient();
-  const [searchMode, setSearchMode] = useState<SearchMode>('receipt');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [showScanner, setShowScanner] = useState(false);
@@ -164,12 +165,6 @@ export const ProcessReturnPage = () => {
 
   const handleBarcodeScan = (barcode: string) => {
     setSearchQuery(barcode);
-    setSearchMode('receipt');
-  };
-
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
   const selectedItems = returnItems.filter((item) => item.selected);
@@ -314,30 +309,6 @@ export const ProcessReturnPage = () => {
             placeholder="Search by receipt number or product name..."
             className="w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-gray-600"
           />
-        </div>
-
-        {/* Toggle Tabs */}
-        <div className="flex bg-gray-800 rounded-xl p-1">
-          <button
-            onClick={() => setSearchMode('receipt')}
-            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
-              searchMode === 'receipt'
-                ? 'bg-gray-700 text-white'
-                : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            By Receipt
-          </button>
-          <button
-            onClick={() => setSearchMode('product')}
-            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
-              searchMode === 'product'
-                ? 'bg-gray-700 text-white'
-                : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            By Product
-          </button>
         </div>
 
         {/* Recent Sales */}

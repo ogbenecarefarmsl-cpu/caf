@@ -90,6 +90,11 @@ export const CheckoutModal = ({
   };
 
   const handleCheckout = async () => {
+    if (items.length === 0 || total <= 0) {
+      alertError('Cannot checkout with an empty cart or zero total.');
+      return;
+    }
+
     // Prepare checkout data
     const checkoutData = {
       branchId,

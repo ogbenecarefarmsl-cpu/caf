@@ -1,4 +1,4 @@
-import { useState, useEffect, type ReactNode } from 'react';
+import { useState, useEffect, useRef, useCallback, type ReactNode } from 'react';
 import { type Toast, ToastContext } from '../../contexts/ToastContext';
 
 interface ToastProviderProps {
@@ -7,38 +7,51 @@ interface ToastProviderProps {
 
 export const ToastProvider = ({ children }: ToastProviderProps) => {
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const timeoutRefs = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
-  const addToast = (toast: Omit<Toast, 'id'>) => {
+  const removeToast = useCallback((id: string) => {
+    const timeout = timeoutRefs.current.get(id);
+    if (timeout) {
+      clearTimeout(timeout);
+      timeoutRefs.current.delete(id);
+    }
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
+  }, []);
+
+  const addToast = useCallback((toast: Omit<Toast, 'id'>) => {
     const id = crypto.randomUUID();
     const newToast = { ...toast, id };
     setToasts((prev) => [...prev, newToast]);
 
-    // Auto remove after duration
     const duration = toast.duration || 5000;
-    setTimeout(() => {
+    const timeout = setTimeout(() => {
       removeToast(id);
     }, duration);
-  };
+    timeoutRefs.current.set(id, timeout);
+  }, [removeToast]);
 
-  const removeToast = (id: string) => {
-    setToasts((prev) => prev.filter((toast) => toast.id !== id));
-  };
+  useEffect(() => {
+    return () => {
+      timeoutRefs.current.forEach((timeout) => clearTimeout(timeout));
+      timeoutRefs.current.clear();
+    };
+  }, []);
 
-  const showSuccess = (title: string, message?: string) => {
+  const showSuccess = useCallback((title: string, message?: string) => {
     addToast({ type: 'success', title, message });
-  };
+  }, [addToast]);
 
-  const showError = (title: string, message?: string) => {
+  const showError = useCallback((title: string, message?: string) => {
     addToast({ type: 'error', title, message });
-  };
+  }, [addToast]);
 
-  const showWarning = (title: string, message?: string) => {
+  const showWarning = useCallback((title: string, message?: string) => {
     addToast({ type: 'warning', title, message });
-  };
+  }, [addToast]);
 
-  const showInfo = (title: string, message?: string) => {
+  const showInfo = useCallback((title: string, message?: string) => {
     addToast({ type: 'info', title, message });
-  };
+  }, [addToast]);
 
   return (
     <ToastContext.Provider value={{
@@ -80,15 +93,19 @@ interface ToastItemProps {
 
 const ToastItem = ({ toast, onRemove }: ToastItemProps) => {
   const [isVisible, setIsVisible] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    // Trigger animation
-    setTimeout(() => setIsVisible(true), 10);
+    timeoutRef.current = setTimeout(() => setIsVisible(true), 10);
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
   }, []);
 
   const handleRemove = () => {
     setIsVisible(false);
-    setTimeout(() => onRemove(toast.id), 300);
+    const timeout = setTimeout(() => onRemove(toast.id), 300);
+    return () => clearTimeout(timeout);
   };
 
   const getToastStyles = () => {
@@ -141,9 +158,9 @@ const ToastItem = ({ toast, onRemove }: ToastItemProps) => {
   };
 
   return (
-    <div className={`${getToastStyles()} p-4 rounded-lg shadow-lg border text-white min-w-80`}>
+    <div className={`${getToastStyles()} p-4 rounded-lg shadow-lg border text-white min-w-80`} role="alert" aria-live="polite">
       <div className="flex items-start space-x-3">
-        <div className="shrink-0">
+        <div className="shrink-0" aria-hidden="true">
           {getIcon()}
         </div>
         <div className="flex-1">
@@ -155,6 +172,7 @@ const ToastItem = ({ toast, onRemove }: ToastItemProps) => {
         <button
           onClick={handleRemove}
           className="shrink-0 hover:opacity-75 transition-opacity"
+          aria-label="Dismiss notification"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

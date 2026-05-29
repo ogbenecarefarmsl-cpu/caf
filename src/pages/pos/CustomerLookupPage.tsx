@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../../lib/api-client';
+import { useDebounce } from '../../hooks/useDebounce';
 import { queryKeys } from '../../lib/query-keys';
 
 interface Customer {
@@ -17,6 +18,7 @@ export const CustomerLookupPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newCustomer, setNewCustomer] = useState({
     firstName: '',
@@ -26,10 +28,10 @@ export const CustomerLookupPage = () => {
   });
 
   const { data: customers, isLoading } = useQuery({
-    queryKey: queryKeys.customers.list({ search: searchQuery }),
+    queryKey: queryKeys.customers.list({ search: debouncedSearchQuery }),
     queryFn: async () => {
       const params: Record<string, string> = {};
-      if (searchQuery) params.search = searchQuery;
+      if (debouncedSearchQuery) params.search = debouncedSearchQuery;
       const response = await apiClient.get('/customers', { params });
       return response.data as Customer[];
     },

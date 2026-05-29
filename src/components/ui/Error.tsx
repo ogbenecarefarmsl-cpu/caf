@@ -1,3 +1,5 @@
+import { Button } from './Button';
+
 interface ErrorProps {
   message: string;
   onRetry?: () => void;
@@ -6,13 +8,14 @@ interface ErrorProps {
 
 export const Error = ({ message, onRetry, fullScreen = false }: ErrorProps) => {
   const content = (
-    <div className="flex flex-col items-center justify-center gap-4 p-6">
+    <div className="flex flex-col items-center justify-center gap-4 p-6" role="alert" aria-live="assertive">
       <div className="rounded-full bg-red-500 bg-opacity-20 p-3">
         <svg
           className="w-8 h-8 text-red-500"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
+          aria-hidden="true"
         >
           <path
             strokeLinecap="round"
@@ -27,12 +30,9 @@ export const Error = ({ message, onRetry, fullScreen = false }: ErrorProps) => {
         <p className="text-gray-400 text-sm max-w-md">{message}</p>
       </div>
       {onRetry && (
-        <button
-          onClick={onRetry}
-          className="px-4 py-2 bg-accent-green text-primary-dark rounded-xl hover:bg-accent-light transition-colors"
-        >
+        <Button onClick={onRetry}>
           Try Again
-        </button>
+        </Button>
       )}
     </div>
   );

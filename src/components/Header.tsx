@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from './ui/Button';
+import { ConfirmDialog } from './ui/ConfirmDialog';
 
 interface HeaderProps {
   title: string;
@@ -11,17 +12,17 @@ interface HeaderProps {
 export const Header = ({ title, showNav = false }: HeaderProps) => {
   const { user, logout } = useAuth();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const location = useLocation();
 
   const handleLogout = async () => {
-    if (window.confirm('Are you sure you want to logout?')) {
-      setIsLoggingOut(true);
-      try {
-        await logout();
-      } catch (error) {
-        console.error('Logout error:', error);
-        setIsLoggingOut(false);
-      }
+    setShowLogoutConfirm(false);
+    setIsLoggingOut(true);
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+      setIsLoggingOut(false);
     }
   };
 
@@ -35,9 +36,9 @@ export const Header = ({ title, showNav = false }: HeaderProps) => {
   const navLinks = [
     { path: '/admin/dashboard', label: 'Dashboard', roles: ['super_admin', 'branch_manager', 'auditor'] },
     { path: '/pos', label: 'POS', roles: ['cashier', 'branch_manager', 'super_admin', 'auditor'] },
-    { path: '/branches', label: 'Branches', roles: ['super_admin'] },
-    { path: '/users', label: 'Users', roles: ['super_admin', 'branch_manager'] },
-    { path: '/products', label: 'Products', roles: ['super_admin', 'branch_manager'] },
+    { path: '/admin/branches', label: 'Branches', roles: ['super_admin'] },
+    { path: '/admin/users', label: 'Users', roles: ['super_admin', 'branch_manager'] },
+    { path: '/admin/products', label: 'Products', roles: ['super_admin', 'branch_manager'] },
   ];
 
   const filteredNavLinks = navLinks.filter(link => 
@@ -67,7 +68,7 @@ export const Header = ({ title, showNav = false }: HeaderProps) => {
             <Button
               variant="secondary"
               size="sm"
-              onClick={handleLogout}
+              onClick={() => setShowLogoutConfirm(true)}
               isLoading={isLoggingOut}
               disabled={isLoggingOut}
               className="!border-white/10 hover:!border-white/20 hover:!bg-white/5 !text-gray-300 hover:!text-white"
@@ -77,6 +78,16 @@ export const Header = ({ title, showNav = false }: HeaderProps) => {
           </div>
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={handleLogout}
+        title="Logout"
+        message="Are you sure you want to logout? You will need to sign in again."
+        confirmLabel="Logout"
+        variant="danger"
+      />
 
       {/* Navigation */}
       {showNav && filteredNavLinks.length > 0 && (

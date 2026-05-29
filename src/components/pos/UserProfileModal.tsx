@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuthStore } from '../../stores/auth-store';
 import { useToast } from '../../hooks/useToast';
 import { useBiometricAuth } from '../../hooks/useBiometricAuth';
 import apiClient from '../../lib/api-client';
+import { ConfirmDialog } from '../ui/ConfirmDialog';
 
 interface UserProfileModalProps {
   isOpen: boolean;
@@ -19,6 +20,57 @@ export const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => 
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      previousFocusRef.current = document.activeElement as HTMLElement;
+      document.body.style.overflow = 'hidden';
+      requestAnimationFrame(() => {
+        modalRef.current?.focus();
+      });
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+      previousFocusRef.current?.focus();
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+        return;
+      }
+
+      if (e.key === 'Tab' && modalRef.current) {
+        const focusableElements = modalRef.current.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+
+        if (e.shiftKey) {
+          if (document.activeElement === firstElement) {
+            e.preventDefault();
+            lastElement?.focus();
+          }
+        } else {
+          if (document.activeElement === lastElement) {
+            e.preventDefault();
+            firstElement?.focus();
+          }
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   const handleChangePassword = async () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
@@ -71,11 +123,11 @@ export const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => 
   if (!isOpen || !user) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-primary-dark rounded-2xl p-6 w-[90%] max-w-md" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="user-profile-title">
+      <div ref={modalRef} tabIndex={-1} className="bg-primary-dark rounded-2xl p-6 w-[90%] max-w-md outline-none" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-white">User Profile</h2>
-          <button onClick={onClose} className="text-gray-400">
+          <h2 id="user-profile-title" className="text-xl font-bold text-white">User Profile</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors" aria-label="Close profile">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -170,7 +222,7 @@ export const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => 
                 Change Password
               </button>
               <button
-                onClick={handleLogout}
+                onClick={() => setShowLogoutConfirm(true)}
                 className="w-full py-3 bg-red-500/20 border border-red-500 rounded-xl text-red-400 font-medium hover:bg-red-500/30 transition-colors"
               >
                 Logout
@@ -232,6 +284,16 @@ export const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => 
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={handleLogout}
+        title="Logout"
+        message="Are you sure you want to logout? You will need to sign in again."
+        confirmLabel="Logout"
+        variant="danger"
+      />
     </div>
   );
 };

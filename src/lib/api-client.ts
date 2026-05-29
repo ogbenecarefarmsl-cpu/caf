@@ -49,6 +49,9 @@ function isRefreshCredentialError(error: unknown): boolean {
   return axios.isAxiosError(error) && [400, 401, 403].includes(error.response?.status ?? 0);
 }
 
+// Refresh-in-flight guard: prevents concurrent refresh requests
+let refreshPromise: Promise<string> | null = null;
+
 // Request interceptor to add auth token and idempotency keys
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
@@ -115,45 +118,67 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       originalRequest._retry = true;
 
+      // If a refresh is already in flight, wait for it instead of starting another
+      if (refreshPromise) {
+        try {
+          const accessToken = await refreshPromise;
+          if (originalRequest.headers) {
+            originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+          }
+          return apiClient(originalRequest);
+        } catch {
+          return Promise.reject(error);
+        }
+      }
+
+      refreshPromise = (async () => {
+        try {
+          const refreshToken = getStoredToken('refreshToken');
+          if (!refreshToken) {
+            throw new Error('No refresh token available');
+          }
+
+          // Attempt to refresh the token
+          const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
+            refreshToken,
+          }, {
+            withCredentials: true,
+          });
+
+          const {
+            accessToken,
+            refreshToken: newRefreshToken,
+            user,
+            expiresIn,
+            refreshExpiresIn,
+          } = response.data;
+          const authStore = useAuthStore.getState();
+          const nextUser = user ?? authStore.user;
+
+          if (!nextUser || !accessToken) {
+            throw new Error('Invalid refresh response');
+          }
+
+          authStore.setAuth(nextUser, accessToken, newRefreshToken || refreshToken, expiresIn, undefined, refreshExpiresIn);
+          return accessToken;
+        } catch (refreshError) {
+          if (isRefreshCredentialError(refreshError)) {
+            useAuthStore.getState().clearAuth();
+            redirectToLogin();
+          }
+          throw refreshError;
+        } finally {
+          refreshPromise = null;
+        }
+      })();
+
       try {
-        const refreshToken = getStoredToken('refreshToken');
-        if (!refreshToken) {
-          throw new Error('No refresh token available');
-        }
-
-        // Attempt to refresh the token
-        const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
-          refreshToken,
-        }, {
-          withCredentials: true,
-        });
-
-        const {
-          accessToken,
-          refreshToken: newRefreshToken,
-          user,
-          expiresIn,
-          refreshExpiresIn,
-        } = response.data;
-        const authStore = useAuthStore.getState();
-        const nextUser = user ?? authStore.user;
-
-        if (!nextUser || !accessToken) {
-          throw new Error('Invalid refresh response');
-        }
-
-        authStore.setAuth(nextUser, accessToken, newRefreshToken || refreshToken, expiresIn, undefined, refreshExpiresIn);
-
-        // Retry the original request with new token
+        const accessToken = await refreshPromise;
         if (originalRequest.headers) {
           originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         }
         return apiClient(originalRequest);
       } catch (refreshError) {
-        if (isRefreshCredentialError(refreshError)) {
-          useAuthStore.getState().clearAuth();
-          redirectToLogin();
-        }
         return Promise.reject(refreshError);
       }
     }

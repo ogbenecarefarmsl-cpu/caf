@@ -75,47 +75,38 @@ export const useOfflineStore = create<OfflineState>((set, get) => ({
       const queuedSales = await offlineDb.queuedSales
         .where('retryCount')
         .below(MAX_RETRY_COUNT)
-        .toArray();
+        .sortBy('timestamp');
 
       if (queuedSales.length === 0) {
         set({ isSyncing: false, lastSyncTime: Date.now() });
         return;
       }
 
-      const results = await Promise.allSettled(
-        queuedSales.map(async (sale) => {
-          try {
-            // Attempt to sync the sale
-            await apiClient.post('/sales/checkout', {
-              branchId: sale.branchId,
-              shiftId: sale.shiftId,
-              terminalId: sale.terminalId,
-              items: sale.items,
-              discount: sale.discount,
-              paymentMethod: sale.paymentMethod,
-              paymentReference: sale.paymentReference, // Include mobile money reference if present
-              prescriptionUrl: sale.prescriptionUrl,
-            });
+      // Sync sequentially to maintain operation order (stock deductions depend on sequence)
+      let successCount = 0;
+      for (const sale of queuedSales) {
+        try {
+          await apiClient.post('/sales/checkout', {
+            branchId: sale.branchId,
+            shiftId: sale.shiftId,
+            terminalId: sale.terminalId,
+            items: sale.items,
+            discount: sale.discount,
+            paymentMethod: sale.paymentMethod,
+            paymentReference: sale.paymentReference,
+            prescriptionUrl: sale.prescriptionUrl,
+          });
 
-            // Remove from queue on success
-            await offlineDb.queuedSales.delete(sale.id!);
-            return { success: true, id: sale.id };
-          } catch (error: unknown) {
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-            // Increment retry count on failure
-            await offlineDb.queuedSales.update(sale.id!, {
-              retryCount: sale.retryCount + 1,
-              lastError: errorMessage,
-            });
-            
-            return { success: false, id: sale.id, error };
-          }
-        })
-      );
-
-      const successCount = results.filter(
-        (r) => r.status === 'fulfilled' && r.value.success
-      ).length;
+          await offlineDb.queuedSales.delete(sale.id!);
+          successCount++;
+        } catch (error: unknown) {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          await offlineDb.queuedSales.update(sale.id!, {
+            retryCount: sale.retryCount + 1,
+            lastError: errorMessage,
+          });
+        }
+      }
 
       await get().updateQueueCount();
       set({ isSyncing: false, lastSyncTime: Date.now() });

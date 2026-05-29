@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { Download, RefreshCw, X } from 'lucide-react'
 
 interface UpdatePromptProps {
@@ -27,20 +28,71 @@ export const UpdatePrompt = ({
   onUpdate,
   onDismiss,
 }: UpdatePromptProps) => {
+  const modalRef = useRef<HTMLDivElement>(null)
+  const previousFocusRef = useRef<HTMLElement | null>(null)
+
+  useEffect(() => {
+    if (isOpen) {
+      previousFocusRef.current = document.activeElement as HTMLElement
+      document.body.style.overflow = 'hidden'
+      requestAnimationFrame(() => {
+        modalRef.current?.focus()
+      })
+    }
+    return () => {
+      document.body.style.overflow = 'unset'
+      previousFocusRef.current?.focus()
+    }
+  }, [isOpen])
+
+  useEffect(() => {
+    if (!isOpen) return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && canDismiss && !isApplying) {
+        onDismiss()
+        return
+      }
+
+      if (e.key === 'Tab' && modalRef.current) {
+        const focusableElements = modalRef.current.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        )
+        const firstElement = focusableElements[0]
+        const lastElement = focusableElements[focusableElements.length - 1]
+
+        if (e.shiftKey) {
+          if (document.activeElement === firstElement) {
+            e.preventDefault()
+            lastElement?.focus()
+          }
+        } else {
+          if (document.activeElement === lastElement) {
+            e.preventDefault()
+            firstElement?.focus()
+          }
+        }
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, canDismiss, isApplying, onDismiss])
+
   if (!isOpen) {
     return null
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-4">
-      <div className="w-full max-w-md rounded-xl border border-gray-700 bg-primary-dark shadow-2xl shadow-black/40">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-4" role="dialog" aria-modal="true" aria-labelledby="update-prompt-title">
+      <div ref={modalRef} tabIndex={-1} className="w-full max-w-md rounded-xl border border-gray-700 bg-primary-dark shadow-2xl shadow-black/40 outline-none">
         <div className="flex items-start justify-between border-b border-gray-700 p-5">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-green/15 text-accent-green">
               <Download className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-white">{title}</h2>
+              <h2 id="update-prompt-title" className="text-lg font-bold text-white">{title}</h2>
               <p className="mt-1 text-sm text-gray-400">
                 {description}
               </p>

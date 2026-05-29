@@ -36,7 +36,7 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       accessToken: null,
       refreshToken: null,
@@ -53,14 +53,38 @@ export const useAuthStore = create<AuthState>()(
         sessionExpiresAt,
         refreshExpiresInSeconds = 7 * 24 * 60 * 60,
       ) => {
+        const sessionExp = sessionExpiresAt ?? Date.now() + expiresInSeconds * 1000;
+        const refreshExp = Date.now() + refreshExpiresInSeconds * 1000;
+
         set({
           user,
           accessToken,
           refreshToken,
-          sessionExpiresAt: sessionExpiresAt ?? Date.now() + expiresInSeconds * 1000,
-          refreshExpiresAt: Date.now() + refreshExpiresInSeconds * 1000,
+          sessionExpiresAt: sessionExp,
+          refreshExpiresAt: refreshExp,
           isAuthenticated: true,
         });
+
+        // Schedule proactive logout before token expiry (2 minutes before)
+        const timeUntilExpiry = sessionExp - Date.now() - 120_000;
+        if (timeUntilExpiry > 0) {
+          setTimeout(() => {
+            const state = get();
+            if (state.isAuthenticated && state.sessionExpiresAt && Date.now() >= state.sessionExpiresAt - 60_000) {
+              set({
+                user: null,
+                accessToken: null,
+                refreshToken: null,
+                sessionExpiresAt: null,
+                refreshExpiresAt: null,
+                isAuthenticated: false,
+              });
+              if (window.location.pathname !== '/login') {
+                window.location.href = '/login';
+              }
+            }
+          }, timeUntilExpiry);
+        }
       },
 
       clearAuth: () => {

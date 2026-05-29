@@ -163,7 +163,7 @@ export const useCartStore = create<CartState>()(
   },
 
   setDiscount: (discount) => {
-    set({ discount });
+    set({ discount: Math.max(0, discount) });
     get().calculateTotals();
   },
 
@@ -183,11 +183,11 @@ export const useCartStore = create<CartState>()(
 
   calculateTotals: () => {
     const items = get().items;
-    const discount = get().discount;
-    const subtotal = items.reduce((sum, item) => sum + item.subtotal, 0);
-    const total = Math.max(0, subtotal - discount);
+    const discount = Math.max(0, get().discount);
+    const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+    const total = Math.max(0, subtotal - Math.min(discount, subtotal));
 
-    set({ subtotal, total });
+    set({ subtotal, total, discount: Math.min(discount, subtotal) });
   },
     }),
     {

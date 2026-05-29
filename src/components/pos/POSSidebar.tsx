@@ -5,6 +5,7 @@ import { useBranchStore, getBranchId } from '../../stores/branch-store';
 import { useQuery } from '@tanstack/react-query';
 import apiClient from '../../lib/api-client';
 import { queryKeys } from '../../lib/query-keys';
+import { ConfirmDialog } from '../ui/ConfirmDialog';
 
 interface Shift {
   _id: string;
@@ -20,6 +21,7 @@ export const POSSidebar = () => {
   const user = useAuthStore((state) => state.user);
   const selectedBranch = useBranchStore((state) => state.selectedBranch);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const dashboardPath =
     user?.role === 'branch_manager' || user?.role === 'super_admin' || user?.role === 'auditor'
       ? '/admin/dashboard'
@@ -236,18 +238,7 @@ export const POSSidebar = () => {
               Dashboard
             </button>
             <button
-              onClick={async () => {
-                try {
-                  // Call backend logout endpoint to invalidate tokens
-                  await apiClient.post('/auth/logout');
-                } catch (error) {
-                  console.error('Logout error:', error);
-                } finally {
-                  // Always clear local state and redirect
-                  useAuthStore.getState().clearAuth();
-                  navigate('/login');
-                }
-              }}
+              onClick={() => setShowLogoutConfirm(true)}
               className="px-3 py-2 bg-gray-800 hover:bg-red-600 rounded-lg text-xs text-gray-300 hover:text-white transition-colors"
             >
               Logout
@@ -255,6 +246,25 @@ export const POSSidebar = () => {
           </div>
         </div>
       </aside>
+
+      <ConfirmDialog
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={async () => {
+          try {
+            await apiClient.post('/auth/logout');
+          } catch (error) {
+            console.error('Logout error:', error);
+          } finally {
+            useAuthStore.getState().clearAuth();
+            navigate('/login');
+          }
+        }}
+        title="Logout"
+        message="Are you sure you want to logout? You will need to sign in again."
+        confirmLabel="Logout"
+        variant="danger"
+      />
     </>
   );
 };

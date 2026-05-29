@@ -13,6 +13,8 @@ export const QRScannerModal = ({ isOpen, onClose, onScan, title = 'Scan Barcode'
   const [scanning, setScanning] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
   const { showError } = useToast();
 
   const stopCamera = useCallback(() => {
@@ -45,6 +47,54 @@ export const QRScannerModal = ({ isOpen, onClose, onScan, title = 'Scan Barcode'
     };
   }, [isOpen, scanning, startCamera, stopCamera]);
 
+  useEffect(() => {
+    if (isOpen) {
+      previousFocusRef.current = document.activeElement as HTMLElement;
+      document.body.style.overflow = 'hidden';
+      requestAnimationFrame(() => {
+        modalRef.current?.focus();
+      });
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+      previousFocusRef.current?.focus();
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleClose();
+        return;
+      }
+
+      if (e.key === 'Tab' && modalRef.current) {
+        const focusableElements = modalRef.current.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+
+        if (e.shiftKey) {
+          if (document.activeElement === firstElement) {
+            e.preventDefault();
+            lastElement?.focus();
+          }
+        } else {
+          if (document.activeElement === lastElement) {
+            e.preventDefault();
+            firstElement?.focus();
+          }
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen]);
+
   const handleManualSubmit = () => {
     if (manualCode.trim()) {
       onScan(manualCode.trim());
@@ -63,11 +113,22 @@ export const QRScannerModal = ({ isOpen, onClose, onScan, title = 'Scan Barcode'
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50" onClick={handleClose}>
-      <div className="bg-primary-dark rounded-2xl p-6 w-[90%] max-w-md" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="qr-scanner-title"
+      onClick={handleClose}
+    >
+      <div
+        ref={modalRef}
+        tabIndex={-1}
+        className="bg-primary-dark rounded-2xl p-6 w-[90%] max-w-md outline-none"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-white">{title}</h2>
-          <button onClick={handleClose} className="text-gray-400">
+          <h2 id="qr-scanner-title" className="text-xl font-bold text-white">{title}</h2>
+          <button onClick={handleClose} className="text-gray-400 hover:text-white transition-colors" aria-label="Close scanner">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -89,7 +150,7 @@ export const QRScannerModal = ({ isOpen, onClose, onScan, title = 'Scan Barcode'
               </div>
               <button
                 onClick={() => setScanning(false)}
-                className="absolute bottom-4 left-1/2 -translate-x-1/2 px-6 py-2 bg-red-500 text-white rounded-xl"
+                className="absolute bottom-4 left-1/2 -translate-x-1/2 px-6 py-2 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors"
               >
                 Stop Camera
               </button>
@@ -109,13 +170,14 @@ export const QRScannerModal = ({ isOpen, onClose, onScan, title = 'Scan Barcode'
 
           {/* Manual Entry */}
           <div>
-            <label className="block text-gray-400 text-sm mb-2">Or Enter Manually</label>
+            <label htmlFor="barcode-manual-input" className="block text-gray-400 text-sm mb-2">Or Enter Manually</label>
             <div className="flex space-x-2">
               <input
+                id="barcode-manual-input"
                 type="text"
                 value={manualCode}
                 onChange={(e) => setManualCode(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleManualSubmit()}
+                onKeyDown={(e) => e.key === 'Enter' && handleManualSubmit()}
                 placeholder="Enter barcode number..."
                 className="flex-1 px-4 py-3 bg-primary-darker border border-gray-600 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-accent-green"
                 autoFocus={!scanning}

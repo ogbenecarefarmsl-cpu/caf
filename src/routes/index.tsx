@@ -150,6 +150,10 @@ export const router = createBrowserRouter([
     element: <Navigate to="/pos/transactions" replace />,
   },
   {
+    path: '/pos/transactons',
+    element: <Navigate to="/pos/transactions" replace />,
+  },
+  {
     path: '/admin/transactions',
     element: (
       <ProtectedRoute allowedRoles={['cashier', 'branch_manager', 'super_admin', 'auditor']}>

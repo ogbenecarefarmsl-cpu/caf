@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
 interface ModalProps {
@@ -16,21 +16,59 @@ export const Modal = ({
   children,
   size = 'md',
 }: ModalProps) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+
   useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
+    if (isOpen) {
+      previousFocusRef.current = document.activeElement as HTMLElement;
+      document.body.style.overflow = 'hidden';
+
+      const timer = setTimeout(() => {
+        const focusable = containerRef.current?.querySelector<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        focusable?.focus();
+      }, 10);
+
+      return () => clearTimeout(timer);
+    }
+    return undefined;
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         onClose();
+        return;
+      }
+
+      if (e.key === 'Tab') {
+        const focusable = containerRef.current?.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        if (!focusable || focusable.length === 0) return;
+
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
       }
     };
 
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'hidden';
-    }
-
+    document.addEventListener('keydown', handleKeyDown);
     return () => {
-      document.removeEventListener('keydown', handleEscape);
+      document.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = 'unset';
+      previousFocusRef.current?.focus();
     };
   }, [isOpen, onClose]);
 
@@ -59,6 +97,7 @@ export const Modal = ({
 
       {/* Modal */}
       <div
+        ref={containerRef}
         className={`relative flex max-h-[92vh] w-full ${sizeStyles[size]} flex-col overflow-hidden rounded-t-2xl border border-white/10 bg-primary-dark shadow-2xl sm:my-8 sm:rounded-2xl`}
         onClick={(event) => event.stopPropagation()}
       >

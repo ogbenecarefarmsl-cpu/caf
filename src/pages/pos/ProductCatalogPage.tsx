@@ -8,6 +8,7 @@ import { useAuthStore } from '../../stores/auth-store';
 import { getProductImage, handleImageError } from '../../lib/product-images';
 import { useCurrency } from '../../hooks/useCurrency';
 import { useAlertReplacement } from '../../hooks/useAlertReplacement';
+import { useDebounce } from '../../hooks/useDebounce';
 import { QRScannerModal } from '../../components/pos/QRScannerModal';
 import { queryKeys } from '../../lib/query-keys';
 
@@ -41,6 +42,7 @@ export const ProductCatalogPage = () => {
   const { alertInfo, alertError } = useAlertReplacement();
 
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [selectedCategory, setSelectedCategory] = useState<Category>('all');
   const [showScanner, setShowScanner] = useState(false);
   const branchId = getBranchId(selectedBranch);
@@ -55,7 +57,7 @@ export const ProductCatalogPage = () => {
   } = useInfiniteQuery({
     queryKey: queryKeys.products.list({
       branchId,
-      search: searchQuery,
+      search: debouncedSearchQuery,
       category: selectedCategory !== 'all' ? selectedCategory : undefined,
       limit: productsPerPage,
     }),
@@ -66,7 +68,7 @@ export const ProductCatalogPage = () => {
         page: pageParam,
         limit: productsPerPage,
       };
-      if (searchQuery) params.search = searchQuery;
+      if (debouncedSearchQuery) params.search = debouncedSearchQuery;
       if (selectedCategory !== 'all') params.category = selectedCategory;
       const response = await apiClient.get('/products', { params });
       return response.data;
@@ -144,7 +146,6 @@ export const ProductCatalogPage = () => {
           </button>
           <div className="text-center">
             <h1 className="text-lg font-bold text-white">{selectedBranch?.name || 'Main Pharmacy'}</h1>
-            <p className="text-gray-400 text-sm">Downtown Branch</p>
           </div>
           <div className="w-10 h-10 rounded-full bg-accent-green flex items-center justify-center text-primary-dark font-bold">
             {user?.firstName?.[0]}{user?.lastName?.[0]}

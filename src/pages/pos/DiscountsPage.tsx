@@ -18,7 +18,7 @@ interface Promotion {
   isActive: boolean;
 }
 
-type DiscountScope = 'entire' | 'item';
+type DiscountScope = 'entire';
 
 export const DiscountsPage = () => {
   const navigate = useNavigate();
@@ -26,7 +26,7 @@ export const DiscountsPage = () => {
   const { subtotal, setDiscount } = useCartStore();
   const { format, symbol } = useCurrency();
   
-  const [discountScope, setDiscountScope] = useState<DiscountScope>('entire');
+  const [discountScope] = useState<DiscountScope>('entire');
   const [percentageDiscount, setPercentageDiscount] = useState('');
   const [fixedDiscount, setFixedDiscount] = useState('');
   const [selectedPromotions, setSelectedPromotions] = useState<string[]>([]);
@@ -46,14 +46,15 @@ export const DiscountsPage = () => {
   const calculateTotalDiscount = () => {
     let discount = 0;
 
-    // Custom percentage discount
+    // Custom percentage discount (clamped to 0-100%)
     if (percentageDiscount) {
-      discount += (subtotal * parseFloat(percentageDiscount)) / 100;
+      const pct = Math.min(100, Math.max(0, parseFloat(percentageDiscount) || 0));
+      discount += (subtotal * pct) / 100;
     }
 
     // Custom fixed discount
     if (fixedDiscount) {
-      discount += parseFloat(fixedDiscount);
+      discount += parseFloat(fixedDiscount) || 0;
     }
 
     // Selected promotions
@@ -84,7 +85,7 @@ export const DiscountsPage = () => {
 
   const handleApplyDiscount = () => {
     setDiscount(totalDiscount);
-    navigate(-1);
+    navigate('/pos');
   };
 
   const filteredPromotions = promotions?.filter(
@@ -107,30 +108,6 @@ export const DiscountsPage = () => {
       </div>
 
       <div className="flex-1 p-4 space-y-6 overflow-y-auto">
-        {/* Scope Toggle */}
-        <div className="flex bg-gray-800 rounded-xl p-1">
-          <button
-            onClick={() => setDiscountScope('entire')}
-            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
-              discountScope === 'entire'
-                ? 'bg-gray-700 text-white'
-                : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            Entire Transaction
-          </button>
-          <button
-            onClick={() => setDiscountScope('item')}
-            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
-              discountScope === 'item'
-                ? 'bg-gray-700 text-white'
-                : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            Specific Item
-          </button>
-        </div>
-
         {/* Custom Discount */}
         <div>
           <h2 className="text-white font-semibold mb-3">Apply Custom Discount</h2>

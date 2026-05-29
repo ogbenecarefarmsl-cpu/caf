@@ -34,7 +34,7 @@ export const Table = <T extends Record<string, any>>({
   onLimitChange,
   onSort,
   currentSort,
-  rowKey = (item) => item._id || item.id,
+  rowKey = (item) => item._id ?? item.id ?? 'unknown',
   onRowClick,
 }: TableProps<T>) => {
   const handleSort = (key: string) => {
@@ -171,7 +171,7 @@ export const Table = <T extends Record<string, any>>({
                   >
                     {column.render
                       ? column.render(item)
-                      : item[column.key] || '-'}
+                      : item[column.key] ?? '-'}
                   </td>
                 ))}
               </tr>

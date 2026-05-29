@@ -1,4 +1,4 @@
-import { forwardRef, type TextareaHTMLAttributes } from 'react';
+import { forwardRef, useId, type TextareaHTMLAttributes } from 'react';
 
 interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string;
@@ -7,17 +7,25 @@ interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
 }
 
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ label, error, helperText, className = '', ...props }, ref) => {
+  ({ label, error, helperText, className = '', id: externalId, ...props }, ref) => {
+    const autoId = useId();
+    const textareaId = externalId || autoId;
+    const errorId = error ? `${textareaId}-error` : undefined;
+    const helperId = helperText && !error ? `${textareaId}-helper` : undefined;
+
     return (
       <div className="w-full">
         {label && (
-          <label className="block text-sm font-medium text-white mb-1">
+          <label htmlFor={textareaId} className="block text-sm font-medium text-white mb-1">
             {label}
             {props.required && <span className="text-red-500 ml-1">*</span>}
           </label>
         )}
         <textarea
           ref={ref}
+          id={textareaId}
+          aria-invalid={!!error}
+          aria-describedby={errorId || helperId || undefined}
           className={`
             w-full px-4 py-2.5 rounded-xl
             bg-white/5 text-white
@@ -32,10 +40,10 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           {...props}
         />
         {error && (
-          <p className="mt-1 text-sm text-red-500">{error}</p>
+          <p id={errorId} className="mt-1 text-sm text-red-500">{error}</p>
         )}
         {helperText && !error && (
-          <p className="mt-1 text-sm text-gray-400">{helperText}</p>
+          <p id={helperId} className="mt-1 text-sm text-gray-400">{helperText}</p>
         )}
       </div>
     );

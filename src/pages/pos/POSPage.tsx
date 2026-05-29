@@ -9,6 +9,7 @@ import { useWebSocket } from '../../hooks/useWebSocket';
 import { useCurrency } from '../../hooks/useCurrency';
 import { useAlertReplacement } from '../../hooks/useAlertReplacement';
 import { useBarcodeScanner } from '../../hooks/useBarcodeScanner';
+import { useDebounce } from '../../hooks/useDebounce';
 import { OfflineIndicator, POSLayout } from '../../components/pos';
 import { getProductImage, handleImageError } from '../../lib/product-images';
 import { UserProfileModal } from '../../components/pos/UserProfileModal';
@@ -121,6 +122,7 @@ export const POSPage = () => {
   };
   
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showShiftModal, setShowShiftModal] = useState(false);
   const [showCloseShiftModal, setShowCloseShiftModal] = useState(false);
@@ -157,7 +159,7 @@ export const POSPage = () => {
   } = useInfiniteQuery({
     queryKey: queryKeys.products.list({
       branchId: getBranchId(selectedBranch),
-      search: searchQuery,
+      search: debouncedSearchQuery,
       category: selectedCategory !== 'all' ? selectedCategory : undefined,
       limit: productsPerPage,
     }),
@@ -173,7 +175,7 @@ export const POSPage = () => {
         page: pageParam,
         limit: productsPerPage,
       };
-      if (searchQuery) params.search = searchQuery;
+      if (debouncedSearchQuery) params.search = debouncedSearchQuery;
       if (selectedCategory !== 'all') params.category = selectedCategory;
       const response = await apiClient.get('/products', { params });
       return response.data;
@@ -232,7 +234,7 @@ export const POSPage = () => {
   });
 
   const { data: shiftSales } = useQuery({
-    queryKey: ['sales', 'shift', currentShift?._id, getBranchId(selectedBranch)],
+    queryKey: queryKeys.sales.list({ branchId: getBranchId(selectedBranch), search: currentShift?._id }),
     queryFn: async () => {
       const branchId = getBranchId(selectedBranch);
       if (!currentShift?._id || !branchId) return [] as ShiftSale[];
