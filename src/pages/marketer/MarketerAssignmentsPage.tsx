@@ -99,9 +99,9 @@ export const MarketerAssignmentsPage = () => {
   const { data: assignmentsData, isLoading } = useQuery<AssignmentResponse>({
     queryKey: queryKeys.marketer.assignments({ branchId, activeOnly: true }),
     queryFn: async () => {
-      const response = await apiClient.get('/marketer/assignments', {
-        params: { branchId, activeOnly: true },
-      });
+      const params: Record<string, string | boolean> = { activeOnly: true };
+      if (branchId) params.branchId = branchId;
+      const response = await apiClient.get('/marketer/assignments', { params });
       return asAssignmentResponse(response.data);
     },
     enabled: !!branchId,
