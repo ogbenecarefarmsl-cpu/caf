@@ -28,6 +28,8 @@ interface Product {
   name: string;
   sku: string;
   branchId?: string;
+  quantityAvailable?: number;
+  stock?: number;
 }
 
 interface Assignment {
@@ -118,7 +120,7 @@ export const MarketerAssignmentsPage = () => {
   const { data: products } = useQuery<Product[]>({
     queryKey: queryKeys.products.list({ branchId }),
     queryFn: async () => {
-      const response = await apiClient.get('/products', { params: { branchId } });
+      const response = await apiClient.get('/products', { params: { branchId, limit: 500 } });
       return asArray<Product>(response.data);
     },
     enabled: !!branchId,
@@ -234,7 +236,7 @@ export const MarketerAssignmentsPage = () => {
               { value: '', label: 'Select product' },
               ...(products || []).map((p) => ({
                 value: p.id || p._id || '',
-                label: `${p.name} (${p.sku})`,
+                label: `${p.name} (${p.sku}) — Stock: ${p.quantityAvailable ?? p.stock ?? 'N/A'}`,
               })),
             ]}
           />
