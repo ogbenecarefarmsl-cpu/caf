@@ -10,8 +10,10 @@ import { Input } from '../../components/ui/Input';
 import { Loading } from '../../components/ui/Loading';
 import { Error } from '../../components/ui/Error';
 import { useBranchStore, getBranchId } from '../../stores/branch-store';
+import { useToast } from '../../hooks/useToast';
 import { queryKeys } from '../../lib/query-keys';
 import { buildApiUrl } from '../../lib/api-utils';
+import { getErrorMessage } from '../../lib/error-utils';
 
 interface Product {
   _id: string;
@@ -20,10 +22,7 @@ interface Product {
   brand: string;
   unit: string;
   quantityAvailable: number;
-  supplierId?: {
-    _id: string;
-    name: string;
-  } | string;
+  supplierId?: { _id: string; name: string } | string;
   supplyDate?: string;
   expiryDate?: string;
 }
@@ -31,18 +30,11 @@ interface Product {
 interface StockMovement {
   _id: string;
   branchId: string;
-  productId?: {
-    _id: string;
-    name: string;
-    sku: string;
-  };
+  productId?: { _id: string; name: string; sku: string };
   quantity: number;
   movementType: string;
   reason: string;
-  userId?: {
-    firstName?: string;
-    lastName?: string;
-  };
+  userId?: { firstName?: string; lastName?: string };
   timestamp: string;
 }
 
@@ -53,9 +45,7 @@ interface AdjustmentFormData {
   approvedBy?: string;
 }
 
-const formatDate = (value?: string) =>
-  value ? new Date(value).toLocaleDateString() : '-';
-
+const formatDate = (value?: string) => value ? new Date(value).toLocaleDateString() : '-';
 const formatSupplier = (supplier?: Product['supplierId']) => {
   if (!supplier) return '-';
   return typeof supplier === 'string' ? supplier : supplier.name;
@@ -66,295 +56,157 @@ export default function StockAdjustmentPage() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const { selectedBranch } = useBranchStore();
   const queryClient = useQueryClient();
+  const { showSuccess, showError } = useToast();
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<AdjustmentFormData>();
+  // Pagination for products
+  const [productPage, setProductPage] = useState(1);
+  const [productLimit, setProductLimit] = useState(20);
 
+  // Pagination for adjustments
+  const [adjPage, setAdjPage] = useState(1);
+  const [adjLimit, setAdjLimit] = useState(20);
+
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<AdjustmentFormData>();
   const branchId = getBranchId(selectedBranch);
 
-  const { data: products, isLoading, error } = useQuery({
-    queryKey: queryKeys.products.list({ branchId }),
+  // Products with pagination
+  const { data: productsData, isLoading, error } = useQuery({
+    queryKey: queryKeys.products.list({ branchId, page: productPage, limit: productLimit }),
     queryFn: async () => {
-      const response = await apiClient.get(buildApiUrl('/products', { branchId }));
-      const payload = response.data?.data ?? response.data;
-      return (Array.isArray(payload) ? payload : []) as Product[];
+      const response = await apiClient.get(buildApiUrl('/products', { branchId, page: productPage, limit: productLimit }));
+      return response.data;
     },
     enabled: !!branchId,
   });
 
-  const { data: adjustments, isLoading: adjustmentsLoading } = useQuery({
-    queryKey: queryKeys.adjustments.list({
-      branchId,
-      movementType: 'adjustment',
-    }),
+  const products = productsData?.data || [];
+  const productPagination = productsData?.pagination;
+
+  // Adjustments with client-side pagination
+  const { data: allAdjustments, isLoading: adjustmentsLoading } = useQuery({
+    queryKey: queryKeys.adjustments.list({ branchId, movementType: 'adjustment' }),
     queryFn: async () => {
-      const response = await apiClient.get(
-        buildApiUrl('/inventory/stock-movements', {
-          branchId,
-          movementType: 'adjustment',
-        }),
-      );
+      const response = await apiClient.get(buildApiUrl('/inventory/stock-movements', { branchId, movementType: 'adjustment' }));
       const payload = response.data?.data ?? response.data;
       return (Array.isArray(payload) ? payload : []) as StockMovement[];
     },
     enabled: !!branchId,
   });
 
+  // Client-side paginate adjustments
+  const adjustments = allAdjustments || [];
+  const adjTotal = adjustments.length;
+  const adjStart = (adjPage - 1) * adjLimit;
+  const paginatedAdjustments = adjustments.slice(adjStart, adjStart + adjLimit);
+  const adjTotalPages = Math.ceil(adjTotal / adjLimit);
+
+  // Reset to page 1 when limit changes
+  const handleProductLimitChange = (limit: number) => { setProductLimit(limit); setProductPage(1); };
+  const handleAdjLimitChange = (limit: number) => { setAdjLimit(limit); setAdjPage(1); };
+
   const adjustmentMutation = useMutation({
     mutationFn: async (data: AdjustmentFormData) =>
-      apiClient.post('/inventory/adjust', {
-        ...data,
-        branchId,
-      }),
+      apiClient.post('/inventory/adjust', { ...data, branchId }),
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.products.all(),
-        exact: false,
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.adjustments.all(),
-        exact: false,
-      });
+      queryClient.invalidateQueries({ queryKey: queryKeys.products.all(), exact: false });
+      queryClient.invalidateQueries({ queryKey: queryKeys.adjustments.all(), exact: false });
+      showSuccess('Stock adjusted successfully');
       setIsModalOpen(false);
       setSelectedProduct(null);
       reset();
     },
+    onError: (err: unknown) => showError(getErrorMessage(err, 'Failed to adjust stock')),
   });
 
-  const handleOpenModal = (product: Product) => {
-    setSelectedProduct(product);
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setSelectedProduct(null);
-    reset();
-  };
-
+  const handleOpenModal = (product: Product) => { setSelectedProduct(product); setIsModalOpen(true); };
+  const handleCloseModal = () => { setIsModalOpen(false); setSelectedProduct(null); reset(); };
   const onSubmit = (data: AdjustmentFormData) => {
     if (!selectedProduct) return;
-
-    adjustmentMutation.mutate({
-      ...data,
-      productId: selectedProduct._id,
-      quantityChange: Number(data.quantityChange),
-    });
+    adjustmentMutation.mutate({ ...data, productId: selectedProduct._id, quantityChange: Number(data.quantityChange) });
   };
 
   if (!selectedBranch) {
-    return (
-      <AdminLayout>
-        <div className="py-12 text-center">
-          <p className="text-gray-400">
-            Please select a branch to manage stock adjustments
-          </p>
-        </div>
-      </AdminLayout>
-    );
+    return <AdminLayout><div className="py-12 text-center"><p className="text-gray-400">Please select a branch to manage stock adjustments</p></div></AdminLayout>;
   }
 
-  if (isLoading) {
-    return (
-      <AdminLayout>
-        <Loading />
-      </AdminLayout>
-    );
-  }
-
-  if (error) {
-    return (
-      <AdminLayout>
-        <Error message="Failed to load products" />
-      </AdminLayout>
-    );
-  }
+  if (isLoading) return <AdminLayout><Loading /></AdminLayout>;
+  if (error) return <AdminLayout><Error message="Failed to load products" onRetry={() => queryClient.invalidateQueries({ queryKey: queryKeys.products.list({ branchId }) })} /></AdminLayout>;
 
   const productColumns = [
     { key: 'name', header: 'Product' },
     { key: 'sku', header: 'SKU' },
     { key: 'brand', header: 'Brand' },
-    { key: 'unit', header: 'Unit' },
-    { key: 'quantityAvailable', header: 'Current Stock' },
-    {
-      key: 'supplierId',
-      header: 'Supplier',
-      render: (product: Product) => formatSupplier(product.supplierId),
-    },
-    {
-      key: 'supplyDate',
-      header: 'Supply Date',
-      render: (product: Product) => formatDate(product.supplyDate),
-    },
-    {
-      key: 'expiryDate',
-      header: 'Expiry',
-      render: (product: Product) => formatDate(product.expiryDate),
-    },
-    {
-      key: 'actions',
-      header: 'Actions',
-      render: (product: Product) => (
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => handleOpenModal(product)}
-        >
-          Adjust
-        </Button>
-      ),
-    },
+    { key: 'quantityAvailable', header: 'Stock' },
+    { key: 'supplierId', header: 'Supplier', render: (p: Product) => formatSupplier(p.supplierId) },
+    { key: 'expiryDate', header: 'Expiry', render: (p: Product) => formatDate(p.expiryDate) },
+    { key: 'actions', header: '', render: (p: Product) => <Button variant="secondary" size="sm" onClick={() => handleOpenModal(p)}>Adjust</Button> },
   ];
 
   const adjustmentColumns = [
-    {
-      key: 'timestamp',
-      header: 'Date',
-      render: (adj: StockMovement) => new Date(adj.timestamp).toLocaleString(),
-    },
-    {
-      key: 'productId.name',
-      header: 'Product',
-      render: (adj: StockMovement) => adj.productId?.name || '-',
-    },
-    {
-      key: 'quantity',
-      header: 'Adjustment',
-      render: (adj: StockMovement) => (
-        <span className={adj.quantity > 0 ? 'text-green-600' : 'text-red-600'}>
-          {adj.quantity > 0 ? '+' : ''}
-          {adj.quantity}
-        </span>
-      ),
-    },
+    { key: 'timestamp', header: 'Date', render: (a: StockMovement) => new Date(a.timestamp).toLocaleString() },
+    { key: 'productId.name', header: 'Product', render: (a: StockMovement) => a.productId?.name || '-' },
+    { key: 'quantity', header: 'Qty', render: (a: StockMovement) => <span className={a.quantity > 0 ? 'text-green-400' : 'text-red-400'}>{a.quantity > 0 ? '+' : ''}{a.quantity}</span> },
     { key: 'reason', header: 'Reason' },
-    {
-      key: 'userId',
-      header: 'Adjusted By',
-      render: (adj: StockMovement) =>
-        adj.userId
-          ? `${adj.userId.firstName || ''} ${adj.userId.lastName || ''}`.trim()
-          : '-',
-    },
+    { key: 'userId', header: 'By', render: (a: StockMovement) => a.userId ? `${a.userId.firstName || ''} ${a.userId.lastName || ''}`.trim() || '-' : '-' },
   ];
 
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-white">
-            Stock Adjustments
-          </h1>
-        </div>
+        <h1 className="text-2xl font-bold text-white">Stock Adjustments</h1>
 
         <div className="rounded-xl border border-white/10 bg-white/5 shadow-lg">
           <div className="border-b border-white/10 px-6 py-4">
-            <h2 className="text-lg font-semibold text-white">
-              Product Stock
-            </h2>
+            <h2 className="text-lg font-semibold text-white">Product Stock</h2>
           </div>
-          <Table data={products || []} columns={productColumns} />
+          <Table
+            data={products}
+            columns={productColumns}
+            pagination={productPagination ? { page: productPagination.page, limit: productPagination.limit, total: productPagination.total, pages: productPagination.pages, hasNext: productPagination.hasNext, hasPrev: productPagination.hasPrev } : undefined}
+            onPageChange={setProductPage}
+            onLimitChange={handleProductLimitChange}
+          />
         </div>
 
         <div className="rounded-xl border border-white/10 bg-white/5 shadow-lg">
           <div className="border-b border-white/10 px-6 py-4">
-            <h2 className="text-lg font-semibold text-white">
-              Adjustment History
-            </h2>
+            <h2 className="text-lg font-semibold text-white">Adjustment History</h2>
           </div>
           {adjustmentsLoading ? (
-            <div className="p-6">
-              <Loading />
-            </div>
+            <div className="p-6"><Loading /></div>
           ) : (
-            <Table data={adjustments || []} columns={adjustmentColumns} />
+            <Table
+              data={paginatedAdjustments}
+              columns={adjustmentColumns}
+              pagination={{ page: adjPage, limit: adjLimit, total: adjTotal, pages: adjTotalPages, hasNext: adjPage < adjTotalPages, hasPrev: adjPage > 1 }}
+              onPageChange={setAdjPage}
+              onLimitChange={handleAdjLimitChange}
+            />
           )}
         </div>
 
-        <Modal
-          isOpen={isModalOpen}
-          onClose={handleCloseModal}
-          title="Adjust Product Stock"
-        >
-          {selectedProduct ? (
+        <Modal isOpen={isModalOpen} onClose={handleCloseModal} title="Adjust Product Stock">
+          {selectedProduct && (
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <div>
-                <p className="text-sm text-gray-300">
-                  Product:{' '}
-                  <span className="font-semibold text-white">{selectedProduct.name}</span>
-                </p>
-                <p className="text-sm text-gray-300">
-                  Current Stock:{' '}
-                  <span className="font-semibold text-white">
-                    {selectedProduct.quantityAvailable}
-                  </span>
-                </p>
-                <p className="text-sm text-gray-300">
-                  Supplier:{' '}
-                  <span className="font-semibold text-white">
-                    {formatSupplier(selectedProduct.supplierId)}
-                  </span>
-                </p>
+              <div className="space-y-1">
+                <p className="text-sm text-gray-300">Product: <span className="font-semibold text-white">{selectedProduct.name}</span></p>
+                <p className="text-sm text-gray-300">Current Stock: <span className="font-semibold text-white">{selectedProduct.quantityAvailable}</span></p>
+                <p className="text-sm text-gray-300">Supplier: <span className="font-semibold text-white">{formatSupplier(selectedProduct.supplierId)}</span></p>
               </div>
-
-              <Input
-                label="Quantity Change"
-                type="number"
-                placeholder="Use positive to add or negative to remove"
-                {...register('quantityChange', {
-                  required: 'Quantity change is required',
-                  validate: (value) =>
-                    Number(value) !== 0 || 'Quantity change cannot be zero',
-                })}
-                error={errors.quantityChange?.message}
-              />
-
+              <Input label="Quantity Change" type="number" placeholder="+ to add, - to remove" {...register('quantityChange', { required: 'Required', validate: (v) => Number(v) !== 0 || 'Cannot be zero' })} error={errors.quantityChange?.message} />
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-300">
-                  Reason <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  {...register('reason', { required: 'Reason is required' })}
-                  className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-white placeholder-gray-500 focus:border-accent-green/50 focus:outline-none focus:ring-2 focus:ring-accent-green/20"
-                  rows={3}
-                  placeholder="Explain the reason for this adjustment"
-                />
-                {errors.reason ? (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.reason.message}
-                  </p>
-                ) : null}
+                <label className="mb-1 block text-sm font-medium text-gray-300">Reason <span className="text-red-500">*</span></label>
+                <textarea {...register('reason', { required: 'Reason is required' })} className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-white placeholder-gray-500 focus:border-accent-green/50 focus:outline-none focus:ring-2 focus:ring-accent-green/20 resize-none" rows={3} placeholder="Why this adjustment?" />
+                {errors.reason && <p className="mt-1 text-sm text-red-500">{errors.reason.message}</p>}
               </div>
-
-              <Input
-                label="Approved By (Optional)"
-                type="text"
-                placeholder="Enter supervisor name"
-                {...register('approvedBy')}
-              />
-
+              <Input label="Approved By (Optional)" type="text" placeholder="Supervisor name" {...register('approvedBy')} />
               <div className="flex justify-end space-x-3 pt-4">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={handleCloseModal}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={adjustmentMutation.isPending}>
-                  {adjustmentMutation.isPending ? 'Adjusting...' : 'Adjust Stock'}
-                </Button>
+                <Button type="button" variant="secondary" onClick={handleCloseModal}>Cancel</Button>
+                <Button type="submit" disabled={adjustmentMutation.isPending}>{adjustmentMutation.isPending ? 'Adjusting...' : 'Adjust Stock'}</Button>
               </div>
-
-              {adjustmentMutation.isError ? (
-                <Error message="Failed to adjust stock. Please try again." />
-              ) : null}
+              {adjustmentMutation.isError && <Error message="Failed to adjust stock. Please try again." />}
             </form>
-          ) : null}
+          )}
         </Modal>
       </div>
     </AdminLayout>
