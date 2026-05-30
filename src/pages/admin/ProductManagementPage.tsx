@@ -241,7 +241,7 @@ export const ProductManagementPage = () => {
     queryKey: queryKeys.branches.list(),
     queryFn: async () => {
       const response = await apiClient.get<BranchesResponse>(buildApiUrl('branches', undefined));
-      return unwrapArray(response.data);
+      return unwrapArray<Branch>(response.data);
     },
   });
 

@@ -132,7 +132,7 @@ export const ProductSearch = ({ branchId }: ProductSearchProps) => {
       const response = await apiClient.get('/products/search', {
         params: { query: searchQuery, branchId },
       });
-      return unwrapArray(response.data).map(normalizeProduct);
+      return unwrapArray<ProductResponse>(response.data).map(normalizeProduct);
     },
     enabled: searchQuery.length >= 2,
   });

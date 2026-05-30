@@ -170,7 +170,7 @@ export function FinanceManagerDashboardPage() {
                     <Pie data={sourceRevenueData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}>
                       {sourceRevenueData.map((_, i) => <Cell key={i} fill={COLORS[i]} />)}
                     </Pie>
-                    <Tooltip formatter={(v: number) => fmt(v)} />
+                    <Tooltip formatter={(v: any) => fmt(Number(v))} />
                     <Legend />
                   </PieChart>
                 </ResponsiveContainer>
@@ -382,10 +382,10 @@ export function FinanceManagerDashboardPage() {
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
-                      <Pie data={expensePieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                      <Pie data={expensePieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}>
                         {expensePieData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                       </Pie>
-                      <Tooltip formatter={(v: number) => fmt(v)} />
+                      <Tooltip formatter={(v: any) => fmt(Number(v))} />
                       <Legend />
                     </PieChart>
                   </ResponsiveContainer>
@@ -431,7 +431,7 @@ export function FinanceManagerDashboardPage() {
                   <BarChart data={branchBarData}>
                     <XAxis dataKey="name" tick={{ fill: '#9ca3af', fontSize: 12 }} />
                     <YAxis tick={{ fill: '#9ca3af', fontSize: 12 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`} />
-                    <Tooltip formatter={(v: number) => fmt(v)} contentStyle={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 8 }} />
+                    <Tooltip formatter={(v: any) => fmt(Number(v))} contentStyle={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 8 }} />
                     <Legend />
                     <Bar dataKey="Revenue" fill="#22c55e" radius={[4, 4, 0, 0]} />
                     <Bar dataKey="Expenses" fill="#ef4444" radius={[4, 4, 0, 0]} />

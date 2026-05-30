@@ -100,6 +100,9 @@ export function ReconciliationPage() {
     { key: 'status', header: 'Status', render: (r: Reconciliation) => (
       <span className={`px-2 py-1 rounded-full text-xs font-medium border ${statusBadge(r.status)}`}>{r.status}</span>
     )},
+    { key: 'actions', header: 'Actions', render: (r: Reconciliation) => r.status === 'pending' ? (
+      <Button size="sm" onClick={(e: any) => { e?.stopPropagation(); setReviewModal(r); }}>Review</Button>
+    ) : null},
   ];
 
   return (
@@ -114,9 +117,6 @@ export function ReconciliationPage() {
           columns={columns}
           emptyMessage="No reconciliations found"
           onRowClick={(r) => setSelected(r)}
-          actions={(r: Reconciliation) => r.status === 'pending' ? (
-            <Button size="sm" onClick={(e) => { e?.stopPropagation(); setReviewModal(r); }}>Review</Button>
-          ) : null}
         />
       )}
 
@@ -175,7 +175,7 @@ export function ReconciliationPage() {
               <Button variant="danger" onClick={() => reviewMutation.mutate({ id: reviewModal._id, status: 'rejected', notes: reviewNotes })}>
                 <XCircle className="w-4 h-4 mr-2" />Reject
               </Button>
-              <Button variant="success" onClick={() => reviewMutation.mutate({ id: reviewModal._id, status: 'approved', notes: reviewNotes })}>
+              <Button variant="primary" onClick={() => reviewMutation.mutate({ id: reviewModal._id, status: 'approved', notes: reviewNotes })}>
                 <CheckCircle className="w-4 h-4 mr-2" />Approve
               </Button>
             </div>

@@ -134,6 +134,20 @@ export function SalaryManagementPage() {
     { key: 'status', header: 'Status', render: (s: Salary) => (
       <span className={`px-2 py-1 rounded-full text-xs font-medium border ${statusBadge(s.status)}`}>{s.status.replace('_', ' ')}</span>
     )},
+    { key: 'actions', header: 'Actions', render: (s: Salary) => (
+      <div className="flex gap-2">
+        {(s.status === 'draft' || s.status === 'pending_approval') && user?.role === 'super_admin' && (
+          <Button size="sm" variant="ghost" onClick={(e: any) => { e?.stopPropagation(); approveMutation.mutate(s._id); }}>
+            <CheckCircle className="w-3 h-3 mr-1" />Approve
+          </Button>
+        )}
+        {s.status === 'approved' && (
+          <Button size="sm" variant="ghost" onClick={(e: any) => { e?.stopPropagation(); payMutation.mutate(s._id); }}>
+            <Send className="w-3 h-3 mr-1" />Pay
+          </Button>
+        )}
+      </div>
+    )},
   ];
 
   return (
@@ -159,20 +173,6 @@ export function SalaryManagementPage() {
           data={salaries || []}
           columns={columns}
           emptyMessage="No salary records"
-          actions={(s: Salary) => (
-            <div className="flex gap-2">
-              {(s.status === 'draft' || s.status === 'pending_approval') && user?.role === 'super_admin' && (
-                <Button size="sm" variant="ghost" onClick={(e) => { e?.stopPropagation(); approveMutation.mutate(s._id); }}>
-                  <CheckCircle className="w-3 h-3 mr-1" />Approve
-                </Button>
-              )}
-              {s.status === 'approved' && (
-                <Button size="sm" variant="ghost" onClick={(e) => { e?.stopPropagation(); payMutation.mutate(s._id); }}>
-                  <Send className="w-3 h-3 mr-1" />Pay
-                </Button>
-              )}
-            </div>
-          )}
         />
       )}
 

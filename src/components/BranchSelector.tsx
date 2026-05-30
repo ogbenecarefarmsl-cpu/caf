@@ -18,7 +18,7 @@ export const BranchSelector = () => {
     queryKey: queryKeys.branches.list(),
     queryFn: async () => {
       const response = await apiClient.get<BranchesResponse>('/branches');
-      return unwrapArray(response.data);
+      return unwrapArray<Branch>(response.data);
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
