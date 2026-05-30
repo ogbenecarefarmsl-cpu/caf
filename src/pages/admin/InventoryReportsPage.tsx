@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useForm } from 'react-hook-form';
 import apiClient from '../../lib/api-client';
 import { AdminLayout } from '../../components/AdminLayout';
 import { Button } from '../../components/ui/Button';
@@ -17,14 +16,6 @@ interface Branch {
   name: string;
 }
 
-interface InventoryReportFilters {
-  branchId?: string;
-  includeExpired: boolean;
-  lowStockOnly: boolean;
-  valuationMethod: 'fifo' | 'moving_average';
-  [key: string]: string | number | boolean | undefined;
-}
-
 interface InventoryReportItem {
   productId: string;
   productName: string;
@@ -38,15 +29,10 @@ interface InventoryReportItem {
 
 export const InventoryReportsPage = () => {
   const { format } = useCurrency();
-  const [filters, setFilters] = useState<InventoryReportFilters>({
-    includeExpired: false,
-    lowStockOnly: false,
-    valuationMethod: 'fifo',
-  });
-
-  const { register, handleSubmit } = useForm<InventoryReportFilters>({
-    defaultValues: filters,
-  });
+  const [branchId, setBranchId] = useState('');
+  const [includeExpired, setIncludeExpired] = useState(false);
+  const [lowStockOnly, setLowStockOnly] = useState(false);
+  const [valuationMethod, setValuationMethod] = useState<'fifo' | 'moving_average'>('fifo');
 
   // Fetch branches
   const { data: branches } = useQuery({
@@ -57,36 +43,29 @@ export const InventoryReportsPage = () => {
     },
   });
 
-  // Fetch report data
-  const { data, isLoading, error, refetch } = useQuery({
-    queryKey: queryKeys.reports.inventory(filters),
+  // Auto-fetch on mount and when filters change
+  const { data, isLoading, error } = useQuery({
+    queryKey: queryKeys.reports.inventory({ branchId, includeExpired, lowStockOnly, valuationMethod }),
     queryFn: async () => {
       const response = await apiClient.get(
         buildApiUrl('/reports/inventory', {
-          branchId: filters.branchId,
-          includeExpired: filters.includeExpired,
-          lowStockOnly: filters.lowStockOnly,
-          valuationMethod: filters.valuationMethod,
+          branchId: branchId || undefined,
+          includeExpired,
+          lowStockOnly,
+          valuationMethod,
         }),
       );
-      // Backend returns { items: [], summary: {} }
       return response.data?.items || [] as InventoryReportItem[];
     },
-    enabled: false,
   });
-
-  const onSubmit = (data: InventoryReportFilters) => {
-    setFilters(data);
-    refetch();
-  };
 
   const handleExport = async (format: 'pdf' | 'excel') => {
     try {
       const response = await apiClient.get(buildApiUrl('/reports/inventory', {
-        branchId: filters.branchId,
-        includeExpired: filters.includeExpired,
-        lowStockOnly: filters.lowStockOnly,
-        valuationMethod: filters.valuationMethod,
+        branchId: branchId || undefined,
+        includeExpired,
+        lowStockOnly,
+        valuationMethod,
         export: format,
       }), {
         responseType: 'blob',
@@ -143,65 +122,71 @@ export const InventoryReportsPage = () => {
     <AdminLayout>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Inventory Reports</h1>
+          <h1 className="text-2xl font-bold text-white">Inventory Reports</h1>
+          {data && data.length > 0 && (
+            <div className="flex space-x-2">
+              <Button variant="secondary" size="sm" onClick={() => handleExport('pdf')}>
+                Export PDF
+              </Button>
+              <Button variant="secondary" size="sm" onClick={() => handleExport('excel')}>
+                Export Excel
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Filters */}
         <div className="bg-primary-dark/50 backdrop-blur-sm rounded-2xl shadow-xl border border-white/5 p-6">
           <h2 className="text-lg font-semibold text-white mb-4">Report Filters</h2>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Select
-                label="Branch"
-                {...register('branchId')}
-              >
-                <option value="">All Branches</option>
-                {branches?.map(branch => (
-                  <option key={branch._id} value={branch._id}>
-                    {branch.name}
-                  </option>
-                ))}
-              </Select>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Select
+              label="Branch"
+              value={branchId}
+              onChange={(e) => setBranchId(e.target.value)}
+            >
+              <option value="">All Branches</option>
+              {branches?.map(branch => (
+                <option key={branch._id} value={branch._id}>
+                  {branch.name}
+                </option>
+              ))}
+            </Select>
 
-              <Select
-                label="Valuation Method"
-                {...register('valuationMethod')}
-              >
-                <option value="fifo">FIFO</option>
-                <option value="moving_average">Moving Average</option>
-              </Select>
+            <Select
+              label="Valuation Method"
+              value={valuationMethod}
+              onChange={(e) => setValuationMethod(e.target.value as 'fifo' | 'moving_average')}
+            >
+              <option value="fifo">FIFO</option>
+              <option value="moving_average">Moving Average</option>
+            </Select>
 
-              <div className="flex items-center pt-6">
-                <input
-                  type="checkbox"
-                  id="includeExpired"
-                  {...register('includeExpired')}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label htmlFor="includeExpired" className="ml-2 block text-sm text-white">
-                  Include Expired
-                </label>
-              </div>
-
-              <div className="flex items-center pt-6">
-                <input
-                  type="checkbox"
-                  id="lowStockOnly"
-                  {...register('lowStockOnly')}
-                  className="h-4 w-4 text-accent-green focus:ring-accent-green border-gray-600 rounded bg-primary-darker"
-                />
-                <label htmlFor="lowStockOnly" className="ml-2 block text-sm text-white">
-                  Low Stock Only
-                </label>
-              </div>
+            <div className="flex items-center pt-6">
+              <input
+                type="checkbox"
+                id="includeExpired"
+                checked={includeExpired}
+                onChange={(e) => setIncludeExpired(e.target.checked)}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <label htmlFor="includeExpired" className="ml-2 block text-sm text-white">
+                Include Expired
+              </label>
             </div>
 
-            <div className="flex justify-end">
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? 'Generating...' : 'Generate Report'}
-              </Button>
+            <div className="flex items-center pt-6">
+              <input
+                type="checkbox"
+                id="lowStockOnly"
+                checked={lowStockOnly}
+                onChange={(e) => setLowStockOnly(e.target.checked)}
+                className="h-4 w-4 text-accent-green focus:ring-accent-green border-gray-600 rounded bg-primary-darker"
+              />
+              <label htmlFor="lowStockOnly" className="ml-2 block text-sm text-white">
+                Low Stock Only
+              </label>
             </div>
-          </form>
+          </div>
         </div>
 
         {/* Report Results */}
@@ -219,24 +204,8 @@ export const InventoryReportsPage = () => {
 
         {data && data.length > 0 && (
           <div className="bg-primary-dark/50 backdrop-blur-sm rounded-2xl shadow-xl border border-white/5">
-            <div className="px-6 py-4 border-b border-white/5 flex justify-between items-center">
+            <div className="px-6 py-4 border-b border-white/5">
               <h2 className="text-lg font-semibold text-white">Report Results</h2>
-              <div className="flex space-x-2">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => handleExport('pdf')}
-                >
-                  Export PDF
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => handleExport('excel')}
-                >
-                  Export Excel
-                </Button>
-              </div>
             </div>
 
             {/* Summary Cards */}

@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useForm } from 'react-hook-form';
 import apiClient from '../../lib/api-client';
 import { AdminLayout } from '../../components/AdminLayout';
 import { Button } from '../../components/ui/Button';
@@ -90,10 +89,6 @@ export default function SalesReportsPage() {
   
   const [filters, setFilters] = useState<SalesReportFilters>(defaultFilters);
 
-  const { register, handleSubmit, formState: { errors } } = useForm<SalesReportFilters>({
-    defaultValues: filters,
-  });
-
   // Fetch branches
   const { data: branches } = useQuery({
     queryKey: queryKeys.branches.list(),
@@ -125,7 +120,7 @@ export default function SalesReportsPage() {
   });
 
   // Fetch report data
-  const { data, isLoading, error, refetch } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: queryKeys.reports.sales(filters),
     queryFn: async () => {
       const response = await apiClient.get(
@@ -140,13 +135,7 @@ export default function SalesReportsPage() {
       );
       return response.data as SalesReportResponse;
     },
-    enabled: false, // Only fetch when user clicks "Generate Report"
   });
-
-  const onSubmit = (data: SalesReportFilters) => {
-    setFilters(data);
-    refetch();
-  };
 
   const handleExport = async (format: 'pdf' | 'excel') => {
     try {
@@ -245,75 +234,71 @@ export default function SalesReportsPage() {
         {/* Filters */}
         <div className="bg-primary-dark/50 backdrop-blur-sm rounded-2xl shadow-xl border border-white/5 p-6">
           <h2 className="text-lg font-semibold text-white mb-4">Report Filters</h2>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <Select
-                label="Branch"
-                {...register('branchId')}
-              >
-                <option value="" className="bg-primary-dark text-white">All Branches</option>
-                {branches?.map(branch => (
-                  <option key={branch._id} value={branch._id} className="bg-primary-dark text-white">
-                    {branch.name}
-                  </option>
-                ))}
-              </Select>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <Select
+              label="Branch"
+              value={filters.branchId ?? ''}
+              onChange={(e) => setFilters(prev => ({ ...prev, branchId: e.target.value || undefined }))}
+            >
+              <option value="" className="bg-primary-dark text-white">All Branches</option>
+              {branches?.map(branch => (
+                <option key={branch._id} value={branch._id} className="bg-primary-dark text-white">
+                  {branch.name}
+                </option>
+              ))}
+            </Select>
 
-              <Select
-                label="Cashier"
-                {...register('cashierId')}
-              >
-                <option value="" className="bg-primary-dark text-white">All Cashiers</option>
-                {cashiers?.map(cashier => (
-                  <option key={cashier._id} value={cashier._id} className="bg-primary-dark text-white">
-                    {cashier.firstName} {cashier.lastName}
-                  </option>
-                ))}
-              </Select>
+            <Select
+              label="Cashier"
+              value={filters.cashierId ?? ''}
+              onChange={(e) => setFilters(prev => ({ ...prev, cashierId: e.target.value || undefined }))}
+            >
+              <option value="" className="bg-primary-dark text-white">All Cashiers</option>
+              {cashiers?.map(cashier => (
+                <option key={cashier._id} value={cashier._id} className="bg-primary-dark text-white">
+                  {cashier.firstName} {cashier.lastName}
+                </option>
+              ))}
+            </Select>
 
-              <Select
-                label="Product"
-                {...register('productId')}
-              >
-                <option value="" className="bg-primary-dark text-white">All Products</option>
-                {products?.map(product => (
-                  <option key={product._id} value={product._id} className="bg-primary-dark text-white">
-                    {product.name} ({product.sku})
-                  </option>
-                ))}
-              </Select>
+            <Select
+              label="Product"
+              value={filters.productId ?? ''}
+              onChange={(e) => setFilters(prev => ({ ...prev, productId: e.target.value || undefined }))}
+            >
+              <option value="" className="bg-primary-dark text-white">All Products</option>
+              {products?.map(product => (
+                <option key={product._id} value={product._id} className="bg-primary-dark text-white">
+                  {product.name} ({product.sku})
+                </option>
+              ))}
+            </Select>
 
-              <Input
-                label="Start Date"
-                type="date"
-                {...register('startDate', { required: 'Start date is required' })}
-                error={errors.startDate?.message}
-              />
+            <Input
+              label="Start Date"
+              type="date"
+              value={filters.startDate}
+              onChange={(e) => setFilters(prev => ({ ...prev, startDate: e.target.value }))}
+            />
 
-              <Input
-                label="End Date"
-                type="date"
-                {...register('endDate', { required: 'End date is required' })}
-                error={errors.endDate?.message}
-              />
+            <Input
+              label="End Date"
+              type="date"
+              value={filters.endDate}
+              onChange={(e) => setFilters(prev => ({ ...prev, endDate: e.target.value }))}
+            />
 
-              <Select
-                label="Group By"
-                {...register('groupBy')}
-              >
-                <option value="" className="bg-primary-dark text-white">No Grouping</option>
-                <option value="branch" className="bg-primary-dark text-white">Branch</option>
-                <option value="cashier" className="bg-primary-dark text-white">Cashier</option>
-                <option value="product" className="bg-primary-dark text-white">Product</option>
-              </Select>
-            </div>
-
-            <div className="flex justify-end">
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? 'Generating...' : 'Generate Report'}
-              </Button>
-            </div>
-          </form>
+            <Select
+              label="Group By"
+              value={filters.groupBy ?? ''}
+              onChange={(e) => setFilters(prev => ({ ...prev, groupBy: (e.target.value || undefined) as SalesReportFilters['groupBy'] }))}
+            >
+              <option value="" className="bg-primary-dark text-white">No Grouping</option>
+              <option value="branch" className="bg-primary-dark text-white">Branch</option>
+              <option value="cashier" className="bg-primary-dark text-white">Cashier</option>
+              <option value="product" className="bg-primary-dark text-white">Product</option>
+            </Select>
+          </div>
         </div>
 
         {/* Report Results */}
@@ -409,5 +394,3 @@ export default function SalesReportsPage() {
     </AdminLayout>
   );
 }
-
-
