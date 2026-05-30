@@ -167,7 +167,7 @@ export function FinanceManagerDashboardPage() {
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie data={sourceRevenueData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                    <Pie data={sourceRevenueData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}>
                       {sourceRevenueData.map((_, i) => <Cell key={i} fill={COLORS[i]} />)}
                     </Pie>
                     <Tooltip formatter={(v: number) => fmt(v)} />

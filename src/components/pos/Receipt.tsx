@@ -11,6 +11,7 @@ interface ReceiptItem {
 interface ReceiptProps {
   saleData: {
     _id: string;
+    receiptNumber?: string;
     branchName?: string;
     branchAddress?: string;
     branchPhone?: string;

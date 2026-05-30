@@ -118,6 +118,7 @@ export function CashManagementPage() {
     )},
     { key: 'entryDate', header: 'Date', render: (e: CashEntry) => new Date(e.entryDate).toLocaleDateString() },
     { key: 'recordedBy', header: 'Recorded By', render: (e: CashEntry) => e.recordedBy ? `${e.recordedBy.firstName} ${e.recordedBy.lastName}` : '-' },
+    { key: 'actions', header: '', render: (e: CashEntry) => <Button size="sm" variant="ghost" className="text-red-400" onClick={() => deleteMutation.mutate(e._id)}>Delete</Button> },
   ];
 
   return (
@@ -159,9 +160,6 @@ export function CashManagementPage() {
           data={entries || []}
           columns={columns}
           emptyMessage="No cash entries found"
-          actions={(e: CashEntry) => (
-            <Button size="sm" variant="ghost" className="text-red-400" onClick={(ev) => { ev?.stopPropagation(); deleteMutation.mutate(e._id); }}>Delete</Button>
-          )}
         />
       )}
 
