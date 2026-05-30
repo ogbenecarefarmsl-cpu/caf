@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../../lib/api-client';
+import { unwrapArray } from '../../lib/unwrap-response';
 import { useDebounce } from '../../hooks/useDebounce';
 import { useToast } from '../../hooks/useToast';
 import { queryKeys } from '../../lib/query-keys';
@@ -35,7 +36,7 @@ export const CustomerLookupPage = () => {
       const params: Record<string, string> = {};
       if (debouncedSearchQuery) params.search = debouncedSearchQuery;
       const response = await apiClient.get('/customers', { params });
-      return response.data as Customer[];
+      return unwrapArray<Customer>(response.data);
     },
   });
 

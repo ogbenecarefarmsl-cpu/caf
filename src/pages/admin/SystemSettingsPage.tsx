@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import apiClient from '../../lib/api-client';
+import { unwrapResponse } from '../../lib/unwrap-response';
 import { AdminLayout } from '../../components/AdminLayout';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -40,7 +41,7 @@ export const SystemSettingsPage = () => {
     queryKey: queryKeys.systemSettings.detail(),
     queryFn: async () => {
       const response = await apiClient.get('/settings');
-      return response.data as SystemSettings;
+      return unwrapResponse(response.data, {} as SystemSettings);
     },
   });
 

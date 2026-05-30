@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import apiClient from '../../lib/api-client';
+import { unwrapResponse } from '../../lib/unwrap-response';
 import { AdminLayout } from '../../components/AdminLayout';
 import { Button } from '../../components/ui/Button';
 import { Table } from '../../components/ui/Table';
@@ -133,7 +134,7 @@ export default function SalesReportsPage() {
           groupBy: filters.groupBy,
         }),
       );
-      return response.data as SalesReportResponse;
+      return unwrapResponse(response.data, {} as SalesReportResponse);
     },
   });
 

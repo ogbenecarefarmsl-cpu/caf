@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import apiClient from '../../lib/api-client';
+import { unwrapResponse } from '../../lib/unwrap-response';
 import { AdminLayout } from '../../components/AdminLayout';
 import { Button } from '../../components/ui/Button';
 import { Table } from '../../components/ui/Table';
@@ -87,7 +88,7 @@ export function CycleCountPage() {
   const createMutation = useMutation({
     mutationFn: async () => {
       const response = await apiClient.post('/cycle-counts', { branchId });
-      return response.data as CycleCount;
+      return unwrapResponse(response.data, {} as CycleCount);
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.cycleCounts.lists() });
@@ -103,7 +104,7 @@ export function CycleCountPage() {
   const submitMutation = useMutation({
     mutationFn: async ({ id, lines }: { id: string; lines: { batchId: string; countedQuantity: number }[] }) => {
       const response = await apiClient.patch(`/cycle-counts/${id}/submit`, { lines });
-      return response.data as CycleCount;
+      return unwrapResponse(response.data, {} as CycleCount);
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.cycleCounts.lists() });
@@ -119,7 +120,7 @@ export function CycleCountPage() {
   const approveMutation = useMutation({
     mutationFn: async (id: string) => {
       const response = await apiClient.patch(`/cycle-counts/${id}/approve`);
-      return response.data as CycleCount;
+      return unwrapResponse(response.data, {} as CycleCount);
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.cycleCounts.lists() });
@@ -136,7 +137,7 @@ export function CycleCountPage() {
   const cancelMutation = useMutation({
     mutationFn: async (id: string) => {
       const response = await apiClient.patch(`/cycle-counts/${id}/cancel`);
-      return response.data as CycleCount;
+      return unwrapResponse(response.data, {} as CycleCount);
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.cycleCounts.lists() });

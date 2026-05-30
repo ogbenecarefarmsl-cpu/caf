@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import apiClient from '../../lib/api-client';
+import { unwrapArray, unwrapResponse } from '../../lib/unwrap-response';
 import { AdminLayout } from '../../components/AdminLayout';
 import { Button } from '../../components/ui/Button';
 import { Table } from '../../components/ui/Table';
@@ -47,7 +48,7 @@ export const JobsMonitoringPage = () => {
         status: statusFilter !== 'all' ? statusFilter : undefined,
         type: typeFilter !== 'all' ? typeFilter : undefined,
       }));
-      return response.data as Job[];
+      return unwrapArray<Job>(response.data);
     },
     refetchInterval: autoRefresh ? 5000 : false,
   });
@@ -57,7 +58,7 @@ export const JobsMonitoringPage = () => {
     queryKey: queryKeys.jobs.stats(),
     queryFn: async () => {
       const response = await apiClient.get('/jobs/stats');
-      return response.data as QueueStats;
+      return unwrapResponse(response.data, {} as QueueStats);
     },
     refetchInterval: autoRefresh ? 5000 : false,
   });

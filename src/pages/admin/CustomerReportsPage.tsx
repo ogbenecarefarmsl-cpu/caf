@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import apiClient from '../../lib/api-client';
+import { unwrapResponse } from '../../lib/unwrap-response';
 import { AdminLayout } from '../../components/AdminLayout';
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
@@ -55,7 +56,7 @@ export const CustomerReportsPage = () => {
         to: dateTo,
         groupBy,
       }));
-      return response.data as CustomerReportData;
+      return unwrapResponse(response.data, {} as CustomerReportData);
     },
     enabled: !!dateFrom && !!dateTo,
   });

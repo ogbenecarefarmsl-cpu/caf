@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import apiClient from '../../lib/api-client';
+import { unwrapArray } from '../../lib/unwrap-response';
 import { AdminLayout } from '../../components/AdminLayout';
 import { Button } from '../../components/ui/Button';
 import { Table } from '../../components/ui/Table';
@@ -43,7 +44,7 @@ export const EmailTemplatesPage = () => {
     queryKey: queryKeys.emailTemplates.list(),
     queryFn: async () => {
       const response = await apiClient.get('/email/templates');
-      return response.data as EmailTemplate[];
+      return unwrapArray<EmailTemplate>(response.data);
     },
   });
 

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { CheckCircle, Plus, Printer, TestTube, Trash2, XCircle } from 'lucide-react';
 import apiClient from '../../lib/api-client';
+import { unwrapArray } from '../../lib/unwrap-response';
 import { AdminLayout } from '../../components/AdminLayout';
 import { Button } from '../../components/ui/Button';
 import { PrinterSettingsModal } from '../../components/admin/PrinterSettingsModal';
@@ -47,7 +48,7 @@ export const PrintersPage: React.FC = () => {
     setLoading(true);
     try {
       const response = await apiClient.get('/printers');
-      setPrinters(Array.isArray(response.data) ? response.data : []);
+      setPrinters(unwrapArray(response.data));
     } catch (error) {
       console.error('Failed to load printers:', error);
       showError('Failed to load printers');

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import apiClient from '../../lib/api-client';
+import { unwrapArray } from '../../lib/unwrap-response';
 import { Input } from '../ui/Input';
 import { useCartStore } from '../../stores/cart-store';
 import { useAlertReplacement } from '../../hooks/useAlertReplacement';
@@ -131,9 +132,7 @@ export const ProductSearch = ({ branchId }: ProductSearchProps) => {
       const response = await apiClient.get('/products/search', {
         params: { query: searchQuery, branchId },
       });
-      return Array.isArray(response.data)
-        ? response.data.map(normalizeProduct)
-        : [];
+      return unwrapArray(response.data).map(normalizeProduct);
     },
     enabled: searchQuery.length >= 2,
   });

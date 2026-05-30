@@ -2,6 +2,7 @@ import { useState, useCallback, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import apiClient from '../../lib/api-client';
+import { unwrapArray } from '../../lib/unwrap-response';
 import { AdminLayout } from '../../components/AdminLayout';
 import { BranchSelector } from '../../components/BranchSelector';
 import { Button } from '../../components/ui/Button';
@@ -240,7 +241,7 @@ export const ProductManagementPage = () => {
     queryKey: queryKeys.branches.list(),
     queryFn: async () => {
       const response = await apiClient.get<BranchesResponse>(buildApiUrl('branches', undefined));
-      return Array.isArray(response.data) ? response.data : response.data?.data || [];
+      return unwrapArray(response.data);
     },
   });
 

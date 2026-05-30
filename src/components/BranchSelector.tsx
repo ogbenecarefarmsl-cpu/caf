@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useBranchStore, getBranchId, type Branch } from '../stores/branch-store';
 import { useAuthStore } from '../stores/auth-store';
 import apiClient from '../lib/api-client';
+import { unwrapArray } from '../lib/unwrap-response';
 import { Select } from './ui/Select';
 import { queryKeys } from '../lib/query-keys';
 
@@ -17,7 +18,7 @@ export const BranchSelector = () => {
     queryKey: queryKeys.branches.list(),
     queryFn: async () => {
       const response = await apiClient.get<BranchesResponse>('/branches');
-      return Array.isArray(response.data) ? response.data : response.data?.data || [];
+      return unwrapArray(response.data);
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
   });

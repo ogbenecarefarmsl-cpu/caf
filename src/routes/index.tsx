@@ -1,4 +1,5 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { ErrorBoundary } from '../components/common/ErrorBoundary';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import { useAuthStore } from '../stores/auth-store';
 import { getDefaultRouteForRole } from '../lib/role-routes';
@@ -85,7 +86,9 @@ export const router = createBrowserRouter([
     path: '/settings/security',
     element: (
       <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'cashier', 'auditor', 'marketer']}>
-        <AccountSecurityPage />
+        <ErrorBoundary>
+          <AccountSecurityPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -93,7 +96,9 @@ export const router = createBrowserRouter([
     path: '/pos',
     element: (
       <ProtectedRoute allowedRoles={['cashier', 'branch_manager', 'super_admin', 'auditor']}>
-        <POSPage />
+        <ErrorBoundary>
+          <POSPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -101,7 +106,9 @@ export const router = createBrowserRouter([
     path: '/pos/catalog',
     element: (
       <ProtectedRoute allowedRoles={['cashier', 'branch_manager', 'super_admin', 'auditor']}>
-        <ProductCatalogPage />
+        <ErrorBoundary>
+          <ProductCatalogPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -109,7 +116,9 @@ export const router = createBrowserRouter([
     path: '/pos/payment',
     element: (
       <ProtectedRoute allowedRoles={['cashier', 'branch_manager', 'super_admin', 'auditor']}>
-        <PaymentPage />
+        <ErrorBoundary>
+          <PaymentPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -117,7 +126,9 @@ export const router = createBrowserRouter([
     path: '/pos/shifts',
     element: (
       <ProtectedRoute allowedRoles={['cashier', 'branch_manager', 'super_admin', 'auditor']}>
-        <ShiftLogsPage />
+        <ErrorBoundary>
+          <ShiftLogsPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -125,7 +136,9 @@ export const router = createBrowserRouter([
     path: '/pos/shift-report/:shiftId',
     element: (
       <ProtectedRoute allowedRoles={['cashier', 'branch_manager', 'super_admin', 'auditor']}>
-        <ShiftReportPage />
+        <ErrorBoundary>
+          <ShiftReportPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -133,7 +146,9 @@ export const router = createBrowserRouter([
     path: '/pos/returns',
     element: (
       <ProtectedRoute allowedRoles={['branch_manager', 'super_admin', 'auditor']}>
-        <ProcessReturnPage />
+        <ErrorBoundary>
+          <ProcessReturnPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -141,7 +156,9 @@ export const router = createBrowserRouter([
     path: '/pos/transactions',
     element: (
       <ProtectedRoute allowedRoles={['cashier', 'branch_manager', 'super_admin', 'auditor']}>
-        <TransactionHistoryPage />
+        <ErrorBoundary>
+          <TransactionHistoryPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -157,7 +174,9 @@ export const router = createBrowserRouter([
     path: '/admin/transactions',
     element: (
       <ProtectedRoute allowedRoles={['cashier', 'branch_manager', 'super_admin', 'auditor']}>
-        <TransactionHistoryPage />
+        <ErrorBoundary>
+          <TransactionHistoryPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -165,7 +184,9 @@ export const router = createBrowserRouter([
     path: '/admin/shifts',
     element: (
       <ProtectedRoute allowedRoles={['cashier', 'branch_manager', 'super_admin', 'auditor']}>
-        <ShiftLogsPage />
+        <ErrorBoundary>
+          <ShiftLogsPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -173,7 +194,9 @@ export const router = createBrowserRouter([
     path: '/pos/customers',
     element: (
       <ProtectedRoute allowedRoles={['cashier', 'branch_manager', 'super_admin', 'auditor']}>
-        <CustomerLookupPage />
+        <ErrorBoundary>
+          <CustomerLookupPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -181,7 +204,9 @@ export const router = createBrowserRouter([
     path: '/pos/discounts',
     element: (
       <ProtectedRoute allowedRoles={['cashier', 'branch_manager', 'super_admin', 'auditor']}>
-        <DiscountsPage />
+        <ErrorBoundary>
+          <DiscountsPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -189,7 +214,9 @@ export const router = createBrowserRouter([
     path: '/pos/receipt',
     element: (
       <ProtectedRoute allowedRoles={['cashier', 'branch_manager', 'super_admin', 'auditor']}>
-        <ReceiptPage />
+        <ErrorBoundary>
+          <ReceiptPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -197,7 +224,9 @@ export const router = createBrowserRouter([
     path: '/pos/receipt/:saleId',
     element: (
       <ProtectedRoute allowedRoles={['cashier', 'branch_manager', 'super_admin', 'auditor']}>
-        <ReceiptPage />
+        <ErrorBoundary>
+          <ReceiptPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -205,7 +234,9 @@ export const router = createBrowserRouter([
     path: '/admin/dashboard',
     element: (
       <ProtectedRoute allowedRoles={['branch_manager', 'super_admin', 'auditor']}>
-        <DashboardPage />
+        <ErrorBoundary>
+          <DashboardPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -217,7 +248,9 @@ export const router = createBrowserRouter([
     path: '/admin/inventory',
     element: (
       <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'auditor']}>
-        <InventoryPage />
+        <ErrorBoundary>
+          <InventoryPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -225,7 +258,9 @@ export const router = createBrowserRouter([
     path: '/admin/sales',
     element: (
       <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'cashier', 'auditor']}>
-        <SalesPage />
+        <ErrorBoundary>
+          <SalesPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -233,7 +268,9 @@ export const router = createBrowserRouter([
     path: '/admin/reports',
     element: (
       <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'auditor']}>
-        <ReportsPage />
+        <ErrorBoundary>
+          <ReportsPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -241,7 +278,9 @@ export const router = createBrowserRouter([
     path: '/admin/branches',
     element: (
       <ProtectedRoute allowedRoles={['super_admin']}>
-        <BranchManagementPage />
+        <ErrorBoundary>
+          <BranchManagementPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -253,7 +292,9 @@ export const router = createBrowserRouter([
     path: '/admin/users',
     element: (
       <ProtectedRoute allowedRoles={['super_admin', 'branch_manager']}>
-        <UserManagementPage />
+        <ErrorBoundary>
+          <UserManagementPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -265,7 +306,9 @@ export const router = createBrowserRouter([
     path: '/admin/products',
     element: (
       <ProtectedRoute allowedRoles={['super_admin', 'branch_manager']}>
-        <ProductManagementPage />
+        <ErrorBoundary>
+          <ProductManagementPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -285,7 +328,9 @@ export const router = createBrowserRouter([
     path: '/admin/stock-adjustments',
     element: (
       <ProtectedRoute allowedRoles={['super_admin', 'branch_manager']}>
-        <StockAdjustmentPage />
+        <ErrorBoundary>
+          <StockAdjustmentPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -293,7 +338,9 @@ export const router = createBrowserRouter([
     path: '/admin/transfers',
     element: (
       <ProtectedRoute allowedRoles={['super_admin', 'branch_manager']}>
-        <TransferManagementPage />
+        <ErrorBoundary>
+          <TransferManagementPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -301,7 +348,9 @@ export const router = createBrowserRouter([
     path: '/admin/cycle-counts',
     element: (
       <ProtectedRoute allowedRoles={['super_admin', 'branch_manager']}>
-        <CycleCountPage />
+        <ErrorBoundary>
+          <CycleCountPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -309,7 +358,9 @@ export const router = createBrowserRouter([
     path: '/admin/printers',
     element: (
       <ProtectedRoute allowedRoles={['super_admin', 'branch_manager']}>
-        <PrintersPage />
+        <ErrorBoundary>
+          <PrintersPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -317,7 +368,9 @@ export const router = createBrowserRouter([
     path: '/admin/sales/credit',
     element: (
       <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'auditor']}>
-        <CreditSalesPage />
+        <ErrorBoundary>
+          <CreditSalesPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -325,7 +378,9 @@ export const router = createBrowserRouter([
     path: '/admin/sales/request-analysis',
     element: (
       <ProtectedRoute allowedRoles={['super_admin', 'branch_manager']}>
-        <RequestAnalysisPage />
+        <ErrorBoundary>
+          <RequestAnalysisPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -337,7 +392,9 @@ export const router = createBrowserRouter([
     path: '/admin/pricing',
     element: (
       <ProtectedRoute allowedRoles={['super_admin', 'branch_manager']}>
-        <PricingManagementPage />
+        <ErrorBoundary>
+          <PricingManagementPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -345,7 +402,9 @@ export const router = createBrowserRouter([
     path: '/admin/expenses',
     element: (
       <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'cashier']}>
-        <ExpensesPage />
+        <ErrorBoundary>
+          <ExpensesPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -353,7 +412,9 @@ export const router = createBrowserRouter([
     path: '/admin/finance',
     element: (
       <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'auditor']}>
-        <FinanceTransactionsPage />
+        <ErrorBoundary>
+          <FinanceTransactionsPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -361,7 +422,9 @@ export const router = createBrowserRouter([
     path: '/admin/reports/valuation',
     element: (
       <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'auditor']}>
-        <ValuationReportPage />
+        <ErrorBoundary>
+          <ValuationReportPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -369,7 +432,9 @@ export const router = createBrowserRouter([
     path: '/admin/reports/sales',
     element: (
       <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'auditor']}>
-        <SalesReportsPage />
+        <ErrorBoundary>
+          <SalesReportsPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -377,7 +442,9 @@ export const router = createBrowserRouter([
     path: '/admin/reports/inventory',
     element: (
       <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'auditor']}>
-        <InventoryReportsPage />
+        <ErrorBoundary>
+          <InventoryReportsPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -385,7 +452,9 @@ export const router = createBrowserRouter([
     path: '/admin/reports/expiry',
     element: (
       <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'auditor']}>
-        <ExpiryReportsPage />
+        <ErrorBoundary>
+          <ExpiryReportsPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -393,7 +462,9 @@ export const router = createBrowserRouter([
     path: '/admin/hq-dashboard',
     element: (
       <ProtectedRoute allowedRoles={['super_admin']}>
-        <HQDashboardPage />
+        <ErrorBoundary>
+          <HQDashboardPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -401,7 +472,9 @@ export const router = createBrowserRouter([
     path: '/marketer/dashboard',
     element: (
       <ProtectedRoute allowedRoles={['marketer']}>
-        <MarketerDashboardPage />
+        <ErrorBoundary>
+          <MarketerDashboardPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -409,7 +482,9 @@ export const router = createBrowserRouter([
     path: '/marketer/sales',
     element: (
       <ProtectedRoute allowedRoles={['marketer']}>
-        <MarketerSalesPage />
+        <ErrorBoundary>
+          <MarketerSalesPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -417,7 +492,9 @@ export const router = createBrowserRouter([
     path: '/marketer/review',
     element: (
       <ProtectedRoute allowedRoles={['marketer']}>
-        <MarketerReviewAssignmentsPage />
+        <ErrorBoundary>
+          <MarketerReviewAssignmentsPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -425,7 +502,9 @@ export const router = createBrowserRouter([
     path: '/marketer/assignments',
     element: (
       <ProtectedRoute allowedRoles={['super_admin', 'branch_manager']}>
-        <MarketerAssignmentsPage />
+        <ErrorBoundary>
+          <MarketerAssignmentsPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -437,7 +516,9 @@ export const router = createBrowserRouter([
     path: '/admin/suppliers',
     element: (
       <ProtectedRoute allowedRoles={['super_admin', 'branch_manager']}>
-        <SupplierManagementPage />
+        <ErrorBoundary>
+          <SupplierManagementPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -445,7 +526,9 @@ export const router = createBrowserRouter([
     path: '/admin/customer-orders',
     element: (
       <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'cashier']}>
-        <CustomerOrdersPage />
+        <ErrorBoundary>
+          <CustomerOrdersPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -453,7 +536,9 @@ export const router = createBrowserRouter([
     path: '/admin/proforma-invoices',
     element: (
       <ProtectedRoute allowedRoles={['super_admin', 'branch_manager']}>
-        <ProformaInvoicesPage />
+        <ErrorBoundary>
+          <ProformaInvoicesPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -461,7 +546,9 @@ export const router = createBrowserRouter([
     path: '/admin/delivery-notes',
     element: (
       <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'cashier']}>
-        <DeliveryNotesPage />
+        <ErrorBoundary>
+          <DeliveryNotesPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -469,7 +556,9 @@ export const router = createBrowserRouter([
     path: '/admin/purchase-orders',
     element: (
       <ProtectedRoute allowedRoles={['super_admin', 'branch_manager']}>
-        <PurchaseOrderPage />
+        <ErrorBoundary>
+          <PurchaseOrderPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -477,7 +566,9 @@ export const router = createBrowserRouter([
     path: '/admin/customers',
     element: (
       <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'cashier']}>
-        <CustomerManagementPage />
+        <ErrorBoundary>
+          <CustomerManagementPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -485,7 +576,9 @@ export const router = createBrowserRouter([
     path: '/admin/promotions',
     element: (
       <ProtectedRoute allowedRoles={['super_admin', 'branch_manager']}>
-        <PromotionsManagementPage />
+        <ErrorBoundary>
+          <PromotionsManagementPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -493,7 +586,9 @@ export const router = createBrowserRouter([
     path: '/admin/email/templates',
     element: (
       <ProtectedRoute allowedRoles={['super_admin']}>
-        <EmailTemplatesPage />
+        <ErrorBoundary>
+          <EmailTemplatesPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -501,7 +596,9 @@ export const router = createBrowserRouter([
     path: '/admin/email/logs',
     element: (
       <ProtectedRoute allowedRoles={['super_admin', 'branch_manager']}>
-        <EmailLogsPage />
+        <ErrorBoundary>
+          <EmailLogsPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -509,7 +606,9 @@ export const router = createBrowserRouter([
     path: '/admin/jobs',
     element: (
       <ProtectedRoute allowedRoles={['super_admin']}>
-        <JobsMonitoringPage />
+        <ErrorBoundary>
+          <JobsMonitoringPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -517,7 +616,9 @@ export const router = createBrowserRouter([
     path: '/admin/reports/purchases',
     element: (
       <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'auditor']}>
-        <PurchaseReportsPage />
+        <ErrorBoundary>
+          <PurchaseReportsPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -525,7 +626,9 @@ export const router = createBrowserRouter([
     path: '/admin/reports/transfers',
     element: (
       <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'auditor']}>
-        <TransferReportsPage />
+        <ErrorBoundary>
+          <TransferReportsPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -533,7 +636,9 @@ export const router = createBrowserRouter([
     path: '/admin/reports/customers',
     element: (
       <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'auditor']}>
-        <CustomerReportsPage />
+        <ErrorBoundary>
+          <CustomerReportsPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -541,7 +646,9 @@ export const router = createBrowserRouter([
     path: '/admin/settings/system',
     element: (
       <ProtectedRoute allowedRoles={['super_admin']}>
-        <SystemSettingsPage />
+        <ErrorBoundary>
+          <SystemSettingsPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -549,7 +656,9 @@ export const router = createBrowserRouter([
     path: '/admin/settings/taxes',
     element: (
       <ProtectedRoute allowedRoles={['super_admin', 'branch_manager']}>
-        <TaxConfigurationPage />
+        <ErrorBoundary>
+          <TaxConfigurationPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -557,7 +666,9 @@ export const router = createBrowserRouter([
     path: '/admin/settings/payment-methods',
     element: (
       <ProtectedRoute allowedRoles={['super_admin', 'branch_manager']}>
-        <PaymentMethodsPage />
+        <ErrorBoundary>
+          <PaymentMethodsPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -565,7 +676,9 @@ export const router = createBrowserRouter([
     path: '/admin/audit/trail',
     element: (
       <ProtectedRoute allowedRoles={['super_admin', 'auditor']}>
-        <AuditTrailPage />
+        <ErrorBoundary>
+          <AuditTrailPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -573,7 +686,9 @@ export const router = createBrowserRouter([
     path: '/admin/audit/user-activity',
     element: (
       <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'auditor']}>
-        <UserActivityLogsPage />
+        <ErrorBoundary>
+          <UserActivityLogsPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -581,7 +696,9 @@ export const router = createBrowserRouter([
     path: '/admin/finance-dashboard',
     element: (
       <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'finance_manager']}>
-        <FinanceManagerDashboardPage />
+        <ErrorBoundary>
+          <FinanceManagerDashboardPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -589,7 +706,9 @@ export const router = createBrowserRouter([
     path: '/admin/reconciliations',
     element: (
       <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'finance_manager']}>
-        <ReconciliationPage />
+        <ErrorBoundary>
+          <ReconciliationPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -597,7 +716,9 @@ export const router = createBrowserRouter([
     path: '/admin/salaries',
     element: (
       <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'finance_manager']}>
-        <SalaryManagementPage />
+        <ErrorBoundary>
+          <SalaryManagementPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -605,7 +726,9 @@ export const router = createBrowserRouter([
     path: '/admin/cash-management',
     element: (
       <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'finance_manager']}>
-        <CashManagementPage />
+        <ErrorBoundary>
+          <CashManagementPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -613,7 +736,9 @@ export const router = createBrowserRouter([
     path: '/admin/finance-reports',
     element: (
       <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'finance_manager']}>
-        <FinanceReportsPage />
+        <ErrorBoundary>
+          <FinanceReportsPage />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -626,4 +751,3 @@ export const router = createBrowserRouter([
     element: <NotFoundPage />,
   },
 ]);
-

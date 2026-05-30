@@ -4,6 +4,7 @@ import { useAuthStore } from '../../stores/auth-store';
 import { useBranchStore, getBranchId } from '../../stores/branch-store';
 import { useQuery } from '@tanstack/react-query';
 import apiClient from '../../lib/api-client';
+import { unwrapResponse } from '../../lib/unwrap-response';
 import { useToast } from '../../hooks/useToast';
 import { queryKeys } from '../../lib/query-keys';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
@@ -39,7 +40,7 @@ export const POSSidebar = () => {
       const response = await apiClient.get('/shifts/current', {
         params: { branchId: getBranchId(selectedBranch), cashierId: user?.id },
       });
-      return response.data as Shift;
+      return unwrapResponse(response.data, {} as Shift);
     },
     enabled: !!getBranchId(selectedBranch) && !!user?.id,
     refetchInterval: 30000, // Refresh every 30 seconds

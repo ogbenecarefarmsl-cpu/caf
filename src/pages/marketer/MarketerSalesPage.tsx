@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import apiClient from '../../lib/api-client';
+import { unwrapResponse } from '../../lib/unwrap-response';
 import { MarketerLayout } from '../../components/MarketerLayout';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -57,7 +58,7 @@ export const MarketerSalesPage = () => {
       const response = await apiClient.get('/marketer/assignments', {
         params: { activeOnly: true, status: 'accepted' },
       });
-      return response.data as AssignmentResponse;
+      return unwrapResponse(response.data, {} as AssignmentResponse);
     },
   });
 
@@ -67,7 +68,7 @@ export const MarketerSalesPage = () => {
       const response = await apiClient.get('/marketer/sales', {
         params: { page: pagination.state.page, limit: pagination.state.limit },
       });
-      return response.data as SalesResponse;
+      return unwrapResponse(response.data, {} as SalesResponse);
     },
   });
 

@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../../lib/api-client';
+import { unwrapResponse } from '../../lib/unwrap-response';
 import { AdminLayout } from '../../components/AdminLayout';
 import { Button } from '../../components/ui/Button';
 import { Table } from '../../components/ui/Table';
@@ -75,7 +76,7 @@ export default function HQDashboardPage() {
     queryKey: queryKeys.dashboard.hq(),
     queryFn: async () => {
       const response = await apiClient.get('/reports/hq-summary');
-      return response.data as HQDashboardData;
+      return unwrapResponse(response.data, {} as HQDashboardData);
     },
   });
 

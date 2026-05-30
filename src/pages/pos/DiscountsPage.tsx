@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../../lib/api-client';
+import { unwrapArray } from '../../lib/unwrap-response';
 import { useCartStore } from '../../stores/cart-store';
 import { useBranchStore, getBranchId } from '../../stores/branch-store';
 import { Error } from '../../components/ui/Error';
@@ -39,7 +40,7 @@ export const DiscountsPage = () => {
       const response = await apiClient.get('/promotions/active', {
         params: { branchId: getBranchId(selectedBranch) },
       });
-      return response.data as Promotion[];
+      return unwrapArray<Promotion>(response.data);
     },
     enabled: !!getBranchId(selectedBranch),
   });

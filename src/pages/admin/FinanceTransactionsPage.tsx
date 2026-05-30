@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import apiClient from '../../lib/api-client';
+import { unwrapResponse } from '../../lib/unwrap-response';
 import { AdminLayout } from '../../components/AdminLayout';
 import { Button } from '../../components/ui/Button';
 import { Table } from '../../components/ui/Table';
@@ -97,7 +98,7 @@ export function FinanceTransactionsPage() {
       const response = await apiClient.get('/finance/transactions/summary', {
         params: { branchId },
       });
-      return response.data as FinanceSummary;
+      return unwrapResponse(response.data, {} as FinanceSummary);
     },
     enabled: !!branchId,
   });

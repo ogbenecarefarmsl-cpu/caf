@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../../lib/api-client';
+import { unwrapArray } from '../../lib/unwrap-response';
 import { useBranchStore, getBranchId } from '../../stores/branch-store';
 import { useAuthStore } from '../../stores/auth-store';
 import { useCurrency } from '../../hooks/useCurrency';
@@ -108,7 +109,7 @@ export const ShiftManagementPage = () => {
     queryFn: async () => {
       if (!currentShift?._id) return [];
       const response = await apiClient.get(`/expenses/shift/${currentShift._id}`);
-      return response.data as Expense[];
+      return unwrapArray<Expense>(response.data);
     },
     enabled: !!currentShift?._id && (activeTab === 'expenses' || activeTab === 'current'),
   });

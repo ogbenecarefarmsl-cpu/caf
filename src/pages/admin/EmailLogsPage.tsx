@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import apiClient from '../../lib/api-client';
+import { unwrapArray } from '../../lib/unwrap-response';
 import { AdminLayout } from '../../components/AdminLayout';
 import { Table } from '../../components/ui/Table';
 import { Input } from '../../components/ui/Input';
@@ -42,7 +43,7 @@ export const EmailLogsPage = () => {
         from: dateFrom,
         to: dateTo,
       }));
-      return response.data as EmailLog[];
+      return unwrapArray<EmailLog>(response.data);
     },
   });
 

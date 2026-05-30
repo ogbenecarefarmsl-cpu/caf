@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import apiClient from '../../lib/api-client';
+import { unwrapResponse } from '../../lib/unwrap-response';
 import { AdminLayout } from '../../components/AdminLayout';
 import { Button } from '../../components/ui/Button';
 import { Table } from '../../components/ui/Table';
@@ -67,7 +68,7 @@ export const TransferReportsPage = () => {
         branchId,
         status: statusFilter !== 'all' ? statusFilter : undefined,
       }));
-      return response.data as TransferReportData;
+      return unwrapResponse(response.data, {} as TransferReportData);
     },
     enabled: !!dateFrom && !!dateTo && !!branchId,
   });

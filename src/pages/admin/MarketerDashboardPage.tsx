@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { MarketerLayout } from '../../components/MarketerLayout';
 import apiClient from '../../lib/api-client';
+import { unwrapResponse } from '../../lib/unwrap-response';
 import { useCurrency } from '../../hooks/useCurrency';
 import { queryKeys } from '../../lib/query-keys';
 
@@ -36,7 +37,7 @@ export const MarketerDashboardPage = () => {
     queryKey: queryKeys.marketer.summary(),
     queryFn: async () => {
       const response = await apiClient.get('/marketer/summary');
-      return response.data as MarketerSummary;
+      return unwrapResponse(response.data, {} as MarketerSummary);
     },
   });
 
@@ -44,7 +45,7 @@ export const MarketerDashboardPage = () => {
     queryKey: queryKeys.marketer.sales({ limit: 10 }),
     queryFn: async () => {
       const response = await apiClient.get('/marketer/sales', { params: { limit: 10 } });
-      return response.data as MarketerSalesResponse;
+      return unwrapResponse(response.data, {} as MarketerSalesResponse);
     },
   });
 

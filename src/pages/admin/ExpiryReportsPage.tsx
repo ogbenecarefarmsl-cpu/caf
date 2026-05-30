@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import apiClient from '../../lib/api-client';
+import { unwrapArray } from '../../lib/unwrap-response';
 import { AdminLayout } from '../../components/AdminLayout';
 import { Button } from '../../components/ui/Button';
 import { Table } from '../../components/ui/Table';
@@ -60,7 +61,7 @@ export const ExpiryReportsPage = () => {
     queryKey: queryKeys.branches.list(),
     queryFn: async () => {
       const response = await apiClient.get('/branches');
-      return response.data as Branch[];
+      return unwrapArray<Branch>(response.data);
     },
   });
 

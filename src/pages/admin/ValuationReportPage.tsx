@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import apiClient from '../../lib/api-client';
+import { unwrapResponse } from '../../lib/unwrap-response';
 import { AdminLayout } from '../../components/AdminLayout';
 import { Button } from '../../components/ui/Button';
 import { Table } from '../../components/ui/Table';
@@ -51,7 +52,7 @@ export function ValuationReportPage() {
         params.branchId = branchId!;
       }
       const response = await apiClient.get('/reports/valuation', { params });
-      return response.data as ValuationReport;
+      return unwrapResponse(response.data, {} as ValuationReport);
     },
     enabled: isSuperAdmin ? (showAllBranches || !!branchId) : !!branchId,
   });

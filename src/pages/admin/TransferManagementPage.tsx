@@ -3,6 +3,7 @@ import { ArrowRightLeft, Package, Truck } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import apiClient from '../../lib/api-client';
+import { unwrapArray } from '../../lib/unwrap-response';
 import { AdminLayout } from '../../components/AdminLayout';
 import { Button } from '../../components/ui/Button';
 import { Error } from '../../components/ui/Error';
@@ -91,7 +92,7 @@ export default function TransferManagementPage() {
     queryKey: queryKeys.branches.list(),
     queryFn: async () => {
       const response = await apiClient.get('/branches');
-      return response.data as Branch[];
+      return unwrapArray<Branch>(response.data);
     },
   });
 
