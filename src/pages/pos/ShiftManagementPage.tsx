@@ -77,7 +77,7 @@ export const ShiftManagementPage = () => {
       const response = await apiClient.get('/shifts/current', {
         params: { branchId, cashierId, terminalId },
       });
-      return response.data.data as Shift;
+      return (response.data?.data ?? response.data) as Shift;
     },
     enabled: !!getBranchId(selectedBranch) && !!user?.id,
     retry: false,
@@ -96,7 +96,7 @@ export const ShiftManagementPage = () => {
       const response = await apiClient.get('/shifts', {
         params: { branchId, limit: '20' },
       });
-      return response.data.data as Shift[];
+      return (response.data?.data ?? response.data) as Shift[];
     },
     enabled: !!getBranchId(selectedBranch) && activeTab === 'history',
     retry: false,
@@ -122,7 +122,7 @@ export const ShiftManagementPage = () => {
         cashierId: user?.id,
         openingCash: data.openingCash,
       });
-      return response.data.data as Shift;
+      return (response.data?.data ?? response.data) as Shift;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.shifts.all(), exact: false });
@@ -161,7 +161,7 @@ export const ShiftManagementPage = () => {
         notes: data.notes,
         totalSales: currentShift?.totalSales || 0,
       });
-      return response.data.data as Shift;
+      return (response.data?.data ?? response.data) as Shift;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.shifts.all(), exact: false });

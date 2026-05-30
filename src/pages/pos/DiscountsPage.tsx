@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import apiClient from '../../lib/api-client';
 import { useCartStore } from '../../stores/cart-store';
 import { useBranchStore, getBranchId } from '../../stores/branch-store';
+import { Error } from '../../components/ui/Error';
 import { queryKeys } from '../../lib/query-keys';
 import { useCurrency } from '../../hooks/useCurrency';
 
@@ -32,7 +33,7 @@ export const DiscountsPage = () => {
   const [selectedPromotions, setSelectedPromotions] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { data: promotions, isLoading } = useQuery({
+  const { data: promotions, isLoading, error, refetch } = useQuery({
     queryKey: queryKeys.promotions.list({ isActive: true, branchId: getBranchId(selectedBranch) }),
     queryFn: async () => {
       const response = await apiClient.get('/promotions/active', {
@@ -163,6 +164,8 @@ export const DiscountsPage = () => {
           <div className="space-y-3">
             {isLoading ? (
               <div className="text-center py-4 text-gray-400">Loading...</div>
+            ) : error ? (
+              <Error message="Failed to load promotions" onRetry={() => refetch()} />
             ) : filteredPromotions && filteredPromotions.length > 0 ? (
               filteredPromotions.map((promo) => (
                 <button

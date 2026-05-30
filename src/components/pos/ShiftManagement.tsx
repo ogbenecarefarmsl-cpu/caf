@@ -53,7 +53,7 @@ export const ShiftManagement = ({
       const response = await apiClient.get('/shifts/current', {
         params: { branchId, terminalId, cashierId: user?.id },
       });
-      return response.data.data as Shift;
+      return (response.data?.data ?? response.data) as Shift;
     },
     refetchInterval: 30000, // Refetch every 30 seconds
   });
@@ -67,7 +67,7 @@ export const ShiftManagement = ({
         cashierId: user?.id,
         openingCash: data.openingCash,
       });
-      return response.data.data as Shift;
+      return (response.data?.data ?? response.data) as Shift;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.shifts.all(), exact: false });
@@ -91,7 +91,7 @@ export const ShiftManagement = ({
         closingCash: data.closingCash,
         notes: data.notes,
       });
-      return response.data.data as Shift;
+      return (response.data?.data ?? response.data) as Shift;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.shifts.all(), exact: false });

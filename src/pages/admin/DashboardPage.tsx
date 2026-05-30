@@ -6,6 +6,7 @@ import { useBranchStore, getBranchId } from '../../stores/branch-store';
 import { useAuthStore } from '../../stores/auth-store';
 import apiClient from '../../lib/api-client';
 import { useCurrency } from '../../hooks/useCurrency';
+import { Error } from '../../components/ui/Error';
 import { queryKeys } from '../../lib/query-keys';
 
 interface DashboardStats {
@@ -47,7 +48,7 @@ export const DashboardPage = () => {
   const { format } = useCurrency();
   const branchId = getBranchId(selectedBranch);
 
-  const { data: stats, isLoading } = useQuery<DashboardStats>({
+  const { data: stats, isLoading, error, refetch } = useQuery<DashboardStats>({
     queryKey: queryKeys.dashboard.branch(branchId),
     queryFn: async () => {
       const response = await apiClient.get('/reports/dashboard-stats', {
@@ -258,7 +259,9 @@ export const DashboardPage = () => {
                       </div>
                     ))}
                   </div>
-                ) : (
+        ) : error ? (
+          <Error message="Failed to load dashboard data" onRetry={() => refetch()} />
+        ) : (
                   <div className="rounded-xl bg-white/5 p-4 text-sm text-gray-400">
                     All products are well stocked.
                   </div>

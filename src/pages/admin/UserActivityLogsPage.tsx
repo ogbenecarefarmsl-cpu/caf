@@ -9,6 +9,7 @@ import { Loading } from '../../components/ui/Loading';
 import { Error } from '../../components/ui/Error';
 import { queryKeys } from '../../lib/query-keys';
 import { buildApiUrl } from '../../lib/api-utils';
+import { unwrapArray } from '../../lib/unwrap-response';
 
 interface UserActivityLog {
   _id: string;
@@ -23,12 +24,6 @@ interface UserActivityLog {
   ipAddress?: string;
   timestamp: string;
 }
-
-const unwrapArray = <T,>(value: unknown): T[] => {
-  if (Array.isArray(value)) return value as T[];
-  const data = (value as { data?: unknown })?.data;
-  return Array.isArray(data) ? data as T[] : [];
-};
 
 export const UserActivityLogsPage = () => {
   const [userFilter, setUserFilter] = useState<string>('all');

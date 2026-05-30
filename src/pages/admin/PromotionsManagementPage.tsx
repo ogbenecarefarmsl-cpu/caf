@@ -15,6 +15,7 @@ import { useCurrency } from '../../hooks/useCurrency';
 import { queryKeys } from '../../lib/query-keys';
 import { buildApiUrl } from '../../lib/api-utils';
 import { useSearchWithDebounce } from '../../hooks/useSearchWithDebounce';
+import { unwrapArray } from '../../lib/unwrap-response';
 
 interface Promotion {
   _id: string;
@@ -45,12 +46,6 @@ interface PromotionFormData {
   endDate: string;
   usageLimit?: number;
 }
-
-const unwrapArray = <T,>(value: unknown): T[] => {
-  if (Array.isArray(value)) return value as T[];
-  const data = (value as { data?: unknown })?.data;
-  return Array.isArray(data) ? data as T[] : [];
-};
 
 export const PromotionsManagementPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);

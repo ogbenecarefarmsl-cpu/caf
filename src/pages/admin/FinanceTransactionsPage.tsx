@@ -91,7 +91,7 @@ export function FinanceTransactionsPage() {
     enabled: !!branchId,
   });
 
-  const { data: summary } = useQuery({
+  const { data: summary, error: summaryError, refetch: refetchSummary } = useQuery({
     queryKey: queryKeys.finance.summary(branchId),
     queryFn: async () => {
       const response = await apiClient.get('/finance/transactions/summary', {
@@ -134,6 +134,7 @@ export function FinanceTransactionsPage() {
         )}
 
         {/* Summary cards */}
+        {summaryError && <Error message="Failed to load summary" onRetry={() => refetchSummary()} />}
         {summary && (
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
             <div className="rounded-xl border border-green-500/20 bg-white/5 p-4">

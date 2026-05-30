@@ -14,6 +14,7 @@ import { useToast } from '../../hooks/useToast';
 import { useBranchStore, getBranchId } from '../../stores/branch-store';
 import { queryKeys } from '../../lib/query-keys';
 import { useCurrency } from '../../hooks/useCurrency';
+import { unwrapArray } from '../../lib/unwrap-response';
 
 interface Batch {
   id: string;
@@ -67,12 +68,6 @@ interface BatchFormData {
   sellingPrice: number;
   supplierId: string | { _id?: string; name?: string };
 }
-
-const unwrapArray = <T,>(value: unknown): T[] => {
-  if (Array.isArray(value)) return value as T[];
-  const data = (value as { data?: unknown })?.data;
-  return Array.isArray(data) ? (data as T[]) : [];
-};
 
 const getEntityId = (value?: string | { _id?: string; id?: string }) =>
   typeof value === 'string' ? value : value?._id || value?.id || '';

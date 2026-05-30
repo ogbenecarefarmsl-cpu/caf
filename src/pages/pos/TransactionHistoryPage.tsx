@@ -7,6 +7,7 @@ import { useAuthStore } from '../../stores/auth-store';
 import { useCurrency } from '../../hooks/useCurrency';
 import { useToast } from '../../hooks/useToast';
 import { getPaymentMethodLabel } from '../../config/payment-methods';
+import { Error } from '../../components/ui/Error';
 import { queryKeys } from '../../lib/query-keys';
 
 interface Branch {
@@ -65,7 +66,7 @@ export const TransactionHistoryPage = () => {
     enabled: isSuperAdmin,
   });
 
-  const { data: sales, isLoading } = useQuery({
+  const { data: sales, isLoading, error, refetch } = useQuery({
     queryKey: queryKeys.sales.history({
       branchId: effectiveBranchId,
       search: searchQuery,
@@ -188,6 +189,8 @@ export const TransactionHistoryPage = () => {
         <div className="space-y-3">
           {isLoading ? (
             <div className="text-center py-8 text-gray-400">Loading...</div>
+          ) : error ? (
+            <Error message="Failed to load transactions" onRetry={() => refetch()} />
           ) : sales && sales.length > 0 ? (
             sales.map((sale) => (
               <div

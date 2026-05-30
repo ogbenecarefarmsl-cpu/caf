@@ -121,7 +121,7 @@ export const ProductCatalogPage = () => {
       const response = await apiClient.get('/products', {
         params: { branchId, barcode },
       });
-      const product = response.data.data[0] as Product | undefined;
+      const product = (response.data?.data ?? response.data)[0] as Product | undefined;
       if (product) {
         handleAddToCart(product);
         alertInfo(`Added ${product.name} to cart`);

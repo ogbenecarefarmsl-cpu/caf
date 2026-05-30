@@ -16,6 +16,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { queryKeys } from '../../lib/query-keys';
 import { buildApiUrl } from '../../lib/api-utils';
 import { useCurrency } from '../../hooks/useCurrency';
+import { unwrapArray } from '../../lib/unwrap-response';
 
 interface Supplier {
   _id: string;
@@ -75,12 +76,6 @@ interface ReceiveFormData {
     supplyDate?: string;
   }[];
 }
-
-const unwrapArray = <T,>(value: unknown): T[] => {
-  if (Array.isArray(value)) return value as T[];
-  const data = (value as { data?: unknown })?.data;
-  return Array.isArray(data) ? data as T[] : [];
-};
 
 export default function PurchaseOrderPage() {
   const { symbol } = useCurrency();

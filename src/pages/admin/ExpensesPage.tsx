@@ -14,6 +14,7 @@ import { queryKeys } from '../../lib/query-keys';
 import { buildApiUrl } from '../../lib/api-utils';
 import { useToast } from '../../hooks/useToast';
 import { useCurrency } from '../../hooks/useCurrency';
+import { unwrapArray } from '../../lib/unwrap-response';
 
 const CATEGORIES = [
   { value: 'supplies', label: 'Supplies' },
@@ -58,12 +59,6 @@ interface ExpenseFormData {
   notes?: string;
   receiptNumber?: string;
 }
-
-const unwrapArray = <T,>(value: unknown): T[] => {
-  if (Array.isArray(value)) return value as T[];
-  const data = (value as { data?: unknown })?.data;
-  return Array.isArray(data) ? data as T[] : [];
-};
 
 export function ExpensesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
