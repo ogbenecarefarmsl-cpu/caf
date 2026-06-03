@@ -1,18 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import path from 'node:path'
 
 import { cloudflare } from "@cloudflare/vite-plugin";
-
-const chunkNameForPage = (id: string) => {
-  const normalized = id.replace(/\\/g, '/');
-  const pagesIndex = normalized.indexOf('/src/pages/');
-  if (pagesIndex === -1) return undefined;
-
-  const pagePath = normalized.slice(pagesIndex + '/src/pages/'.length);
-  const parsed = path.parse(pagePath);
-  return `page-${parsed.name.toLowerCase().replace(/page$/, '')}`;
-};
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -21,21 +10,24 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          const pageChunk = chunkNameForPage(id);
-          if (pageChunk) return pageChunk;
+          const normalized = id.replace(/\\/g, '/');
 
-          if (id.includes('node_modules')) {
-            if (id.includes('/react/') || id.includes('/react-dom/') || id.includes('/react-router-dom/')) return 'react';
-            if (id.includes('@tanstack/react-query')) return 'query';
-            if (id.includes('react-hook-form')) return 'forms';
-            if (id.includes('lucide-react')) return 'ui';
-            if (id.includes('socket.io-client')) return 'realtime';
-            if (id.includes('dexie') || id.includes('zustand')) return 'storage';
+          if (normalized.includes('node_modules')) {
             if (
-              id.includes('@capacitor/') ||
-              id.includes('@capacitor-mlkit/') ||
-              id.includes('@aparajita/') ||
-              id.includes('@capgo/')
+              normalized.includes('/react/') ||
+              normalized.includes('/react-dom/') ||
+              normalized.includes('/react-router-dom/')
+            ) return 'react';
+            if (normalized.includes('@tanstack/react-query')) return 'query';
+            if (normalized.includes('react-hook-form')) return 'forms';
+            if (normalized.includes('lucide-react')) return 'ui';
+            if (normalized.includes('socket.io-client')) return 'realtime';
+            if (normalized.includes('dexie') || normalized.includes('zustand')) return 'storage';
+            if (
+              normalized.includes('@capacitor/') ||
+              normalized.includes('@capacitor-mlkit/') ||
+              normalized.includes('@aparajita/') ||
+              normalized.includes('@capgo/')
             ) {
               return 'native';
             }
