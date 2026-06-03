@@ -24,9 +24,9 @@ export const POSLayout = ({ children }: POSLayoutProps) => {
   }
 
   return (
-    <div className="min-h-screen bg-primary-darker flex">
+    <div className="h-screen overflow-hidden bg-primary-darker">
       <POSSidebar />
-      <main className="flex-1 overflow-auto">
+      <main className="h-screen overflow-auto lg:ml-64">
         {children}
       </main>
     </div>

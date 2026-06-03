@@ -158,7 +158,7 @@ export const POSSidebar = () => {
       {/* Sidebar */}
       <aside
         className={`
-          fixed lg:static inset-y-0 left-0 z-40
+          fixed inset-y-0 left-0 z-40 lg:z-30
           w-64 bg-primary-dark border-r border-gray-700
           transform transition-transform duration-300 ease-in-out
           ${isExpanded ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}

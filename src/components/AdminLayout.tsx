@@ -277,10 +277,10 @@ export const AdminLayout = ({ children, title = 'Admin' }: AdminLayoutProps) => 
   );
 
   return (
-    <div className="min-h-screen bg-primary-darker flex">
+    <div className="h-screen overflow-hidden bg-primary-darker">
       <ConnectionStatus />
       <OfflineNotification />
-      <aside className="hidden lg:flex w-64 bg-primary-dark border-r border-gray-800 flex-col">
+      <aside className="hidden lg:flex fixed inset-y-0 left-0 z-30 w-64 bg-primary-dark border-r border-gray-800 flex-col">
         <div className="p-6 border-b border-gray-800">
           <h1 className="text-2xl font-bold text-white">CAREFARM POS</h1>
           {selectedBranch ? (
@@ -388,7 +388,7 @@ export const AdminLayout = ({ children, title = 'Admin' }: AdminLayoutProps) => 
         variant="danger"
       />
 
-      <div className="flex-1 flex flex-col min-w-0 bg-primary-darker">
+      <div className="flex h-screen min-w-0 flex-col bg-primary-darker lg:ml-64">
         <header className="bg-primary-dark/50 backdrop-blur-xl border-b border-white/5 px-4 py-4 sm:px-6 lg:px-8 lg:py-6 sticky top-0 z-30">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
