@@ -16,11 +16,12 @@ export default defineConfig({
             if (
               normalized.includes('/react/') ||
               normalized.includes('/react-dom/') ||
-              normalized.includes('/react-router-dom/')
+              normalized.includes('/react-router-dom/') ||
+              normalized.includes('recharts') ||
+              normalized.includes('/d3-')
             ) return 'react';
             if (normalized.includes('@tanstack/react-query')) return 'query';
             if (normalized.includes('react-hook-form')) return 'forms';
-            if (normalized.includes('recharts') || normalized.includes('d3-')) return 'charts';
             if (normalized.includes('lucide-react')) return 'ui';
             if (normalized.includes('socket.io-client')) return 'realtime';
             if (normalized.includes('dexie') || normalized.includes('zustand')) return 'storage';
