@@ -194,7 +194,7 @@ export default function SupplierManagementPage() {
         </div>
 
         {/* Suppliers Table */}
-        <div className="bg-white rounded-lg shadow">
+        <div className="bg-primary-dark/50 rounded-lg shadow border border-white/10">
           <Table
             data={suppliers || []}
             columns={columns}

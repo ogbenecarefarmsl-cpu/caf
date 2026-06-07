@@ -202,7 +202,7 @@ export const ReceiptModal = ({ isOpen, onClose, saleData }: ReceiptModalProps) =
           </div>
 
           {/* Receipt Actions */}
-          <div className="bg-gray-50 p-4 rounded-lg">
+          <div className="bg-primary-dark/50 p-4 rounded-lg">
             <ReceiptActions 
               saleId={saleData._id} 
               receiptNumber={saleData.saleNumber}

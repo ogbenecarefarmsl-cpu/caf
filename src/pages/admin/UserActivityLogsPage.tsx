@@ -88,15 +88,15 @@ export const UserActivityLogsPage = () => {
       header: 'Activity',
       render: (log: UserActivityLog) => {
         const activityColors: Record<string, string> = {
-          login: 'bg-green-100 text-green-800',
-          logout: 'bg-gray-100 text-gray-800',
-          'shift-open': 'bg-blue-100 text-blue-800',
-          'shift-close': 'bg-purple-100 text-purple-800',
-          sale: 'bg-yellow-100 text-yellow-800',
-          return: 'bg-red-100 text-red-800',
+          login: 'bg-green-500/20 text-green-300',
+          logout: 'bg-white/10 text-white/60',
+          'shift-open': 'bg-blue-500/20 text-blue-300',
+          'shift-close': 'bg-purple-500/20 text-purple-300',
+          sale: 'bg-yellow-500/20 text-yellow-300',
+          return: 'bg-red-500/20 text-red-300',
         };
         return (
-          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${activityColors[log.activity] || 'bg-gray-100 text-gray-800'}`}>
+          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${activityColors[log.activity] || 'bg-white/10 text-white/60'}`}>
             {log.activity.replace('-', ' ').toUpperCase()}
           </span>
         );

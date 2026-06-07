@@ -144,11 +144,11 @@ export const PaymentMethodsPage = () => {
           other: 'Other',
         };
         const typeColors = {
-          cash: 'bg-green-100 text-green-800',
-          card: 'bg-blue-100 text-blue-800',
-          mobile_money: 'bg-purple-100 text-purple-800',
-          bank_transfer: 'bg-yellow-100 text-yellow-800',
-          other: 'bg-gray-100 text-gray-800',
+          cash: 'bg-green-500/20 text-green-300',
+          card: 'bg-blue-500/20 text-blue-300',
+          mobile_money: 'bg-purple-500/20 text-purple-300',
+          bank_transfer: 'bg-yellow-500/20 text-yellow-300',
+          other: 'bg-white/10 text-white/60',
         };
         return (
           <span className={`px-2 py-1 text-xs font-semibold rounded-full ${typeColors[method.type]}`}>
@@ -227,7 +227,7 @@ export const PaymentMethodsPage = () => {
         </div>
 
         {/* Payment Methods Table */}
-        <div className="bg-white rounded-lg shadow">
+        <div className="bg-primary-dark/50 rounded-lg shadow border border-white/10">
           <Table
             data={methods || []}
             columns={columns}

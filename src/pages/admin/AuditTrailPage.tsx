@@ -155,14 +155,14 @@ export const AuditTrailPage = () => {
       header: 'Action',
       render: (log: AuditLog) => {
         const actionColors: Record<string, string> = {
-          create: 'bg-green-100 text-green-800',
-          update: 'bg-blue-100 text-blue-800',
-          delete: 'bg-red-100 text-red-800',
-          login: 'bg-purple-100 text-purple-800',
-          logout: 'bg-gray-100 text-gray-800',
+          create: 'bg-green-500/20 text-green-300',
+          update: 'bg-blue-500/20 text-blue-300',
+          delete: 'bg-red-500/20 text-red-300',
+          login: 'bg-purple-500/20 text-purple-300',
+          logout: 'bg-white/10 text-white/60',
         };
         return (
-          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${actionColors[log.action] || 'bg-gray-100 text-gray-800'}`}>
+          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${actionColors[log.action] || 'bg-white/10 text-white/60'}`}>
             {log.action.charAt(0).toUpperCase() + log.action.slice(1)}
           </span>
         );
@@ -273,12 +273,12 @@ export const AuditTrailPage = () => {
         {/* Details Modal */}
         {selectedLog && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="bg-primary-dark rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto border border-white/10">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-gray-900">Audit Log Details</h2>
+                <h2 className="text-xl font-bold text-white">Audit Log Details</h2>
                 <button
                   onClick={() => setSelectedLog(null)}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-white/50 hover:text-white"
                 >
                   ✕
                 </button>
@@ -287,51 +287,51 @@ export const AuditTrailPage = () => {
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Timestamp</p>
-                    <p className="text-sm text-gray-900">{new Date(selectedLog.timestamp).toLocaleString()}</p>
+                    <p className="text-sm font-medium text-white/50">Timestamp</p>
+                    <p className="text-sm text-white">{new Date(selectedLog.timestamp).toLocaleString()}</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-500">User</p>
-                    <p className="text-sm text-gray-900">{selectedLog.userName}</p>
+                    <p className="text-sm font-medium text-white/50">User</p>
+                    <p className="text-sm text-white">{selectedLog.userName}</p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Action</p>
-                    <p className="text-sm text-gray-900">{selectedLog.action}</p>
+                    <p className="text-sm font-medium text-white/50">Action</p>
+                    <p className="text-sm text-white">{selectedLog.action}</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Entity</p>
-                    <p className="text-sm text-gray-900">{selectedLog.entity}</p>
+                    <p className="text-sm font-medium text-white/50">Entity</p>
+                    <p className="text-sm text-white">{selectedLog.entity}</p>
                   </div>
                 </div>
 
                 <div>
-                  <p className="text-sm font-medium text-gray-500">Entity ID</p>
-                  <p className="text-sm text-gray-900">{selectedLog.entityId}</p>
+                  <p className="text-sm font-medium text-white/50">Entity ID</p>
+                  <p className="text-sm text-white">{selectedLog.entityId}</p>
                 </div>
 
                 {selectedLog.ipAddress && (
                   <div>
-                    <p className="text-sm font-medium text-gray-500">IP Address</p>
-                    <p className="text-sm text-gray-900">{selectedLog.ipAddress}</p>
+                    <p className="text-sm font-medium text-white/50">IP Address</p>
+                    <p className="text-sm text-white">{selectedLog.ipAddress}</p>
                   </div>
                 )}
 
                 {(selectedLog.previousData || selectedLog.newData) && (
                   <div>
-                    <p className="text-sm font-medium text-gray-500 mb-2">Changes</p>
+                    <p className="text-sm font-medium text-white/50 mb-2">Changes</p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div>
-                        <p className="text-xs text-gray-500 mb-1">Previous Data</p>
-                        <pre className="p-3 bg-gray-50 rounded text-xs overflow-x-auto">
+                        <p className="text-xs text-white/50 mb-1">Previous Data</p>
+                        <pre className="p-3 bg-black/30 rounded text-xs text-white/70 overflow-x-auto">
                           {JSON.stringify(selectedLog.previousData || {}, null, 2)}
                         </pre>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-500 mb-1">New Data</p>
-                        <pre className="p-3 bg-gray-50 rounded text-xs overflow-x-auto">
+                        <p className="text-xs text-white/50 mb-1">New Data</p>
+                        <pre className="p-3 bg-black/30 rounded text-xs text-white/70 overflow-x-auto">
                           {JSON.stringify(selectedLog.newData || {}, null, 2)}
                         </pre>
                       </div>
@@ -341,8 +341,8 @@ export const AuditTrailPage = () => {
 
                 {selectedLog.metadata && (
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Additional Metadata</p>
-                    <pre className="mt-2 p-3 bg-gray-50 rounded text-xs overflow-x-auto">
+                    <p className="text-sm font-medium text-white/50">Additional Metadata</p>
+                    <pre className="mt-2 p-3 bg-black/30 rounded text-xs text-white/70 overflow-x-auto">
                       {JSON.stringify(selectedLog.metadata, null, 2)}
                     </pre>
                   </div>

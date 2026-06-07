@@ -87,10 +87,10 @@ export const ExpiryReportsPage = () => {
   };
 
   const getExpiryStatus = (days: number) => {
-    if (days <= 0) return { label: 'EXPIRED', color: 'bg-red-100 text-red-800' };
-    if (days <= 30) return { label: 'CRITICAL', color: 'bg-red-100 text-red-800' };
-    if (days <= 60) return { label: 'WARNING', color: 'bg-orange-100 text-orange-800' };
-    return { label: 'ATTENTION', color: 'bg-yellow-100 text-yellow-800' };
+    if (days <= 0) return { label: 'EXPIRED', color: 'bg-red-500/20 text-red-300' };
+    if (days <= 30) return { label: 'CRITICAL', color: 'bg-red-500/20 text-red-300' };
+    if (days <= 60) return { label: 'WARNING', color: 'bg-orange-500/20 text-orange-300' };
+    return { label: 'ATTENTION', color: 'bg-yellow-500/20 text-yellow-300' };
   };
 
   const columns = [

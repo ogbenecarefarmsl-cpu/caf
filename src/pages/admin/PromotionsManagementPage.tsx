@@ -221,17 +221,17 @@ export const PromotionsManagementPage = () => {
         const isExpired = new Date(promotion.endDate) < new Date();
         if (isExpired) {
           return (
-            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
+            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-white/10 text-white/60">
               Expired
             </span>
           );
         }
         return promotion.isActive ? (
-          <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+          <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-500/20 text-green-300">
             Active
           </span>
         ) : (
-          <span className="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+          <span className="px-2 py-1 text-xs font-semibold rounded-full bg-red-500/20 text-red-300">
             Inactive
           </span>
         );
@@ -293,7 +293,7 @@ export const PromotionsManagementPage = () => {
         </div>
 
         {/* Promotions Table */}
-        <div className="bg-white rounded-lg shadow">
+        <div className="bg-primary-dark/50 rounded-lg shadow border border-white/10">
           <Table
             data={promotions || []}
             columns={columns}

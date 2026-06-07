@@ -102,9 +102,9 @@ export const MarketerDashboardPage = () => {
           ))}
         </div>
 
-        <div className="rounded-2xl border border-gray-200 bg-white">
-          <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-gray-900">Recent Sales</h3>
+        <div className="rounded-2xl border border-white/10 bg-primary-dark/50">
+          <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-white">Recent Sales</h3>
             <Link to="/marketer/sales" className="text-sm font-medium text-blue-600 hover:text-blue-700">
               Open Sell Screen
             </Link>
@@ -122,14 +122,14 @@ export const MarketerDashboardPage = () => {
             ) : (
               <div className="space-y-2">
                 {(recentSales?.data || []).map((sale) => (
-                  <div key={sale._id} className="rounded-xl border border-gray-100 px-4 py-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div key={sale._id} className="rounded-xl border border-white/10 px-4 py-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <div className="min-w-0">
-                      <p className="text-sm font-medium text-gray-900">{sale.productId?.name || 'Assigned Product'}</p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-sm font-medium text-white">{sale.productId?.name || 'Assigned Product'}</p>
+                      <p className="text-xs text-white/50">
                         Qty {sale.quantity} · {new Date(sale.soldAt).toLocaleString()}
                       </p>
                     </div>
-                      <p className="text-sm font-semibold text-emerald-700 sm:pl-4">{format(sale.totalAmount)}</p>
+                      <p className="text-sm font-semibold text-emerald-400 sm:pl-4">{format(sale.totalAmount)}</p>
                   </div>
                 ))}
               </div>

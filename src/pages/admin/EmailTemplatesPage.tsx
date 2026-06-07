@@ -129,7 +129,7 @@ export const EmailTemplatesPage = () => {
       key: 'type',
       header: 'Type',
       render: (template: EmailTemplate) => (
-        <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+        <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-500/20 text-blue-300">
           {template.type}
         </span>
       ),
@@ -139,11 +139,11 @@ export const EmailTemplatesPage = () => {
       header: 'Status',
       render: (template: EmailTemplate) => (
         template.isActive ? (
-          <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+          <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-500/20 text-green-300">
             Active
           </span>
         ) : (
-          <span className="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+          <span className="px-2 py-1 text-xs font-semibold rounded-full bg-red-500/20 text-red-300">
             Inactive
           </span>
         )
@@ -191,7 +191,7 @@ export const EmailTemplatesPage = () => {
         </div>
 
         {/* Templates Table */}
-        <div className="bg-white rounded-lg shadow">
+        <div className="bg-primary-dark/50 rounded-lg shadow border border-white/10">
           <Table
             data={templates || []}
             columns={columns}
@@ -286,9 +286,9 @@ export const EmailTemplatesPage = () => {
                 <p className="text-lg font-semibold text-gray-900">{previewTemplate.subject}</p>
               </div>
               <div>
-                <h3 className="text-sm font-medium text-gray-500">Body:</h3>
-                <div className="mt-2 p-4 bg-gray-50 rounded-md">
-                  <pre className="whitespace-pre-wrap text-sm text-gray-900">
+                <h3 className="text-sm font-medium text-white/50">Body:</h3>
+                <div className="mt-2 p-4 bg-black/30 rounded-md">
+                  <pre className="whitespace-pre-wrap text-sm text-white/70">
                     {previewTemplate.body}
                   </pre>
                 </div>

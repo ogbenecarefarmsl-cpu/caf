@@ -82,11 +82,11 @@ export const JobsMonitoringPage = () => {
       header: 'Status',
       render: (job: Job) => {
         const statusColors = {
-          pending: 'bg-gray-100 text-gray-800',
-          active: 'bg-blue-100 text-blue-800',
-          completed: 'bg-green-100 text-green-800',
-          failed: 'bg-red-100 text-red-800',
-          delayed: 'bg-yellow-100 text-yellow-800',
+          pending: 'bg-white/10 text-white/60',
+          active: 'bg-blue-500/20 text-blue-300',
+          completed: 'bg-green-500/20 text-green-300',
+          failed: 'bg-red-500/20 text-red-300',
+          delayed: 'bg-yellow-500/20 text-yellow-300',
         };
         return (
           <span className={`px-2 py-1 text-xs font-semibold rounded-full ${statusColors[job.status]}`}>
@@ -100,9 +100,9 @@ export const JobsMonitoringPage = () => {
       header: 'Progress',
       render: (job: Job) => (
         job.progress !== undefined ? (
-          <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className="w-full bg-white/10 rounded-full h-2">
             <div
-              className="bg-blue-600 h-2 rounded-full"
+              className="bg-blue-400 h-2 rounded-full"
               style={{ width: `${job.progress}%` }}
             />
           </div>
@@ -165,23 +165,23 @@ export const JobsMonitoringPage = () => {
         {/* Queue Statistics */}
         {stats && (
           <div className="grid grid-cols-5 gap-4">
-            <div className="bg-white p-4 rounded-lg shadow">
+            <div className="bg-primary-dark/50 p-4 rounded-lg shadow border border-white/10">
               <p className="text-sm text-gray-500">Waiting</p>
               <p className="text-2xl font-bold text-gray-900">{stats.waiting}</p>
             </div>
-            <div className="bg-white p-4 rounded-lg shadow">
+            <div className="bg-primary-dark/50 p-4 rounded-lg shadow border border-white/10">
               <p className="text-sm text-gray-500">Active</p>
               <p className="text-2xl font-bold text-blue-600">{stats.active}</p>
             </div>
-            <div className="bg-white p-4 rounded-lg shadow">
+            <div className="bg-primary-dark/50 p-4 rounded-lg shadow border border-white/10">
               <p className="text-sm text-gray-500">Completed</p>
               <p className="text-2xl font-bold text-green-600">{stats.completed}</p>
             </div>
-            <div className="bg-white p-4 rounded-lg shadow">
+            <div className="bg-primary-dark/50 p-4 rounded-lg shadow border border-white/10">
               <p className="text-sm text-gray-500">Failed</p>
               <p className="text-2xl font-bold text-red-600">{stats.failed}</p>
             </div>
-            <div className="bg-white p-4 rounded-lg shadow">
+            <div className="bg-primary-dark/50 p-4 rounded-lg shadow border border-white/10">
               <p className="text-sm text-gray-500">Delayed</p>
               <p className="text-2xl font-bold text-yellow-600">{stats.delayed}</p>
             </div>
@@ -215,7 +215,7 @@ export const JobsMonitoringPage = () => {
         </div>
 
         {/* Jobs Table */}
-        <div className="bg-white rounded-lg shadow">
+        <div className="bg-primary-dark/50 rounded-lg shadow border border-white/10">
           <Table
             data={jobs || []}
             columns={columns}

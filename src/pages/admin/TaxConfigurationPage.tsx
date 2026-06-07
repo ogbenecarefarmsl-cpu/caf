@@ -144,7 +144,7 @@ export const TaxConfigurationPage = () => {
       key: 'type',
       header: 'Type',
       render: (tax: TaxConfig) => (
-        <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+        <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-500/20 text-blue-300">
           {tax.type === 'percentage' ? 'Percentage' : 'Fixed Amount'}
         </span>
       ),
@@ -154,11 +154,11 @@ export const TaxConfigurationPage = () => {
       header: 'Status',
       render: (tax: TaxConfig) => (
         tax.isActive ? (
-          <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+          <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-500/20 text-green-300">
             Active
           </span>
         ) : (
-          <span className="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+          <span className="px-2 py-1 text-xs font-semibold rounded-full bg-red-500/20 text-red-300">
             Inactive
           </span>
         )
@@ -210,7 +210,7 @@ export const TaxConfigurationPage = () => {
         </div>
 
         {/* Tax Table */}
-        <div className="bg-white rounded-lg shadow">
+        <div className="bg-primary-dark/50 rounded-lg shadow border border-white/10">
           <Table
             data={taxes || []}
             columns={columns}

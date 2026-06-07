@@ -141,8 +141,8 @@ export const MarketerSalesPage = () => {
   return (
     <MarketerLayout title="Sell Assigned Products">
       <div className="space-y-5">
-        <div className="bg-white rounded-2xl border border-gray-200 p-5">
-          <h3 className="text-sm font-semibold text-gray-900 mb-4">Create Sale</h3>
+        <div className="bg-primary-dark/50 rounded-2xl border border-white/10 p-5">
+          <h3 className="text-sm font-semibold text-white mb-4">Create Sale</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Select
               label="Assigned Product"
@@ -190,7 +190,7 @@ export const MarketerSalesPage = () => {
           </div>
 
           <div className="mt-4 flex items-center justify-between">
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-white/60">
               Unit Price: {selectedAssignment ? format(selectedAssignment.assignedUnitPrice) : '-'}
             </div>
             <Button
@@ -203,8 +203,8 @@ export const MarketerSalesPage = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-200 p-5">
-          <h3 className="text-sm font-semibold text-gray-900 mb-4">Recent Sales</h3>
+        <div className="bg-primary-dark/50 rounded-2xl border border-white/10 p-5">
+          <h3 className="text-sm font-semibold text-white mb-4">Recent Sales</h3>
           <Table
             data={salesData?.data || []}
             columns={columns}

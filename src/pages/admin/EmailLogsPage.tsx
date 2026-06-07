@@ -68,9 +68,9 @@ export const EmailLogsPage = () => {
       header: 'Status',
       render: (log: EmailLog) => {
         const statusColors = {
-          pending: 'bg-yellow-100 text-yellow-800',
-          sent: 'bg-green-100 text-green-800',
-          failed: 'bg-red-100 text-red-800',
+          pending: 'bg-yellow-500/20 text-yellow-300',
+          sent: 'bg-green-500/20 text-green-300',
+          failed: 'bg-red-500/20 text-red-300',
         };
         return (
           <span className={`px-2 py-1 text-xs font-semibold rounded-full ${statusColors[log.status]}`}>
