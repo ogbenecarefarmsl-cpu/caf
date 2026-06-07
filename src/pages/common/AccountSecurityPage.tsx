@@ -1,6 +1,10 @@
 import { AdminLayout } from '../../components/AdminLayout';
 import { MarketerLayout } from '../../components/MarketerLayout';
-import { BiometricSettingsPanel } from '../../components/account';
+import {
+  BiometricSettingsPanel,
+  PasskeySettingsPanel,
+  RecoveryCodesPanel,
+} from '../../components/account';
 import { useAuthStore } from '../../stores/auth-store';
 
 export const AccountSecurityPage = () => {
@@ -16,7 +20,9 @@ export const AccountSecurityPage = () => {
         </p>
       </div>
 
+      <PasskeySettingsPanel />
       <BiometricSettingsPanel />
+      <RecoveryCodesPanel />
     </div>
   );
 

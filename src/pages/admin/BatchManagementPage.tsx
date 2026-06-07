@@ -274,7 +274,7 @@ export const BatchManagementPage = () => {
       header: 'Product',
       render: (batch: Batch) => (
         <div>
-          <div className="font-medium">{batch.productName}</div>
+          <div className="font-medium whitespace-normal break-words max-w-xs">{batch.productName}</div>
           <div className="text-sm text-gray-400">SKU: {batch.productSku}</div>
         </div>
       ),
@@ -368,7 +368,7 @@ export const BatchManagementPage = () => {
         </div>
 
         {/* Filters */}
-        <div className="mb-6 grid grid-cols-4 gap-4">
+        <div className="mb-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
           <Select
             label="Filter by Branch"
             value={activeBranchId}

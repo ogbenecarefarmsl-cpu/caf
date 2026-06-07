@@ -3,6 +3,7 @@ import { ErrorBoundary } from '../components/common/ErrorBoundary';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import { useAuthStore } from '../stores/auth-store';
 import { getDefaultRouteForRole } from '../lib/role-routes';
+import { FinanceReportsPage as FinanceReportsPageFinance } from '../pages/finance/FinanceReportsPage';
 import {
   LoginPage,
   DashboardPage,
@@ -66,6 +67,16 @@ import {
   SalaryManagementPage,
   CashManagementPage,
   FinanceReportsPage,
+  FinanceHubPage,
+  FinanceCashBookPage,
+  FinanceReceivablesPage,
+  FinancePayablesPage,
+  FinanceSalariesPage,
+  FinanceReconciliationsPage,
+  FinanceLoansPage,
+  FinanceAdvancesPage,
+  FinanceFinalSettlementPage,
+  RecurringInvoicesPage,
 } from '../pages';
 
 const RoleAwareHomeRedirect = () => {
@@ -85,7 +96,7 @@ export const router = createBrowserRouter([
   {
     path: '/settings/security',
     element: (
-      <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'cashier', 'auditor', 'marketer']}>
+      <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'cashier', 'auditor', 'marketer', 'finance_manager']}>
         <ErrorBoundary>
           <AccountSecurityPage />
         </ErrorBoundary>
@@ -411,7 +422,7 @@ export const router = createBrowserRouter([
   {
     path: '/admin/finance',
     element: (
-      <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'auditor']}>
+      <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'finance_manager', 'auditor']}>
         <ErrorBoundary>
           <FinanceTransactionsPage />
         </ErrorBoundary>
@@ -499,7 +510,7 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: '/marketer/assignments',
+    path: '/admin/marketer-assignments',
     element: (
       <ProtectedRoute allowedRoles={['super_admin', 'branch_manager']}>
         <ErrorBoundary>
@@ -507,6 +518,10 @@ export const router = createBrowserRouter([
         </ErrorBoundary>
       </ProtectedRoute>
     ),
+  },
+  {
+    path: '/marketer/assignments',
+    element: <Navigate to="/admin/marketer-assignments" replace />,
   },
   {
     path: '/admin/marketer-dashboard',
@@ -697,7 +712,117 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'finance_manager']}>
         <ErrorBoundary>
-          <FinanceManagerDashboardPage />
+          <FinanceReportsPageFinance />
+        </ErrorBoundary>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/finance',
+    element: (
+      <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'finance_manager']}>
+        <ErrorBoundary>
+          <FinanceHubPage />
+        </ErrorBoundary>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/finance/cash-book',
+    element: (
+      <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'finance_manager']}>
+        <ErrorBoundary>
+          <FinanceCashBookPage />
+        </ErrorBoundary>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/finance/receivables',
+    element: (
+      <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'finance_manager']}>
+        <ErrorBoundary>
+          <FinanceReceivablesPage />
+        </ErrorBoundary>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/finance/payables',
+    element: (
+      <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'finance_manager']}>
+        <ErrorBoundary>
+          <FinancePayablesPage />
+        </ErrorBoundary>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/finance/salaries',
+    element: (
+      <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'finance_manager']}>
+        <ErrorBoundary>
+          <FinanceSalariesPage />
+        </ErrorBoundary>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/finance/reconciliations',
+    element: (
+      <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'finance_manager']}>
+        <ErrorBoundary>
+          <FinanceReconciliationsPage />
+        </ErrorBoundary>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/finance/reports',
+    element: (
+      <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'finance_manager']}>
+        <ErrorBoundary>
+          <FinanceReportsPage />
+        </ErrorBoundary>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/finance/loans',
+    element: (
+      <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'finance_manager']}>
+        <ErrorBoundary>
+          <FinanceLoansPage />
+        </ErrorBoundary>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/finance/recurring-invoices',
+    element: (
+      <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'finance_manager']}>
+        <ErrorBoundary>
+          <RecurringInvoicesPage />
+        </ErrorBoundary>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/finance/advances',
+    element: (
+      <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'finance_manager']}>
+        <ErrorBoundary>
+          <FinanceAdvancesPage />
+        </ErrorBoundary>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/finance/settlement',
+    element: (
+      <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'finance_manager']}>
+        <ErrorBoundary>
+          <FinanceFinalSettlementPage />
         </ErrorBoundary>
       </ProtectedRoute>
     ),

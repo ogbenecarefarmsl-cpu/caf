@@ -33,9 +33,20 @@ interface SaleUpdate {
   timestamp: Date;
 }
 
+export interface NotificationUpdate {
+  notificationId: string;
+  type: string;
+  title: string;
+  message: string;
+  severity: 'info' | 'warning' | 'error' | 'critical';
+  link?: string;
+  createdAt: string | Date;
+}
+
 interface UseWebSocketOptions {
   onInventoryUpdate?: (update: InventoryUpdate) => void;
   onSaleUpdate?: (update: SaleUpdate) => void;
+  onNotification?: (update: NotificationUpdate) => void;
   onConnect?: () => void;
   onDisconnect?: () => void;
   onError?: (error: Error) => void;
@@ -116,6 +127,16 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
     socket.on('sale:update', (update: SaleUpdate) => {
       console.log('Received sale update:', update);
       optionsRef.current.onSaleUpdate?.(update);
+    });
+
+    // Notification handler
+    socket.on('notification:new', (update: NotificationUpdate) => {
+      console.log('Received notification:', update);
+      optionsRef.current.onNotification?.(update);
+      // Dispatch a window event for the bell to listen on
+      window.dispatchEvent(
+        new CustomEvent('app:notification-new', { detail: update }),
+      );
     });
 
     // Cleanup on unmount

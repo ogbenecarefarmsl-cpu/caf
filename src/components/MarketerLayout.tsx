@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import apiClient from '../lib/api-client';
 import { useAuthStore } from '../stores/auth-store';
 import { useBranchStore } from '../stores/branch-store';
+import { PasskeySetupBanner } from './account';
 
 interface MarketerLayoutProps {
   children: ReactNode;
@@ -93,6 +94,9 @@ export const MarketerLayout = ({ children, title = 'Marketer Dashboard' }: Marke
         <main>
           <div className="mb-4">
             <h2 className="text-lg font-semibold text-white">{title}</h2>
+          </div>
+          <div className="mb-4">
+            <PasskeySetupBanner />
           </div>
           {children}
         </main>

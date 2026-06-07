@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { AdminLayout } from '../../components/AdminLayout';
+import { useAuthStore } from '../../stores/auth-store';
 import { 
   TrendingUp, 
   Package, 
@@ -12,6 +13,7 @@ import {
 } from 'lucide-react';
 
 export function ReportsPage() {
+  const user = useAuthStore((state) => state.user);
   const reportModules = [
     {
       title: 'Sales Reports',
@@ -19,7 +21,8 @@ export function ReportsPage() {
       icon: DollarSign,
       path: '/admin/reports/sales',
       color: 'bg-green-500',
-      stats: 'Revenue & Profit'
+      stats: 'Revenue & Profit',
+      roles: ['super_admin', 'branch_manager', 'auditor']
     },
     {
       title: 'Inventory Reports',
@@ -27,7 +30,8 @@ export function ReportsPage() {
       icon: Package,
       path: '/admin/reports/inventory',
       color: 'bg-blue-500',
-      stats: 'Stock Analysis'
+      stats: 'Stock Analysis',
+      roles: ['super_admin', 'branch_manager', 'auditor']
     },
     {
       title: 'Expiry Reports',
@@ -35,7 +39,8 @@ export function ReportsPage() {
       icon: AlertTriangle,
       path: '/admin/reports/expiry',
       color: 'bg-red-500',
-      stats: 'Expiry Tracking'
+      stats: 'Expiry Tracking',
+      roles: ['super_admin', 'branch_manager', 'auditor']
     },
     {
       title: 'Customer Reports',
@@ -43,7 +48,8 @@ export function ReportsPage() {
       icon: Users,
       path: '/admin/reports/customers',
       color: 'bg-purple-500',
-      stats: 'Customer Insights'
+      stats: 'Customer Insights',
+      roles: ['super_admin', 'branch_manager', 'auditor']
     },
     {
       title: 'Purchase Reports',
@@ -51,7 +57,8 @@ export function ReportsPage() {
       icon: ShoppingCart,
       path: '/admin/reports/purchases',
       color: 'bg-orange-500',
-      stats: 'Purchase Analysis'
+      stats: 'Purchase Analysis',
+      roles: ['super_admin', 'branch_manager', 'auditor']
     },
     {
       title: 'Transfer Reports',
@@ -59,7 +66,8 @@ export function ReportsPage() {
       icon: ArrowLeftRight,
       path: '/admin/reports/transfers',
       color: 'bg-teal-500',
-      stats: 'Transfer History'
+      stats: 'Transfer History',
+      roles: ['super_admin', 'branch_manager', 'auditor']
     },
     {
       title: 'Audit Trail',
@@ -67,7 +75,8 @@ export function ReportsPage() {
       icon: FileText,
       path: '/admin/audit/trail',
       color: 'bg-gray-600',
-      stats: 'Security & Compliance'
+      stats: 'Security & Compliance',
+      roles: ['super_admin', 'auditor']
     },
     {
       title: 'User Activity',
@@ -75,9 +84,13 @@ export function ReportsPage() {
       icon: TrendingUp,
       path: '/admin/audit/user-activity',
       color: 'bg-indigo-500',
-      stats: 'Activity Monitoring'
+      stats: 'Activity Monitoring',
+      roles: ['super_admin', 'branch_manager', 'auditor']
     }
   ];
+  const visibleReportModules = reportModules.filter((module) =>
+    module.roles.includes(user?.role || ''),
+  );
 
   return (
     <AdminLayout>
@@ -90,7 +103,7 @@ export function ReportsPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {reportModules.map((module) => {
+          {visibleReportModules.map((module) => {
             const Icon = module.icon;
             return (
               <Link

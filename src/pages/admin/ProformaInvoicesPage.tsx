@@ -243,9 +243,9 @@ export function ProformaInvoicesPage() {
               <h4 className="text-lg font-semibold text-white mb-3">Items</h4>
               <div className="space-y-2">
                 {selectedPf.items.map((item, i) => (
-                  <div key={i} className="flex items-center justify-between bg-white/5 rounded-xl p-3">
-                    <p className="text-white font-medium">{item.productName}</p>
-                    <p className="text-gray-400">{item.quantity} x {symbol}{item.unitPrice.toFixed(2)} = {symbol}{item.total.toFixed(2)}</p>
+                  <div key={i} className="flex items-center justify-between gap-3 bg-white/5 rounded-xl p-3">
+                    <p className="text-white font-medium whitespace-normal break-words min-w-0 flex-1">{item.productName}</p>
+                    <p className="shrink-0 text-gray-400">{item.quantity} x {symbol}{item.unitPrice.toFixed(2)} = {symbol}{item.total.toFixed(2)}</p>
                   </div>
                 ))}
               </div>

@@ -1,0 +1,324 @@
+import { type ReactNode, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../stores/auth-store';
+import { useBranchStore } from '../stores/branch-store';
+import apiClient from '../lib/api-client';
+import { useToast } from '../hooks/useToast';
+import { BranchSelector } from './BranchSelector';
+import { NotificationBell } from './NotificationBell';
+import { PasskeySetupBanner } from './account';
+import { ConnectionStatus } from './ui/ConnectionStatus';
+import { OfflineNotification } from './ui/OfflineNotification';
+import { ConfirmDialog } from './ui/ConfirmDialog';
+
+interface FinanceLayoutProps {
+  children: ReactNode;
+  title?: string;
+}
+
+interface NavItem {
+  name: string;
+  path: string;
+  icon: ReactNode;
+  section: string;
+}
+
+const ICONS = {
+  dashboard: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+    </svg>
+  ),
+  cash: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+    </svg>
+  ),
+  receivables: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+    </svg>
+  ),
+  payables: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+    </svg>
+  ),
+  salaries: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  ),
+  advances: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+    </svg>
+  ),
+  settlement: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  ),
+  loans: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
+    </svg>
+  ),
+  reconciliation: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+    </svg>
+  ),
+  reports: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+    </svg>
+  ),
+  security: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 11c1.657 0 3-1.567 3-3.5S13.657 4 12 4 9 5.567 9 7.5 10.343 11 12 11zm0 2c-3.314 0-6 1.79-6 4v1a2 2 0 002 2h8a2 2 0 002-2v-1c0-2.21-2.686-4-6-4z" />
+    </svg>
+  ),
+};
+
+export const FinanceLayout = ({ children, title = 'Finance Hub' }: FinanceLayoutProps) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { user, clearAuth } = useAuthStore();
+  const { selectedBranch } = useBranchStore();
+  const { showError } = useToast();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      await apiClient.post('/auth/logout');
+    } catch (error) {
+      console.error('Logout error:', error);
+      showError('Logout failed. Please try again.');
+    } finally {
+      clearAuth();
+      navigate('/login');
+    }
+  };
+
+  const navItems: NavItem[] = [
+    { name: 'Hub', path: '/finance', icon: ICONS.dashboard, section: 'Overview' },
+    { name: 'Cash Book', path: '/finance/cash-book', icon: ICONS.cash, section: 'Money' },
+    { name: 'Receivables', path: '/finance/receivables', icon: ICONS.receivables, section: 'Money' },
+    { name: 'Payables', path: '/finance/payables', icon: ICONS.payables, section: 'Money' },
+    { name: 'Salaries', path: '/finance/salaries', icon: ICONS.salaries, section: 'People' },
+    { name: 'Staff Advances', path: '/finance/advances', icon: ICONS.advances, section: 'People' },
+    { name: 'Final Settlement', path: '/finance/settlement', icon: ICONS.settlement, section: 'People' },
+    { name: 'Loans', path: '/finance/loans', icon: ICONS.loans, section: 'Capital' },
+    { name: 'Recurring Invoices', path: '/finance/recurring-invoices', icon: ICONS.payables, section: 'Capital' },
+    { name: 'Reconciliations', path: '/finance/reconciliations', icon: ICONS.reconciliation, section: 'Controls' },
+    { name: 'Reports', path: '/finance/reports', icon: ICONS.reports, section: 'Controls' },
+    { name: 'My Security', path: '/settings/security', icon: ICONS.security, section: 'Account' },
+  ];
+
+  const navSections = navItems.reduce<Array<{ name: string; items: NavItem[] }>>((sections, item) => {
+    const existingSection = sections.find((section) => section.name === item.section);
+    if (existingSection) {
+      existingSection.items.push(item);
+    } else {
+      sections.push({ name: item.section, items: [item] });
+    }
+    return sections;
+  }, []);
+
+  const isActiveRoute = (path: string) => {
+    if (path === '/finance') {
+      return location.pathname === '/finance';
+    }
+    return location.pathname === path || location.pathname.startsWith(`${path}/`);
+  };
+
+  const renderNavigation = (onNavigate?: () => void) => (
+    <div className="space-y-5">
+      {navSections.map((section) => (
+        <div key={section.name}>
+          <p className="px-4 pb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500">
+            {section.name}
+          </p>
+          <ul className="space-y-2">
+            {section.items.map((item) => {
+              const isActive = isActiveRoute(item.path);
+              return (
+                <li key={item.path}>
+                  <Link
+                    to={item.path}
+                    onClick={onNavigate}
+                    className={`group flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                      isActive
+                        ? 'bg-accent-green/10 text-accent-green shadow-[0_0_20px_rgba(0,255,136,0.1)]'
+                        : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                    }`}
+                  >
+                    <span
+                      className={`transition-transform duration-200 ${
+                        isActive ? 'scale-110' : 'group-hover:scale-110'
+                      }`}
+                    >
+                      {item.icon}
+                    </span>
+                    <span className="font-medium">{item.name}</span>
+                    {isActive ? (
+                      <div className="ml-auto w-1.5 h-1.5 rounded-full bg-accent-green shadow-[0_0_10px_rgba(0,255,136,0.75)]" />
+                    ) : null}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+    </div>
+  );
+
+  return (
+    <div className="h-screen overflow-hidden bg-primary-darker">
+      <ConnectionStatus />
+      <OfflineNotification />
+      <aside className="hidden lg:flex fixed inset-y-0 left-0 z-30 w-64 bg-primary-dark border-r border-gray-800 flex-col">
+        <div className="p-6 border-b border-gray-800">
+          <h1 className="text-2xl font-bold text-white">CAREFARM FINANCE</h1>
+          {selectedBranch ? (
+            <p className="text-sm text-gray-400 mt-1">{selectedBranch.name}</p>
+          ) : null}
+        </div>
+
+        <nav className="flex-1 p-4 overflow-y-auto">{renderNavigation()}</nav>
+
+        <div className="p-4 border-t border-white/10 bg-black/20">
+          <div className="flex items-center space-x-3 mb-3">
+            <div className="w-10 h-10 rounded-full bg-linear-to-br from-accent-green to-emerald-600 flex items-center justify-center text-primary-dark font-bold shadow-lg">
+              {user?.firstName?.[0]}
+              {user?.lastName?.[0]}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-white truncate">
+                {user?.firstName} {user?.lastName}
+              </p>
+              <p className="text-xs text-gray-400 truncate capitalize">
+                {user?.role?.replace('_', ' ')}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowLogoutConfirm(true)}
+            className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white rounded-lg transition-all duration-200 border border-white/5 hover:border-white/10"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            <span>Logout</span>
+          </button>
+        </div>
+      </aside>
+
+      <div
+        className={`fixed inset-0 z-40 bg-black/60 transition-opacity duration-200 lg:hidden ${
+          isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={() => setIsMobileMenuOpen(false)}
+      ></div>
+
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-72 bg-primary-dark border-r border-gray-800 flex flex-col transform transition-transform duration-200 lg:hidden ${
+          isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <div className="p-5 border-b border-gray-800 flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-white">CAREFARM FINANCE</h1>
+            {selectedBranch ? (
+              <p className="text-xs text-gray-400 mt-1">{selectedBranch.name}</p>
+            ) : null}
+          </div>
+          <button
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="p-2 rounded-lg text-gray-300 hover:text-white hover:bg-white/5"
+            aria-label="Close menu"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <nav className="flex-1 p-4 overflow-y-auto">
+          {renderNavigation(() => setIsMobileMenuOpen(false))}
+        </nav>
+
+        <div className="p-4 border-t border-white/10 bg-black/20">
+          <div className="flex items-center space-x-3 mb-3">
+            <div className="w-10 h-10 rounded-full bg-linear-to-br from-accent-green to-emerald-600 flex items-center justify-center text-primary-dark font-bold shadow-lg">
+              {user?.firstName?.[0]}
+              {user?.lastName?.[0]}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-white truncate">
+                {user?.firstName} {user?.lastName}
+              </p>
+              <p className="text-xs text-gray-400 truncate capitalize">
+                {user?.role?.replace('_', ' ')}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowLogoutConfirm(true)}
+            className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white rounded-lg transition-all duration-200 border border-white/5 hover:border-white/10"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            <span>Logout</span>
+          </button>
+        </div>
+      </aside>
+
+      <ConfirmDialog
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={handleLogout}
+        title="Logout"
+        message="Are you sure you want to logout? You will need to sign in again."
+        confirmLabel="Logout"
+        variant="danger"
+      />
+
+      <div className="flex h-screen min-w-0 flex-col bg-primary-darker lg:ml-64">
+        <header className="bg-primary-dark/50 backdrop-blur-xl border-b border-white/5 px-4 py-4 sm:px-6 lg:px-8 lg:py-6 sticky top-0 z-30">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 min-w-0">
+              <button
+                onClick={() => setIsMobileMenuOpen(true)}
+                className="lg:hidden p-2.5 rounded-lg text-gray-300 hover:text-white hover:bg-white/5"
+                aria-label="Open menu"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+              <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight truncate">{title}</h2>
+            </div>
+            <div className="flex items-center gap-3">
+              <NotificationBell />
+              <div className="hidden sm:block w-64">
+                <BranchSelector />
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+          <div className="max-w-7xl mx-auto space-y-4">
+            <PasskeySetupBanner />
+            {children}
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+};

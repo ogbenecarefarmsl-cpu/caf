@@ -103,11 +103,11 @@ export const EmailLogsPage = () => {
     <AdminLayout>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Email Logs</h1>
+          <h1 className="text-2xl font-bold text-white">Email Logs</h1>
         </div>
 
         {/* Filters */}
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 rounded-2xl border border-white/10 bg-primary-dark/50 p-4 shadow-xl">
           <Input
             placeholder="Search by recipient or subject..."
             value={searchQuery}
@@ -118,10 +118,10 @@ export const EmailLogsPage = () => {
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >
-            <option value="all">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="sent">Sent</option>
-            <option value="failed">Failed</option>
+            <option value="all" className="bg-primary-dark text-white">All Status</option>
+            <option value="pending" className="bg-primary-dark text-white">Pending</option>
+            <option value="sent" className="bg-primary-dark text-white">Sent</option>
+            <option value="failed" className="bg-primary-dark text-white">Failed</option>
           </Select>
 
           <Input
@@ -140,7 +140,7 @@ export const EmailLogsPage = () => {
         </div>
 
         {/* Email Logs Table */}
-        <div className="bg-white rounded-lg shadow">
+        <div className="bg-primary-dark/50 rounded-2xl border border-white/10 shadow-xl">
           <Table
             data={logs || []}
             columns={columns}
@@ -148,18 +148,18 @@ export const EmailLogsPage = () => {
         </div>
 
         {/* Summary Stats */}
-        <div className="grid grid-cols-3 gap-4">
-          <div className="bg-white p-4 rounded-lg shadow">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-primary-dark/50 border border-white/10 p-4 rounded-2xl shadow-xl">
             <p className="text-sm text-gray-500">Total Emails</p>
-            <p className="text-2xl font-bold text-gray-900">{logs?.length || 0}</p>
+            <p className="text-2xl font-bold text-white">{logs?.length || 0}</p>
           </div>
-          <div className="bg-white p-4 rounded-lg shadow">
+          <div className="bg-primary-dark/50 border border-white/10 p-4 rounded-2xl shadow-xl">
             <p className="text-sm text-gray-500">Successfully Sent</p>
             <p className="text-2xl font-bold text-green-600">
               {logs?.filter(log => log.status === 'sent').length || 0}
             </p>
           </div>
-          <div className="bg-white p-4 rounded-lg shadow">
+          <div className="bg-primary-dark/50 border border-white/10 p-4 rounded-2xl shadow-xl">
             <p className="text-sm text-gray-500">Failed</p>
             <p className="text-2xl font-bold text-red-600">
               {logs?.filter(log => log.status === 'failed').length || 0}

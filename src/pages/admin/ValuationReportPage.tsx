@@ -33,7 +33,7 @@ interface ValuationReport {
 
 export function ValuationReportPage() {
   const [method, setMethod] = useState<ValuationMethod>('AVERAGE');
-  const [showAllBranches, setShowAllBranches] = useState(false);
+  const [showAllBranches, setShowAllBranches] = useState(true);
   const { selectedBranch } = useBranchStore();
   const { user } = useAuthStore();
   const { format } = useCurrency();
@@ -85,10 +85,10 @@ export function ValuationReportPage() {
     <AdminLayout>
       <div className="max-w-6xl mx-auto py-6 px-4">
         <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Inventory Valuation Report</h1>
+          <h1 className="text-2xl font-bold text-white">Inventory Valuation Report</h1>
           <div className="flex items-center gap-3">
             {isSuperAdmin && (
-              <label className="flex items-center gap-2 text-sm text-gray-700">
+              <label className="flex items-center gap-2 text-sm text-gray-300">
                 <input
                   type="checkbox"
                   checked={showAllBranches}
@@ -105,8 +105,8 @@ export function ValuationReportPage() {
                   onClick={() => setMethod(m)}
                   className={`px-3 py-1.5 text-sm font-medium transition-colors ${
                     method === m
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white text-gray-700 hover:bg-gray-50'
+                      ? 'bg-accent-green text-primary-dark'
+                      : 'bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white'
                   }`}
                 >
                   {m}
@@ -127,17 +127,17 @@ export function ValuationReportPage() {
 
         {/* Total value card */}
         {data && (
-          <div className="bg-white border border-blue-200 rounded-lg p-6 mb-6 flex items-center justify-between">
+          <div className="bg-primary-dark/50 border border-white/10 rounded-2xl p-6 mb-6 flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500 uppercase font-semibold">Total Inventory Value</p>
-              <p className="text-4xl font-bold text-blue-700 mt-1">{format(data.totalValue)}</p>
+              <p className="text-4xl font-bold text-accent-green mt-1">{format(data.totalValue)}</p>
               <p className="text-xs text-gray-400 mt-1">
                 Method: <span className="font-semibold">{data.method}</span>
                 {data.products?.length != null && ` · ${data.products.length} products`}
               </p>
             </div>
-            <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center">
-              <svg className="w-8 h-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="w-16 h-16 bg-accent-green/10 rounded-full flex items-center justify-center">
+              <svg className="w-8 h-8 text-accent-green" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
             </div>
@@ -148,22 +148,22 @@ export function ValuationReportPage() {
         {error && <Error message="Failed to load valuation report" />}
 
         {data?.products && data.products.length === 0 && (
-          <div className="text-gray-500 text-sm text-center py-12">
+          <div className="text-gray-400 text-sm text-center py-12">
             No inventory data available.
           </div>
         )}
 
         {data?.products && data.products.length > 0 && (
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="bg-primary-dark/50 rounded-2xl border border-white/10 overflow-hidden">
             <Table
               columns={[
                 {
                   key: 'productName',
                   header: 'Product',
                   render: (row: ValuationProductEntry) => (
-                    <div>
-                      <p className="font-medium text-gray-900">{row.productName}</p>
-                      <p className="text-xs text-gray-400">{row.sku}</p>
+                    <div className="max-w-xs">
+                      <p className="font-medium text-white whitespace-normal break-words">{row.productName}</p>
+                      <p className="text-xs text-gray-400">SKU: {row.sku}</p>
                     </div>
                   ),
                 },
@@ -171,7 +171,7 @@ export function ValuationReportPage() {
                   key: 'quantity',
                   header: 'Quantity',
                   render: (row: ValuationProductEntry) => (
-                    <span className="text-gray-700">{row.quantity.toLocaleString()}</span>
+                    <span className="text-gray-300">{row.quantity.toLocaleString()}</span>
                   ),
                 },
                 {
@@ -183,7 +183,7 @@ export function ValuationReportPage() {
                   key: 'totalValue',
                   header: 'Total Value',
                   render: (row: ValuationProductEntry) => (
-                    <span className="font-semibold text-gray-900">{format(row.totalValue)}</span>
+                    <span className="font-semibold text-white">{format(row.totalValue)}</span>
                   ),
                 },
               ]}

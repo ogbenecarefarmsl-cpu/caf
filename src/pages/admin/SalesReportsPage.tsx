@@ -11,6 +11,7 @@ import { Loading } from '../../components/ui/Loading';
 import { Error } from '../../components/ui/Error';
 import { useCurrency } from '../../hooks/useCurrency';
 import { useBranchStore, getBranchId } from '../../stores/branch-store';
+import { useAuthStore } from '../../stores/auth-store';
 import { queryKeys } from '../../lib/query-keys';
 import { buildApiUrl } from '../../lib/api-utils';
 
@@ -86,9 +87,12 @@ const defaultFilters: SalesReportFilters = {
 export default function SalesReportsPage() {
   const { format } = useCurrency();
   const selectedBranch = useBranchStore((state) => state.selectedBranch);
+  const user = useAuthStore((state) => state.user);
   const selectedBranchId = getBranchId(selectedBranch);
+  const isSuperAdmin = user?.role === 'super_admin';
   
   const [filters, setFilters] = useState<SalesReportFilters>(defaultFilters);
+  const effectiveBranchId = filters.branchId ?? (isSuperAdmin ? undefined : selectedBranchId);
 
   // Fetch branches
   const { data: branches } = useQuery({
@@ -122,11 +126,11 @@ export default function SalesReportsPage() {
 
   // Fetch report data
   const { data, isLoading, error } = useQuery({
-    queryKey: queryKeys.reports.sales(filters),
+    queryKey: queryKeys.reports.sales({ ...filters, branchId: effectiveBranchId }),
     queryFn: async () => {
       const response = await apiClient.get(
         buildApiUrl('/reports/sales', {
-          branchId: filters.branchId,
+          branchId: effectiveBranchId,
           cashierId: filters.cashierId,
           productId: filters.productId,
           startDate: filters.startDate,
@@ -136,12 +140,13 @@ export default function SalesReportsPage() {
       );
       return unwrapResponse(response.data, {} as SalesReportResponse);
     },
+    enabled: isSuperAdmin || !!selectedBranchId,
   });
 
   const handleExport = async (format: 'pdf' | 'excel') => {
     try {
       const response = await apiClient.get(buildApiUrl('/reports/sales', {
-        branchId: filters.branchId,
+        branchId: effectiveBranchId,
         cashierId: filters.cashierId,
         productId: filters.productId,
         startDate: filters.startDate,
@@ -212,13 +217,13 @@ export default function SalesReportsPage() {
     },
   ];
 
-  if (!selectedBranchId) {
+  if (!isSuperAdmin && !selectedBranchId) {
     return (
       <AdminLayout>
         <div className="rounded-2xl border border-white/10 bg-primary-dark/60 p-8 text-center">
           <h2 className="text-xl font-semibold text-white">Select a Branch First</h2>
           <p className="mt-2 text-gray-400">
-            Sales reports are branch-scoped. Choose a branch to continue.
+            Sales reports use your assigned branch. Choose a branch to continue.
           </p>
         </div>
       </AdminLayout>
@@ -229,7 +234,7 @@ export default function SalesReportsPage() {
     <AdminLayout>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Sales Reports</h1>
+          <h1 className="text-2xl font-bold text-white">Sales Reports</h1>
         </div>
 
         {/* Filters */}
@@ -241,7 +246,9 @@ export default function SalesReportsPage() {
               value={filters.branchId ?? ''}
               onChange={(e) => setFilters(prev => ({ ...prev, branchId: e.target.value || undefined }))}
             >
-              <option value="" className="bg-primary-dark text-white">All Branches</option>
+              <option value="" className="bg-primary-dark text-white">
+                {isSuperAdmin ? 'All Branches' : 'Current Branch'}
+              </option>
               {branches?.map(branch => (
                 <option key={branch._id} value={branch._id} className="bg-primary-dark text-white">
                   {branch.name}
@@ -311,7 +318,7 @@ export default function SalesReportsPage() {
 
         {error && (
           <div className="bg-primary-dark/50 backdrop-blur-sm rounded-2xl shadow-xl border border-white/5 p-6">
-            <Error message="Failed to generate report. Please try again." />
+            <Error message="Failed to load report. Please try again." />
           </div>
         )}
 

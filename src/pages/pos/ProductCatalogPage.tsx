@@ -106,6 +106,7 @@ export const ProductCatalogPage = () => {
     addItem({
       productId: product._id,
       productName: product.name,
+      brand: product.brand,
       sku: product.sku,
       barcode: product.barcode || '',
       quantity: 1,

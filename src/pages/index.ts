@@ -4,6 +4,9 @@ export * from './auth';
 // Admin pages
 export * from './admin';
 
+// Finance pages
+export * from './finance';
+
 // POS pages
 export * from './pos';
 

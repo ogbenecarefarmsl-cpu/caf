@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { AdminLayout } from '../../components/AdminLayout';
+import { useAuthStore } from '../../stores/auth-store';
 import { 
   Package, 
   TrendingUp, 
@@ -10,50 +11,60 @@ import {
 } from 'lucide-react';
 
 export function InventoryPage() {
+  const user = useAuthStore((state) => state.user);
   const inventoryModules = [
     {
       title: 'Products',
       description: 'Manage product catalog, categories, and pricing',
       icon: Package,
       path: '/admin/products',
-      color: 'bg-blue-500'
+      color: 'bg-blue-500',
+      roles: ['super_admin', 'branch_manager']
     },
     {
       title: 'Stock Adjustments',
       description: 'Adjust total product stock with supplier and expiry context',
       icon: TrendingUp,
       path: '/admin/stock-adjustments',
-      color: 'bg-purple-500'
+      color: 'bg-purple-500',
+      roles: ['super_admin', 'branch_manager']
     },
     {
       title: 'Purchase Orders',
       description: 'Receive incoming stock from suppliers and update product inventory',
       icon: Truck,
       path: '/admin/purchase-orders',
-      color: 'bg-green-500'
+      color: 'bg-green-500',
+      roles: ['super_admin', 'branch_manager']
     },
     {
       title: 'Stock Transfers',
       description: 'Manage inter-branch stock transfers',
       icon: ArrowLeftRight,
       path: '/admin/transfers',
-      color: 'bg-orange-500'
+      color: 'bg-orange-500',
+      roles: ['super_admin', 'branch_manager']
     },
     {
       title: 'Expiry Reports',
       description: 'Monitor expiring and expired products',
       icon: AlertTriangle,
       path: '/admin/reports/expiry',
-      color: 'bg-red-500'
+      color: 'bg-red-500',
+      roles: ['super_admin', 'branch_manager', 'auditor']
     },
     {
       title: 'Inventory Reports',
       description: 'View inventory levels and stock movements',
       icon: RefreshCw,
       path: '/admin/reports/inventory',
-      color: 'bg-teal-500'
+      color: 'bg-teal-500',
+      roles: ['super_admin', 'branch_manager', 'auditor']
     }
   ];
+  const visibleInventoryModules = inventoryModules.filter((module) =>
+    module.roles.includes(user?.role || ''),
+  );
 
   return (
     <AdminLayout>
@@ -66,7 +77,7 @@ export function InventoryPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {inventoryModules.map((module) => {
+          {visibleInventoryModules.map((module) => {
             const Icon = module.icon;
             return (
               <Link

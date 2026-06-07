@@ -4,6 +4,7 @@ import { AdminLayout } from '../../components/AdminLayout';
 import { Loading } from '../../components/ui/Loading';
 import { Error } from '../../components/ui/Error';
 import { useBranchStore, getBranchId } from '../../stores/branch-store';
+import { useAuthStore } from '../../stores/auth-store';
 import { queryKeys } from '../../lib/query-keys';
 import apiClient from '../../lib/api-client';
 import { buildApiUrl } from '../../lib/api-utils';
@@ -100,19 +101,21 @@ export function FinanceManagerDashboardPage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const { selectedBranch } = useBranchStore();
+  const user = useAuthStore((state) => state.user);
   const branchId = getBranchId(selectedBranch);
+  const effectiveBranchId = user?.role === 'super_admin' ? undefined : branchId;
 
   const { data, isLoading, error } = useQuery({
-    queryKey: queryKeys.financeManager.dashboard(branchId),
+    queryKey: [...queryKeys.financeManager.dashboard(effectiveBranchId), startDate, endDate],
     queryFn: async () => {
       const params: Record<string, string> = {};
-      if (branchId) params.branchId = branchId;
+      if (effectiveBranchId) params.branchId = effectiveBranchId;
       if (startDate) params.startDate = startDate;
       if (endDate) params.endDate = endDate;
       const res = await apiClient.get(buildApiUrl('/finance-manager/unified-dashboard', params));
       return (res.data?.data ?? res.data) as UnifiedDashboard;
     },
-    enabled: !!branchId,
+    enabled: user?.role === 'super_admin' || !!effectiveBranchId,
   });
 
   if (isLoading) return <AdminLayout title="Finance Dashboard"><Loading variant="centered" text="Loading financial data..." /></AdminLayout>;

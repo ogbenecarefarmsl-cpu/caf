@@ -10,6 +10,8 @@ import apiClient from '../../lib/api-client';
 import { getErrorMessage } from '../../lib/error-utils';
 import { useAuthStore } from '../../stores/auth-store';
 import { queryKeys } from '../../lib/query-keys';
+import { CustomerTypeahead, type CustomerOption } from '../../components/ui/CustomerTypeahead';
+import { useHeldSalesStore } from '../../stores/held-sales-store';
 
 type PaymentMethod =
   | 'cash'
@@ -44,8 +46,11 @@ interface RecentSale {
 export const PaymentPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { items, total, discount, clearCart } = useCartStore();
+  const { items, total, discount, subtotal, prescriptionUrl, clearCart } = useCartStore();
+  const holdSale = useHeldSalesStore((s) => s.holdSale);
+  const heldSales = useHeldSalesStore((s) => s.heldSales);
   const selectedBranch = useBranchStore((state) => state.selectedBranch);
+  const branchId = getBranchId(selectedBranch);
   const user = useAuthStore((state) => state.user);
   const { alertInfo } = useAlertReplacement();
   const { showSuccess, showError } = useToast();
@@ -58,6 +63,8 @@ export const PaymentPage = () => {
   const [creditCustomerName, setCreditCustomerName] = useState('');
   const [creditCustomerPhone, setCreditCustomerPhone] = useState('');
   const [creditDueDate, setCreditDueDate] = useState('');
+  const [creditCustomerId, setCreditCustomerId] = useState<string | undefined>(undefined);
+  const [linkedCustomer, setLinkedCustomer] = useState<CustomerOption | null>(null);
   const [creditAmountPaid, setCreditAmountPaid] = useState('0');
   const [creditInitialMethod, setCreditInitialMethod] =
     useState<CreditCollectionMethod>('cash');
@@ -111,6 +118,38 @@ export const PaymentPage = () => {
     },
   });
 
+  const handleHoldSale = () => {
+    if (items.length === 0) {
+      showError('Cart is empty');
+      return;
+    }
+    if (!user?.id || !branchId) {
+      showError('Cannot hold sale: missing user or branch');
+      return;
+    }
+    const customerName = paymentMethod === 'credit' ? creditCustomerName.trim() : undefined;
+    const customerPhone = paymentMethod === 'credit' ? creditCustomerPhone.trim() : undefined;
+    const heldCount = heldSales.length + 1;
+    const defaultLabel = customerName
+      ? `Sale for ${customerName}`
+      : `Sale ${heldCount}`;
+    const held = holdSale({
+      label: defaultLabel,
+      items: items.map((i) => ({ ...i })),
+      discount,
+      prescriptionUrl,
+      customerId: paymentMethod === 'credit' ? creditCustomerId : undefined,
+      customerName,
+      customerPhone,
+      heldBy: user.id,
+      branchId,
+      subtotal,
+      total,
+    });
+    clearCart();
+    showSuccess(`Held "${held.label}" — ${heldSales.length + 1} sale(s) parked`);
+  };
+
   const handleEmailReceipt = () => {
     if (!emailAddress) {
       showError('Please enter an email address');
@@ -150,10 +189,6 @@ export const PaymentPage = () => {
       }
 
       if (paymentMethod === 'credit') {
-        if (!creditCustomerName.trim()) {
-          throw new Error('Customer name is required for credit sales');
-        }
-
         if (!creditDueDate) {
           throw new Error('Due date is required for credit sales');
         }
@@ -208,8 +243,9 @@ export const PaymentPage = () => {
         saleType: paymentMethod === 'credit' ? 'credit' : 'cash',
         amountPaid: paymentMethod === 'credit' ? parsedCreditAmount : total,
         dueDate: paymentMethod === 'credit' ? creditDueDate : undefined,
-        customerName: paymentMethod === 'credit' ? creditCustomerName.trim() : undefined,
+        customerName: paymentMethod === 'credit' && creditCustomerName.trim() ? creditCustomerName.trim() : undefined,
         customerPhone: paymentMethod === 'credit' ? creditCustomerPhone.trim() || undefined : undefined,
+        customerId: paymentMethod === 'credit' ? creditCustomerId : undefined,
         initialPaymentMethod:
           paymentMethod === 'credit' && parsedCreditAmount > 0
             ? creditInitialMethodMap[creditInitialMethod]
@@ -338,7 +374,7 @@ export const PaymentPage = () => {
         {/* Payment Methods */}
         <div>
           <h2 className="text-white font-semibold mb-3">Select Payment Method</h2>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {paymentMethods.map((method) => (
               <button
                 key={method.id}
@@ -401,16 +437,25 @@ export const PaymentPage = () => {
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <h2 className="text-white font-semibold mb-3">Customer Name</h2>
-                <input
-                  type="text"
-                  value={creditCustomerName}
-                  onChange={(e) => setCreditCustomerName(e.target.value)}
-                  className="w-full px-4 py-4 bg-primary-dark border border-gray-700 rounded-xl text-white focus:outline-none focus:border-accent-green"
-                  placeholder="Required for credit sale"
-                />
-              </div>
+              <CustomerTypeahead
+                label="Customer Name"
+                value={creditCustomerName}
+                onChange={setCreditCustomerName}
+                onSelectCustomer={(c) => {
+                  setCreditCustomerId(c._id);
+                  setLinkedCustomer(c);
+                  if (!creditCustomerPhone.trim() && c.phone) {
+                    setCreditCustomerPhone(c.phone);
+                  }
+                }}
+                onClearCustomer={() => {
+                  setCreditCustomerId(undefined);
+                  setLinkedCustomer(null);
+                }}
+                selectedCustomerId={creditCustomerId}
+                placeholder="Search customer or type walk-in name…"
+                helperText="Optional. Select an existing customer to track their balance, or type a name for a walk-in."
+              />
               <div>
                 <h2 className="text-white font-semibold mb-3">Customer Phone</h2>
                 <input
@@ -422,7 +467,7 @@ export const PaymentPage = () => {
                 />
               </div>
               <div>
-                <h2 className="text-white font-semibold mb-3">Due Date</h2>
+                <h2 className="text-white font-semibold mb-3">Due Date <span className="text-red-500">*</span></h2>
                 <input
                   type="date"
                   value={creditDueDate}
@@ -478,13 +523,23 @@ export const PaymentPage = () => {
       {/* Bottom Actions */}
       <div className="p-4 space-y-3 border-t border-gray-800">
         <button
+          onClick={handleHoldSale}
+          disabled={items.length === 0}
+          className="w-full py-3 bg-primary-dark text-accent-green border border-accent-green/30 font-semibold rounded-xl hover:bg-accent-green/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          title="Park this sale to recall later"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
+          </svg>
+          Hold Sale{heldSales.length > 0 ? ` (${heldSales.length} parked)` : ''}
+        </button>
+        <button
           onClick={() => checkoutMutation.mutate()}
           disabled={
             checkoutMutation.isPending ||
             (paymentMethod === 'cash' && parseFloat(amountReceived) < total) ||
             (paymentMethod === 'credit' &&
-              (!creditCustomerName.trim() ||
-                !creditDueDate ||
+              (!creditDueDate ||
                 parsedCreditAmount < 0 ||
                 parsedCreditAmount > total)) ||
             !currentShift ||

@@ -1,6 +1,7 @@
 import axios, { type AxiosError, type AxiosInstance, type InternalAxiosRequestConfig } from 'axios';
 import { SyncService } from '../services/sync-service';
 import { useAuthStore } from '../stores/auth-store';
+import { getCachedStepUpToken, clearStepUpToken } from '../hooks/useStepUp';
 
 const DEFAULT_API_BASE_URL = 'https://carefam-00c1641bcdf9.herokuapp.com/api';
 const API_BASE_URL = import.meta.env.VITE_API_URL?.trim() || DEFAULT_API_BASE_URL;
@@ -61,6 +62,12 @@ apiClient.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
 
+    // 1b. Attach step-up token (if a recent WebAuthn ceremony produced one)
+    const stepUpToken = getCachedStepUpToken();
+    if (stepUpToken && config.headers) {
+      config.headers['X-Step-Up-Token'] = stepUpToken;
+    }
+
     // 2. Handle Idempotency for write operations
     const writeMethods = ['post', 'put', 'patch', 'delete'];
     if (config.method && writeMethods.includes(config.method.toLowerCase())) {
@@ -117,6 +124,8 @@ apiClient.interceptors.response.use(
     // If error is 401 and we haven't retried yet
     if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       originalRequest._retry = true;
+      // Step-up token is bound to this session; clear it
+      clearStepUpToken();
 
       // If a refresh is already in flight, wait for it instead of starting another
       if (refreshPromise) {
@@ -148,21 +157,31 @@ apiClient.interceptors.response.use(
           const {
             accessToken,
             refreshToken: newRefreshToken,
-            user,
             expiresIn,
             refreshExpiresIn,
           } = response.data;
           const authStore = useAuthStore.getState();
-          const nextUser = user ?? authStore.user;
 
-          if (!nextUser || !accessToken) {
+          if (!accessToken) {
             throw new Error('Invalid refresh response');
           }
 
-          authStore.setAuth(nextUser, accessToken, newRefreshToken || refreshToken, expiresIn, undefined, refreshExpiresIn);
+          // Sliding 14h window: every successful refresh resets the 14h clock
+          const accessTtl = typeof expiresIn === 'number' && expiresIn > 0 ? expiresIn : 15 * 60;
+          const refreshTtl =
+            typeof refreshExpiresIn === 'number' && refreshExpiresIn > 0
+              ? refreshExpiresIn
+              : 14 * 60 * 60;
+          authStore.refreshSession(
+            accessToken,
+            newRefreshToken || refreshToken,
+            accessTtl,
+            refreshTtl,
+          );
           return accessToken;
         } catch (refreshError) {
           if (isRefreshCredentialError(refreshError)) {
+            clearStepUpToken();
             useAuthStore.getState().clearAuth();
             redirectToLogin();
           }

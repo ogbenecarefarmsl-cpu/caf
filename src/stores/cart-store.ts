@@ -13,6 +13,7 @@ export interface PackSize {
 export interface CartItem {
   productId: string;
   productName: string;
+  brand?: string;
   sku: string;
   barcode: string;
   quantity: number;       // Quantity in selected pack units
@@ -43,6 +44,7 @@ interface CartState {
   setDiscount: (discount: number) => void;
   setPrescription: (url: string) => void;
   clearCart: () => void;
+  restoreCart: (snapshot: { items: CartItem[]; discount: number; prescriptionUrl?: string }) => void;
   calculateTotals: () => void;
 }
 
@@ -179,6 +181,15 @@ export const useCartStore = create<CartState>()(
       subtotal: 0,
       total: 0,
     });
+  },
+
+  restoreCart: (snapshot) => {
+    set({
+      items: snapshot.items.map((i) => ({ ...i })),
+      discount: snapshot.discount ?? 0,
+      prescriptionUrl: snapshot.prescriptionUrl,
+    });
+    get().calculateTotals();
   },
 
   calculateTotals: () => {

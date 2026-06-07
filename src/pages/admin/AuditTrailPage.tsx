@@ -206,15 +206,15 @@ export const AuditTrailPage = () => {
     <AdminLayout>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Audit Trail</h1>
+          <h1 className="text-2xl font-bold text-white">Audit Trail</h1>
           <Button onClick={handleExport}>
             Export to CSV
           </Button>
         </div>
 
         {/* Filters */}
-        <div className="bg-white p-4 rounded-lg shadow">
-          <div className="grid grid-cols-5 gap-4">
+        <div className="bg-primary-dark/50 border border-white/10 p-4 rounded-2xl shadow-xl">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
             <Input
               placeholder="Search..."
               value={searchQuery}
@@ -225,25 +225,25 @@ export const AuditTrailPage = () => {
               value={actionFilter}
               onChange={(e) => setActionFilter(e.target.value)}
             >
-              <option value="all">All Actions</option>
-              <option value="create">Create</option>
-              <option value="update">Update</option>
-              <option value="delete">Delete</option>
-              <option value="login">Login</option>
-              <option value="logout">Logout</option>
+              <option value="all" className="bg-primary-dark text-white">All Actions</option>
+              <option value="create" className="bg-primary-dark text-white">Create</option>
+              <option value="update" className="bg-primary-dark text-white">Update</option>
+              <option value="delete" className="bg-primary-dark text-white">Delete</option>
+              <option value="login" className="bg-primary-dark text-white">Login</option>
+              <option value="logout" className="bg-primary-dark text-white">Logout</option>
             </Select>
 
             <Select
               value={entityFilter}
               onChange={(e) => setEntityFilter(e.target.value)}
             >
-              <option value="all">All Entities</option>
-              <option value="product">Product</option>
-              <option value="sale">Sale</option>
-              <option value="user">User</option>
-              <option value="customer">Customer</option>
-              <option value="batch">Batch</option>
-              <option value="transfer">Transfer</option>
+              <option value="all" className="bg-primary-dark text-white">All Entities</option>
+              <option value="product" className="bg-primary-dark text-white">Product</option>
+              <option value="sale" className="bg-primary-dark text-white">Sale</option>
+              <option value="user" className="bg-primary-dark text-white">User</option>
+              <option value="customer" className="bg-primary-dark text-white">Customer</option>
+              <option value="batch" className="bg-primary-dark text-white">Batch</option>
+              <option value="transfer" className="bg-primary-dark text-white">Transfer</option>
             </Select>
 
             <Input
@@ -263,7 +263,7 @@ export const AuditTrailPage = () => {
         </div>
 
         {/* Audit Logs Table */}
-        <div className="bg-white rounded-lg shadow">
+        <div className="bg-primary-dark/50 rounded-2xl border border-white/10 shadow-xl">
           <Table
             data={logs || []}
             columns={columns}

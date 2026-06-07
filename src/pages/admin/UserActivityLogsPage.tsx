@@ -137,12 +137,12 @@ export const UserActivityLogsPage = () => {
     <AdminLayout>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">User Activity Logs</h1>
+          <h1 className="text-2xl font-bold text-white">User Activity Logs</h1>
         </div>
 
         {/* Filters */}
-        <div className="bg-white p-4 rounded-lg shadow">
-          <div className="grid grid-cols-4 gap-4">
+        <div className="bg-primary-dark/50 border border-white/10 p-4 rounded-2xl shadow-xl">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
             <Select
               value={userFilter}
               onChange={(e) => setUserFilter(e.target.value)}
@@ -186,24 +186,24 @@ export const UserActivityLogsPage = () => {
         </div>
 
         {/* Activity Summary */}
-        <div className="grid grid-cols-4 gap-4">
-          <div className="bg-white p-4 rounded-lg shadow">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-primary-dark/50 border border-white/10 p-4 rounded-2xl shadow-xl">
             <p className="text-sm text-gray-500">Total Activities</p>
-            <p className="text-2xl font-bold text-gray-900">{logs?.length || 0}</p>
+            <p className="text-2xl font-bold text-white">{logs?.length || 0}</p>
           </div>
-          <div className="bg-white p-4 rounded-lg shadow">
+          <div className="bg-primary-dark/50 border border-white/10 p-4 rounded-2xl shadow-xl">
             <p className="text-sm text-gray-500">Logins</p>
             <p className="text-2xl font-bold text-green-600">
               {logs?.filter(log => log.activity === 'login').length || 0}
             </p>
           </div>
-          <div className="bg-white p-4 rounded-lg shadow">
+          <div className="bg-primary-dark/50 border border-white/10 p-4 rounded-2xl shadow-xl">
             <p className="text-sm text-gray-500">Sales</p>
             <p className="text-2xl font-bold text-yellow-600">
               {logs?.filter(log => log.activity === 'sale').length || 0}
             </p>
           </div>
-          <div className="bg-white p-4 rounded-lg shadow">
+          <div className="bg-primary-dark/50 border border-white/10 p-4 rounded-2xl shadow-xl">
             <p className="text-sm text-gray-500">Active Users</p>
             <p className="text-2xl font-bold text-blue-600">
               {new Set(logs?.map(log => log.userId)).size || 0}
@@ -212,7 +212,7 @@ export const UserActivityLogsPage = () => {
         </div>
 
         {/* Activity Logs Table */}
-        <div className="bg-white rounded-lg shadow">
+        <div className="bg-primary-dark/50 rounded-2xl border border-white/10 shadow-xl">
           <Table
             data={logs || []}
             columns={columns}

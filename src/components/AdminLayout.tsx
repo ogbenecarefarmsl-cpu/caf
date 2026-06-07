@@ -5,6 +5,8 @@ import { useBranchStore } from '../stores/branch-store';
 import apiClient from '../lib/api-client';
 import { useToast } from '../hooks/useToast';
 import { BranchSelector } from './BranchSelector';
+import { NotificationBell } from './NotificationBell';
+import { PasskeySetupBanner } from './account';
 import { ConnectionStatus } from './ui/ConnectionStatus';
 import { OfflineNotification } from './ui/OfflineNotification';
 import { ConfirmDialog } from './ui/ConfirmDialog';
@@ -18,6 +20,7 @@ interface NavItem {
   name: string;
   path: string;
   icon: ReactNode;
+  section: string;
   roles?: string[];
 }
 
@@ -45,7 +48,8 @@ export const AdminLayout = ({ children, title = 'Admin' }: AdminLayoutProps) => 
   const navItems: NavItem[] = [
     {
       name: 'Dashboard',
-      path: '/admin/dashboard',
+      path: user?.role === 'super_admin' ? '/admin/hq-dashboard' : '/admin/dashboard',
+      section: 'Main',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -54,18 +58,20 @@ export const AdminLayout = ({ children, title = 'Admin' }: AdminLayoutProps) => 
       roles: ['super_admin', 'branch_manager', 'auditor'],
     },
     {
-      name: 'Account Security',
+      name: 'My Security',
       path: '/settings/security',
+      section: 'Main',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 11c1.657 0 3-1.567 3-3.5S13.657 4 12 4 9 5.567 9 7.5 10.343 11 12 11zm0 2c-3.314 0-6 1.79-6 4v1a2 2 0 002 2h8a2 2 0 002-2v-1c0-2.21-2.686-4-6-4z" />
         </svg>
       ),
-      roles: ['super_admin', 'branch_manager', 'cashier', 'auditor', 'marketer'],
+      roles: ['super_admin', 'branch_manager', 'cashier', 'auditor', 'marketer', 'finance_manager'],
     },
     {
       name: 'Inventory',
       path: '/admin/inventory',
+      section: 'Inventory',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
@@ -76,6 +82,7 @@ export const AdminLayout = ({ children, title = 'Admin' }: AdminLayoutProps) => 
     {
       name: 'Products',
       path: '/admin/products',
+      section: 'Inventory',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -86,6 +93,7 @@ export const AdminLayout = ({ children, title = 'Admin' }: AdminLayoutProps) => 
     {
       name: 'Sales',
       path: '/admin/sales',
+      section: 'Sales & POS',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
@@ -96,6 +104,7 @@ export const AdminLayout = ({ children, title = 'Admin' }: AdminLayoutProps) => 
     {
       name: 'POS Terminal',
       path: '/pos',
+      section: 'Sales & POS',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -106,6 +115,7 @@ export const AdminLayout = ({ children, title = 'Admin' }: AdminLayoutProps) => 
     {
       name: 'Customers',
       path: '/admin/customers',
+      section: 'Sales & POS',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -116,6 +126,7 @@ export const AdminLayout = ({ children, title = 'Admin' }: AdminLayoutProps) => 
     {
       name: 'Reports',
       path: '/admin/reports',
+      section: 'Reports',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -126,6 +137,7 @@ export const AdminLayout = ({ children, title = 'Admin' }: AdminLayoutProps) => 
     {
       name: 'Branches',
       path: '/admin/branches',
+      section: 'Administration',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -136,6 +148,7 @@ export const AdminLayout = ({ children, title = 'Admin' }: AdminLayoutProps) => 
     {
       name: 'Users',
       path: '/admin/users',
+      section: 'Administration',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -146,6 +159,7 @@ export const AdminLayout = ({ children, title = 'Admin' }: AdminLayoutProps) => 
     {
       name: 'Customer Orders',
       path: '/admin/customer-orders',
+      section: 'Sales & POS',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -156,6 +170,7 @@ export const AdminLayout = ({ children, title = 'Admin' }: AdminLayoutProps) => 
     {
       name: 'Proforma Invoices',
       path: '/admin/proforma-invoices',
+      section: 'Sales & POS',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -166,6 +181,7 @@ export const AdminLayout = ({ children, title = 'Admin' }: AdminLayoutProps) => 
     {
       name: 'Delivery Notes',
       path: '/admin/delivery-notes',
+      section: 'Sales & POS',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -175,7 +191,8 @@ export const AdminLayout = ({ children, title = 'Admin' }: AdminLayoutProps) => 
     },
     {
       name: 'Marketer Assignments',
-      path: '/marketer/assignments',
+      path: '/admin/marketer-assignments',
+      section: 'Inventory',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -186,6 +203,7 @@ export const AdminLayout = ({ children, title = 'Admin' }: AdminLayoutProps) => 
     {
       name: 'Finance Dashboard',
       path: '/admin/finance-dashboard',
+      section: 'Finance',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -194,8 +212,20 @@ export const AdminLayout = ({ children, title = 'Admin' }: AdminLayoutProps) => 
       roles: ['super_admin', 'branch_manager', 'finance_manager'],
     },
     {
+      name: 'Finance Transactions',
+      path: '/admin/finance',
+      section: 'Finance',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+      ),
+      roles: ['super_admin', 'branch_manager', 'finance_manager', 'auditor'],
+    },
+    {
       name: 'Reconciliations',
       path: '/admin/reconciliations',
+      section: 'Finance',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
@@ -206,6 +236,7 @@ export const AdminLayout = ({ children, title = 'Admin' }: AdminLayoutProps) => 
     {
       name: 'Salaries',
       path: '/admin/salaries',
+      section: 'Finance',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -216,6 +247,7 @@ export const AdminLayout = ({ children, title = 'Admin' }: AdminLayoutProps) => 
     {
       name: 'Cash Management',
       path: '/admin/cash-management',
+      section: 'Finance',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -226,6 +258,7 @@ export const AdminLayout = ({ children, title = 'Admin' }: AdminLayoutProps) => 
     {
       name: 'Finance Reports',
       path: '/admin/finance-reports',
+      section: 'Finance',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -243,37 +276,64 @@ export const AdminLayout = ({ children, title = 'Admin' }: AdminLayoutProps) => 
     return item.roles.includes(user?.role || '');
   });
 
+  const navSections = filteredNavItems.reduce<Array<{ name: string; items: NavItem[] }>>((sections, item) => {
+    const existingSection = sections.find((section) => section.name === item.section);
+    if (existingSection) {
+      existingSection.items.push(item);
+    } else {
+      sections.push({ name: item.section, items: [item] });
+    }
+    return sections;
+  }, []);
+
+  const isActiveRoute = (path: string) => {
+    if (location.pathname === path) {
+      return true;
+    }
+
+    return path.startsWith('/admin') && location.pathname.startsWith(`${path}/`);
+  };
+
   const renderNavigation = (onNavigate?: () => void) => (
-    <ul className="space-y-2">
-      {filteredNavItems.map((item) => {
-        const isActive = location.pathname === item.path;
-        return (
-          <li key={item.path}>
-            <Link
-              to={item.path}
-              onClick={onNavigate}
-              className={`group flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-                isActive
-                  ? 'bg-accent-green/10 text-accent-green shadow-[0_0_20px_rgba(0,255,136,0.1)]'
-                  : 'text-gray-400 hover:bg-white/5 hover:text-white'
-              }`}
-            >
-              <span
-                className={`transition-transform duration-200 ${
-                  isActive ? 'scale-110' : 'group-hover:scale-110'
-                }`}
-              >
-                {item.icon}
-              </span>
-              <span className="font-medium">{item.name}</span>
-              {isActive ? (
-                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-accent-green shadow-[0_0_10px_rgba(0,255,136,0.75)]" />
-              ) : null}
-            </Link>
-          </li>
-        );
-      })}
-    </ul>
+    <div className="space-y-5">
+      {navSections.map((section) => (
+        <div key={section.name}>
+          <p className="px-4 pb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500">
+            {section.name}
+          </p>
+          <ul className="space-y-2">
+            {section.items.map((item) => {
+              const isActive = isActiveRoute(item.path);
+              return (
+                <li key={item.path}>
+                  <Link
+                    to={item.path}
+                    onClick={onNavigate}
+                    className={`group flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                      isActive
+                        ? 'bg-accent-green/10 text-accent-green shadow-[0_0_20px_rgba(0,255,136,0.1)]'
+                        : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                    }`}
+                  >
+                    <span
+                      className={`transition-transform duration-200 ${
+                        isActive ? 'scale-110' : 'group-hover:scale-110'
+                      }`}
+                    >
+                      {item.icon}
+                    </span>
+                    <span className="font-medium">{item.name}</span>
+                    {isActive ? (
+                      <div className="ml-auto w-1.5 h-1.5 rounded-full bg-accent-green shadow-[0_0_10px_rgba(0,255,136,0.75)]" />
+                    ) : null}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+    </div>
   );
 
   return (
@@ -394,7 +454,7 @@ export const AdminLayout = ({ children, title = 'Admin' }: AdminLayoutProps) => 
             <div className="flex items-center gap-3 min-w-0">
               <button
                 onClick={() => setIsMobileMenuOpen(true)}
-                className="lg:hidden p-2 rounded-lg text-gray-300 hover:text-white hover:bg-white/5"
+                className="lg:hidden p-2.5 rounded-lg text-gray-300 hover:text-white hover:bg-white/5"
                 aria-label="Open menu"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -403,14 +463,20 @@ export const AdminLayout = ({ children, title = 'Admin' }: AdminLayoutProps) => 
               </button>
               <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight truncate">{title}</h2>
             </div>
-            <div className="hidden sm:block w-64">
-              <BranchSelector />
+            <div className="flex items-center gap-3">
+              <NotificationBell />
+              <div className="hidden sm:block w-64">
+                <BranchSelector />
+              </div>
             </div>
           </div>
         </header>
 
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-          <div className="max-w-7xl mx-auto">{children}</div>
+          <div className="max-w-7xl mx-auto space-y-4">
+            <PasskeySetupBanner />
+            {children}
+          </div>
         </main>
       </div>
     </div>

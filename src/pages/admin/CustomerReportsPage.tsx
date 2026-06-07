@@ -11,6 +11,8 @@ import { Error } from '../../components/ui/Error';
 import { useCurrency } from '../../hooks/useCurrency';
 import { queryKeys } from '../../lib/query-keys';
 import { buildApiUrl } from '../../lib/api-utils';
+import { useAuthStore } from '../../stores/auth-store';
+import { getBranchId, useBranchStore } from '../../stores/branch-store';
 
 interface CustomerReportData {
   totalCustomers: number;
@@ -46,19 +48,29 @@ export const CustomerReportsPage = () => {
   const [dateTo, setDateTo] = useState(() => new Date().toISOString().split('T')[0]);
   const [groupBy, setGroupBy] = useState<'day' | 'week' | 'month'>('day');
   const { format } = useCurrency();
+  const user = useAuthStore((state) => state.user);
+  const selectedBranch = useBranchStore((state) => state.selectedBranch);
+  const isSuperAdmin = user?.role === 'super_admin';
+  const effectiveBranchId = isSuperAdmin ? undefined : getBranchId(selectedBranch) || user?.branchId;
 
   // Fetch customer reports
   const { data: reportData, isLoading, error } = useQuery({
-    queryKey: queryKeys.reports.customer({ startDate: dateFrom, endDate: dateTo, groupBy }),
+    queryKey: queryKeys.reports.customer({
+      branchId: effectiveBranchId,
+      startDate: dateFrom,
+      endDate: dateTo,
+      groupBy,
+    }),
     queryFn: async () => {
       const response = await apiClient.get(buildApiUrl('/reports/customers', {
+        branchId: effectiveBranchId,
         from: dateFrom,
         to: dateTo,
         groupBy,
       }));
       return unwrapResponse(response.data, {} as CustomerReportData);
     },
-    enabled: !!dateFrom && !!dateTo,
+    enabled: !!dateFrom && !!dateTo && (isSuperAdmin || !!effectiveBranchId),
   });
 
   const handleExport = async () => {
@@ -68,6 +80,7 @@ export const CustomerReportsPage = () => {
         to: dateTo,
         groupBy,
         format: 'csv',
+        branchId: effectiveBranchId,
       }), {
         responseType: 'blob',
       });
@@ -91,15 +104,15 @@ export const CustomerReportsPage = () => {
     <AdminLayout>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Customer Reports</h1>
+          <h1 className="text-2xl font-bold text-white">Customer Reports</h1>
           <Button onClick={handleExport}>
             Export to CSV
           </Button>
         </div>
 
         {/* Filters */}
-        <div className="bg-white p-4 rounded-lg shadow">
-          <div className="grid grid-cols-3 gap-4">
+        <div className="bg-primary-dark/50 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-white/5">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Input
               label="From Date"
               type="date"
@@ -117,9 +130,9 @@ export const CustomerReportsPage = () => {
               value={groupBy}
               onChange={(e) => setGroupBy(e.target.value as 'day' | 'week' | 'month')}
             >
-              <option value="day">Daily</option>
-              <option value="week">Weekly</option>
-              <option value="month">Monthly</option>
+              <option value="day" className="bg-primary-dark text-white">Daily</option>
+              <option value="week" className="bg-primary-dark text-white">Weekly</option>
+              <option value="month" className="bg-primary-dark text-white">Monthly</option>
             </Select>
           </div>
         </div>
@@ -127,58 +140,58 @@ export const CustomerReportsPage = () => {
         {/* Summary Cards */}
         {reportData && (
           <>
-            <div className="grid grid-cols-4 gap-4">
-              <div className="bg-white p-6 rounded-lg shadow">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-primary-dark/50 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-white/5">
                 <p className="text-sm text-gray-500">Total Customers</p>
-                <p className="text-3xl font-bold text-gray-900">{reportData.totalCustomers}</p>
+                <p className="text-3xl font-bold text-white">{reportData.totalCustomers}</p>
               </div>
-              <div className="bg-white p-6 rounded-lg shadow">
+              <div className="bg-primary-dark/50 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-white/5">
                 <p className="text-sm text-gray-500">Active Customers</p>
                 <p className="text-3xl font-bold text-green-600">{reportData.activeCustomers}</p>
               </div>
-              <div className="bg-white p-6 rounded-lg shadow">
+              <div className="bg-primary-dark/50 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-white/5">
                 <p className="text-sm text-gray-500">New Customers</p>
                 <p className="text-3xl font-bold text-blue-600">{reportData.newCustomers}</p>
               </div>
-              <div className="bg-white p-6 rounded-lg shadow">
+              <div className="bg-primary-dark/50 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-white/5">
                 <p className="text-sm text-gray-500">Total Loyalty Points</p>
                 <p className="text-3xl font-bold text-purple-600">{reportData.totalLoyaltyPoints}</p>
               </div>
             </div>
 
             {/* Customer Segmentation */}
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Customer Segmentation</h2>
-              <div className="grid grid-cols-4 gap-4">
-                <div className="text-center p-4 bg-green-50 rounded-lg">
-                  <p className="text-sm text-gray-600">High Value</p>
+            <div className="bg-primary-dark/50 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-white/5">
+              <h2 className="text-xl font-bold text-white mb-4">Customer Segmentation</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="text-center p-4 bg-green-500/10 rounded-lg border border-green-500/20">
+                  <p className="text-sm text-green-100">High Value</p>
                   <p className="text-2xl font-bold text-green-600">{reportData.segmentation.highValue}</p>
-                  <p className="text-xs text-gray-500">{'>'} 10 purchases</p>
+                  <p className="text-xs text-gray-400">{'>'} 10 purchases</p>
                 </div>
-                <div className="text-center p-4 bg-blue-50 rounded-lg">
-                  <p className="text-sm text-gray-600">Medium</p>
+                <div className="text-center p-4 bg-blue-500/10 rounded-lg border border-blue-500/20">
+                  <p className="text-sm text-blue-100">Medium</p>
                   <p className="text-2xl font-bold text-blue-600">{reportData.segmentation.medium}</p>
-                  <p className="text-xs text-gray-500">5-10 purchases</p>
+                  <p className="text-xs text-gray-400">5-10 purchases</p>
                 </div>
-                <div className="text-center p-4 bg-yellow-50 rounded-lg">
-                  <p className="text-sm text-gray-600">Low</p>
+                <div className="text-center p-4 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
+                  <p className="text-sm text-yellow-100">Low</p>
                   <p className="text-2xl font-bold text-yellow-600">{reportData.segmentation.low}</p>
-                  <p className="text-xs text-gray-500">1-4 purchases</p>
+                  <p className="text-xs text-gray-400">1-4 purchases</p>
                 </div>
-                <div className="text-center p-4 bg-gray-50 rounded-lg">
-                  <p className="text-sm text-gray-600">Inactive</p>
+                <div className="text-center p-4 bg-white/5 rounded-lg border border-white/10">
+                  <p className="text-sm text-gray-300">Inactive</p>
                   <p className="text-2xl font-bold text-gray-600">{reportData.segmentation.inactive}</p>
-                  <p className="text-xs text-gray-500">No recent activity</p>
+                  <p className="text-xs text-gray-400">No recent activity</p>
                 </div>
               </div>
             </div>
 
             {/* Top Customers */}
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Top Customers</h2>
+            <div className="bg-primary-dark/50 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-white/5">
+              <h2 className="text-xl font-bold text-white mb-4">Top Customers</h2>
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                  <thead className="bg-white/5">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Customer
@@ -194,16 +207,16 @@ export const CustomerReportsPage = () => {
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="divide-y divide-white/5">
                     {reportData.topCustomers.map((customer) => (
                       <tr key={customer.customerId}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
                           {customer.customerName}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                           {format(customer.totalPurchases)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
                           {customer.purchaseCount}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-purple-600">
@@ -217,11 +230,11 @@ export const CustomerReportsPage = () => {
             </div>
 
             {/* Customer Growth Trend */}
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Customer Growth Trend</h2>
+            <div className="bg-primary-dark/50 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-white/5">
+              <h2 className="text-xl font-bold text-white mb-4">Customer Growth Trend</h2>
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                  <thead className="bg-white/5">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Date
@@ -234,16 +247,16 @@ export const CustomerReportsPage = () => {
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="divide-y divide-white/5">
                     {reportData.byPeriod.map((period, index) => (
                       <tr key={index}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
                           {new Date(period.date).toLocaleDateString()}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
                           {period.newCustomers}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                           {format(period.totalPurchases)}
                         </td>
                       </tr>

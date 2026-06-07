@@ -5,6 +5,7 @@ import { Button } from '../../components/ui/Button';
 import { Loading } from '../../components/ui/Loading';
 import { Error } from '../../components/ui/Error';
 import { useBranchStore, getBranchId } from '../../stores/branch-store';
+import { useAuthStore } from '../../stores/auth-store';
 import { queryKeys } from '../../lib/query-keys';
 import apiClient from '../../lib/api-client';
 import { buildApiUrl } from '../../lib/api-utils';
@@ -19,33 +20,36 @@ export function FinanceReportsPage() {
   const [endDate, setEndDate] = useState('');
   const [reportType, setReportType] = useState('cash');
   const { selectedBranch } = useBranchStore();
+  const user = useAuthStore((state) => state.user);
   const branchId = getBranchId(selectedBranch);
+  const effectiveBranchId = user?.role === 'super_admin' ? undefined : branchId;
+  const canLoadReports = user?.role === 'super_admin' || !!effectiveBranchId;
 
   const { data: cashSummary, isLoading: loadingCash } = useQuery({
-    queryKey: queryKeys.financeManager.cashEntries.summary(branchId, startDate, endDate),
+    queryKey: queryKeys.financeManager.cashEntries.summary(effectiveBranchId, startDate, endDate),
     queryFn: async () => {
-      const res = await apiClient.get(buildApiUrl('/finance-manager/cash-entries/stats/summary', { branchId, startDate: startDate || undefined, endDate: endDate || undefined }));
+      const res = await apiClient.get(buildApiUrl('/finance-manager/cash-entries/stats/summary', { branchId: effectiveBranchId, startDate: startDate || undefined, endDate: endDate || undefined }));
       return (res.data?.data ?? res.data) as { totalIncome: number; totalExpense: number; totalTransfer: number; totalLoan: number; totalSalary: number; netCash: number; byCategory: { category: string; total: number; count: number }[] };
     },
-    enabled: !!branchId,
+    enabled: canLoadReports,
   });
 
   const { data: reconStats, isLoading: loadingRecon } = useQuery({
-    queryKey: queryKeys.financeManager.reconciliations.stats(branchId),
+    queryKey: queryKeys.financeManager.reconciliations.stats(effectiveBranchId),
     queryFn: async () => {
-      const res = await apiClient.get(buildApiUrl('/finance-manager/reconciliations/stats/summary', { branchId }));
+      const res = await apiClient.get(buildApiUrl('/finance-manager/reconciliations/stats/summary', { branchId: effectiveBranchId }));
       return (res.data?.data ?? res.data) as { pending: number; approved: number; rejected: number; totalDiscrepancy: number };
     },
-    enabled: !!branchId,
+    enabled: canLoadReports,
   });
 
   const { data: salaryStats, isLoading: loadingSalary } = useQuery({
-    queryKey: queryKeys.financeManager.salaries.stats(branchId),
+    queryKey: queryKeys.financeManager.salaries.stats(effectiveBranchId),
     queryFn: async () => {
-      const res = await apiClient.get(buildApiUrl('/finance-manager/salaries/stats/summary', { branchId }));
+      const res = await apiClient.get(buildApiUrl('/finance-manager/salaries/stats/summary', { branchId: effectiveBranchId }));
       return (res.data?.data ?? res.data) as { totalEmployees: number; totalBase: number; totalAllowances: number; totalDeductions: number; totalNet: number; pendingCount: number; paidCount: number };
     },
-    enabled: !!branchId,
+    enabled: canLoadReports,
   });
 
   const exportCSV = (data: any[], filename: string) => {

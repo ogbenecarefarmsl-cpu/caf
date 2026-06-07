@@ -3,16 +3,21 @@ import { useNavigate } from 'react-router-dom';
 import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import apiClient from '../../lib/api-client';
 import { useBranchStore, getBranchId } from '../../stores/branch-store';
-import { useCartStore, itemKey } from '../../stores/cart-store';
+import { useCartStore, itemKey, type CartItem } from '../../stores/cart-store';
+import { useHeldSalesStore, type HeldSale } from '../../stores/held-sales-store';
 import { useAuthStore } from '../../stores/auth-store';
 import { useWebSocket } from '../../hooks/useWebSocket';
 import { useCurrency } from '../../hooks/useCurrency';
 import { useAlertReplacement } from '../../hooks/useAlertReplacement';
 import { useBarcodeScanner } from '../../hooks/useBarcodeScanner';
 import { useDebounce } from '../../hooks/useDebounce';
+import { useToast } from '../../hooks/useToast';
 import { OfflineIndicator, POSLayout } from '../../components/pos';
 import { getProductImage, handleImageError } from '../../lib/product-images';
 import { UserProfileModal } from '../../components/pos/UserProfileModal';
+import { ParkedSalesBar } from '../../components/pos/ParkedSalesBar';
+import { QuickKeysGrid } from '../../components/pos/QuickKeysGrid';
+import type { QuickKeyProduct } from '../../stores/quick-keys-store';
 import { queryKeys } from '../../lib/query-keys';
 
 interface Shift {
@@ -79,6 +84,11 @@ export const POSPage = () => {
     subtotal, 
     discount 
   } = useCartStore();
+  const heldSales = useHeldSalesStore((s) => s.heldSales);
+  const recallHeldSale = useHeldSalesStore((s) => s.recallSale);
+  const discardHeldSale = useHeldSalesStore((s) => s.discardSale);
+  const restoreCart = useCartStore((s) => s.restoreCart);
+  const { showSuccess, showError } = useToast();
   const { format, symbol } = useCurrency();
   
   // Helper to convert stock to readable units
@@ -299,6 +309,7 @@ export const POSPage = () => {
           addItem({
             productId: found._id,
             productName: found.name,
+            brand: found.brand,
             sku: found.sku,
             barcode: found.barcode || '',
             quantity: 1,
@@ -556,6 +567,7 @@ export const POSPage = () => {
     addItem({
       productId: product._id,
       productName: packSize ? `${product.name} (${packSize.name})` : product.name,
+      brand: product.brand,
       sku: product.sku,
       barcode: packSize?.barcode || product.barcode || '',
       quantity: 1,
@@ -566,6 +578,20 @@ export const POSPage = () => {
       quantityInBaseUnits: quantityPerPack,
     });
   };
+
+  const handleQuickKeyAdd = (key: QuickKeyProduct) => {
+    // Find the product in the currently loaded products
+    const product = products.find((p) => p._id === key.productId);
+    if (!product) {
+      showError(`Product not loaded. Scroll the catalog to refresh.`);
+      return;
+    }
+    const packSize = key.packSizeCode
+      ? product.packSizes?.find((pk) => pk.code === key.packSizeCode)
+      : undefined;
+    handleAddToCart(product, packSize);
+  };
+
 
   const categories = [
     { id: 'all', label: 'All' },
@@ -679,6 +705,34 @@ export const POSPage = () => {
         </div>
       </div>
 
+      {/* Parked Sales Banner */}
+      {heldSales.length > 0 && (
+        <div className="px-3 md:px-6 pt-3">
+          <ParkedSalesBar
+            heldSales={heldSales}
+            onRecall={(id) => {
+              const sale = recallHeldSale(id);
+              if (sale) {
+                restoreCart({
+                  items: sale.items,
+                  discount: sale.discount,
+                  prescriptionUrl: sale.prescriptionUrl,
+                });
+                showSuccess(`Recalled "${sale.label}"`);
+              }
+            }}
+            onDiscard={(id) => {
+              const sale = heldSales.find((s) => s.id === id);
+              if (sale && window.confirm(`Discard parked sale "${sale.label}"? This cannot be undone.`)) {
+                discardHeldSale(id);
+                showSuccess(`Discarded "${sale.label}"`);
+              }
+            }}
+            format={format}
+          />
+        </div>
+      )}
+
       {/* Main Content - Split View */}
       <div className="flex-1 flex gap-6 overflow-hidden p-3 md:p-6">
         {/* Left: Products Section */}
@@ -757,6 +811,14 @@ export const POSPage = () => {
             </div>
           </div>
 
+          {/* Quick Keys (Square-style speed buttons) */}
+          <QuickKeysGrid
+            onAdd={handleQuickKeyAdd}
+            format={format}
+            branchId={getBranchId(selectedBranch)}
+            products={products}
+          />
+
           {/* Product Grid */}
           <div className="flex-1 overflow-y-auto pr-2">
             {loadingProducts ? (
@@ -809,7 +871,7 @@ export const POSPage = () => {
                       <div className="absolute inset-0 bg-linear-to-t from-black/40 to-transparent group-hover:from-black/60 transition-all" />
                     </div>
                     <div className="p-3 bg-primary-dark rounded-b-xl border-t border-gray-700">
-                      <h3 className="line-clamp-2 min-h-10 text-left text-sm font-semibold leading-snug text-white break-words">
+                      <h3 className="text-left text-sm font-semibold leading-snug text-white break-words">
                         {product.name}
                       </h3>
                       <p className="mt-2 rounded-md bg-accent-green/10 px-2 py-1 text-left text-xs font-semibold text-accent-green whitespace-normal break-words">
@@ -1078,6 +1140,11 @@ export const POSPage = () => {
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1 min-w-0">
                     <h3 className="text-white font-semibold text-base leading-snug whitespace-normal break-words">{item.productName}</h3>
+                    {item.brand && item.brand.trim().toLowerCase() !== 'unknown' && (
+                      <p className="text-sm text-accent-green mt-0.5 whitespace-normal break-words">
+                        Brand: {item.brand}
+                      </p>
+                    )}
                     <p className="text-sm text-gray-400 mt-1">
                       SKU: {item.sku}
                       {item.packSize && (
@@ -1101,7 +1168,7 @@ export const POSPage = () => {
                   <div className="flex items-center space-x-2 bg-primary-darker rounded-lg p-1.5">
                     <button
                       onClick={() => handleQuantityDecrement(item.productId, item.packSize, item.quantity)}
-                      className="w-8 h-8 flex items-center justify-center hover:bg-gray-700 rounded transition-colors text-gray-300"
+                      className="w-10 h-10 flex items-center justify-center hover:bg-gray-700 rounded transition-colors text-gray-300"
                     >
                       <span className="text-lg">−</span>
                     </button>
@@ -1109,11 +1176,11 @@ export const POSPage = () => {
                       type="text"
                       value={item.quantity}
                       onChange={(e) => handleQuantityChange(item.productId, item.packSize, e.target.value)}
-                      className="w-10 h-8 bg-transparent text-center text-white font-semibold text-base focus:outline-none"
+                      className="w-10 h-10 bg-transparent text-center text-white font-semibold text-base focus:outline-none"
                     />
                     <button
                       onClick={() => handleQuantityIncrement(item.productId, item.packSize, item.quantity)}
-                      className="w-8 h-8 flex items-center justify-center hover:bg-gray-700 rounded transition-colors text-gray-300"
+                      className="w-10 h-10 flex items-center justify-center hover:bg-gray-700 rounded transition-colors text-gray-300"
                     >
                       <span className="text-lg">+</span>
                     </button>

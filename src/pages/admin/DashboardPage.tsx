@@ -8,6 +8,7 @@ import apiClient from '../../lib/api-client';
 import { useCurrency } from '../../hooks/useCurrency';
 import { Error } from '../../components/ui/Error';
 import { queryKeys } from '../../lib/query-keys';
+import HQDashboardPage from './HQDashboardPage';
 
 interface DashboardStats {
   todaySales: number;
@@ -15,6 +16,7 @@ interface DashboardStats {
   monthlySales: number;
   monthlySalesCount: number;
   totalProducts: number;
+  totalInventoryValue: number;
   totalCustomers: number;
   lowStockProducts: number;
   expiringSoon: number;
@@ -62,17 +64,22 @@ export const DashboardPage = () => {
         monthlySales: raw?.monthlySales?.amount ?? 0,
         monthlySalesCount: raw?.monthlySales?.count ?? 0,
         totalProducts: raw?.totalProducts ?? 0,
+        totalInventoryValue: raw?.totalInventoryValue ?? 0,
         totalCustomers: raw?.totalCustomers ?? 0,
         lowStockProducts: raw?.lowStockProducts ?? raw?.lowStockCount ?? 0,
         expiringSoon: raw?.expiringSoon ?? 0,
         lowStockItems: Array.isArray(raw?.lowStockItems) ? raw.lowStockItems : [],
       };
     },
-    enabled: !!branchId,
+    enabled: user?.role !== 'super_admin' && !!branchId,
   });
 
   const lowStockItems = stats?.lowStockItems ?? [];
   const lowStockProducts = stats?.lowStockProducts ?? 0;
+
+  if (user?.role === 'super_admin') {
+    return <HQDashboardPage />;
+  }
 
   if (!branchId) {
     return (
@@ -168,12 +175,12 @@ export const DashboardPage = () => {
 
               <StatCard
                 title="Products"
-                value={String(stats?.totalProducts ?? 0)}
-                subtitle={`${stats?.lowStockProducts ?? 0} low stock`}
+                value={format(stats?.totalInventoryValue ?? 0)}
+                subtitle={`${stats?.totalProducts ?? 0} SKUs · ${stats?.lowStockProducts ?? 0} low stock`}
                 colorClass="bg-purple-500/10 text-purple-500"
                 icon={
                   <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8 4-8-4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                   </svg>
                 }
               />
@@ -251,9 +258,9 @@ export const DashboardPage = () => {
                 {lowStockItems.length > 0 ? (
                   <div className="space-y-3">
                     {lowStockItems.slice(0, 4).map((item) => (
-                      <div key={item._id} className="flex items-center justify-between p-3 sm:p-4 bg-white/5 rounded-xl border border-transparent hover:border-white/5 transition-colors">
-                        <span className="text-sm text-gray-200 font-medium truncate">{item.productName}</span>
-                        <span className="px-2 py-1 rounded-md bg-orange-500/10 text-orange-400 text-xs font-bold border border-orange-500/20">
+                      <div key={item._id} className="flex items-center justify-between gap-3 p-3 sm:p-4 bg-white/5 rounded-xl border border-transparent hover:border-white/5 transition-colors">
+                        <span className="text-sm text-gray-200 font-medium whitespace-normal break-words min-w-0 flex-1">{item.productName}</span>
+                        <span className="shrink-0 px-2 py-1 rounded-md bg-orange-500/10 text-orange-400 text-xs font-bold border border-orange-500/20">
                           {item.quantity} left
                         </span>
                       </div>

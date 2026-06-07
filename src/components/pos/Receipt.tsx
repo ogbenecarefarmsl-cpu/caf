@@ -3,6 +3,7 @@ import { CURRENCY } from '../../lib/currency';
 
 interface ReceiptItem {
   productName: string;
+  productId?: { name?: string; brand?: string };
   quantity: number;
   unitPrice: number;
   subtotal: number;
@@ -87,18 +88,27 @@ export const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(
               </tr>
             </thead>
             <tbody>
-              {saleData.items.map((item, index) => (
-                <tr key={index} className="border-b border-gray-300">
-                  <td className="py-2 break-words">{item.productName}</td>
-                  <td className="text-center py-2">{item.quantity}</td>
-                  <td className="text-right py-2">
-                    {CURRENCY.format(item.unitPrice)}
-                  </td>
-                  <td className="text-right py-2">
-                    {CURRENCY.format(item.subtotal)}
-                  </td>
-                </tr>
-              ))}
+              {saleData.items.map((item, index) => {
+                const brand = item.productId?.brand?.trim();
+                const showBrand = brand && brand.toLowerCase() !== 'unknown';
+                return (
+                  <tr key={index} className="border-b border-gray-300">
+                    <td className="py-2 break-words">
+                      <div>{item.productName}</div>
+                      {showBrand ? (
+                        <div className="text-[11px] text-gray-600 break-words">Brand: {brand}</div>
+                      ) : null}
+                    </td>
+                    <td className="text-center py-2">{item.quantity}</td>
+                    <td className="text-right py-2">
+                      {CURRENCY.format(item.unitPrice)}
+                    </td>
+                    <td className="text-right py-2">
+                      {CURRENCY.format(item.subtotal)}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

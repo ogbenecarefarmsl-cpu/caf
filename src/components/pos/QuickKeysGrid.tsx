@@ -1,0 +1,160 @@
+import { useState, useMemo } from 'react';
+import { useQuickKeysStore, type QuickKeyProduct, MAX_QUICK_KEYS } from '../../stores/quick-keys-store';
+import { useToast } from '../../hooks/useToast';
+import { ProductPickerModal } from './ProductPickerModal';
+
+export interface QuickKeyProductLite {
+  _id: string;
+  name: string;
+  brand?: string;
+  sku: string;
+  price: number;
+  stock: number;
+  imageUrl?: string;
+  packSizes?: { code?: string; name: string; sellingPrice: number; quantityPerPack: number }[];
+}
+
+interface QuickKeysGridProps {
+  onAdd: (key: QuickKeyProduct) => void;
+  format: (n: number) => string;
+  branchId: string | undefined;
+  products: QuickKeyProductLite[];
+}
+
+const PACK_KEY_SEP = '::';
+
+export const QuickKeysGrid = ({
+  onAdd,
+  format,
+  branchId,
+  products,
+}: QuickKeysGridProps) => {
+  const keys = useQuickKeysStore((s) => s.keys);
+  const removeKey = useQuickKeysStore((s) => s.removeKey);
+  const { showError } = useToast();
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [manageMode, setManageMode] = useState(false);
+
+  const productById = useMemo(() => {
+    const m = new Map<string, QuickKeyProductLite>();
+    for (const p of products) m.set(p._id, p);
+    return m;
+  }, [products]);
+
+  const handleTileClick = (key: QuickKeyProduct) => {
+    const product = productById.get(key.productId);
+    if (!product) {
+      showError(`"${key.productName}" not in current catalog. Scroll products to load, or re-add.`);
+      return;
+    }
+    if (product.stock <= 0) {
+      showError(`"${key.productName}" is out of stock`);
+      return;
+    }
+    onAdd(key);
+  };
+
+  const isFull = keys.length >= MAX_QUICK_KEYS;
+
+  if (keys.length === 0 && !manageMode) {
+    return (
+      <div className="mb-4">
+        <button
+          onClick={() => setManageMode(true)}
+          className="w-full py-3 bg-primary-dark border border-dashed border-gray-700 text-gray-400 rounded-xl text-sm font-medium hover:border-accent-green/40 hover:text-accent-green transition-all flex items-center justify-center gap-2"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+          </svg>
+          Add Quick Keys (Square-style speed buttons)
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mb-4 bg-primary-dark border border-gray-700 rounded-xl p-3">
+      <div className="flex items-center justify-between mb-2 px-1">
+        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+          Quick Keys · {keys.length}/{MAX_QUICK_KEYS}
+        </h3>
+        <div className="flex gap-2">
+          {!isFull && (
+            <button
+              onClick={() => setPickerOpen(true)}
+              className="text-xs text-accent-green hover:text-accent-light font-medium"
+            >
+              + Add
+            </button>
+          )}
+          <button
+            onClick={() => setManageMode((m) => !m)}
+            className="text-xs text-gray-400 hover:text-white font-medium"
+          >
+            {manageMode ? 'Done' : 'Manage'}
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+        {keys.map((key) => {
+          const product = productById.get(key.productId);
+          const outOfStock = !product || product.stock <= 0;
+          return (
+            <div
+              key={`${key.productId}${PACK_KEY_SEP}${key.packSizeCode ?? ''}`}
+              className={`relative group rounded-lg border p-2 flex flex-col items-center justify-center text-center min-h-[80px] transition-all cursor-pointer ${
+                outOfStock
+                  ? 'border-red-500/30 bg-red-500/5 text-red-400'
+                  : 'border-gray-700 bg-primary-darker hover:border-accent-green hover:bg-accent-green/5 text-white'
+              }`}
+              onClick={() => !manageMode && handleTileClick(key)}
+              title={manageMode ? 'Manage' : `Add ${key.productName} to cart`}
+            >
+              {manageMode && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeKey(key.productId, key.packSizeCode);
+                  }}
+                  className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 text-white text-xs font-bold flex items-center justify-center shadow-md hover:bg-red-600"
+                  title="Remove quick key"
+                >
+                  ×
+                </button>
+              )}
+              <p className="text-[11px] font-semibold leading-tight line-clamp-2 break-words">
+                {key.productName}
+              </p>
+              {key.brand && (
+                <p className="text-[10px] text-gray-500 truncate max-w-full">{key.brand}</p>
+              )}
+              <p className="text-xs text-accent-green font-bold mt-1">
+                {format(key.unitPrice)}
+              </p>
+              {outOfStock && !manageMode && (
+                <span className="absolute bottom-1 right-1 text-[9px] bg-red-500/30 text-red-300 px-1 rounded">
+                  OOS
+                </span>
+              )}
+            </div>
+          );
+        })}
+        {!isFull && manageMode && (
+          <button
+            onClick={() => setPickerOpen(true)}
+            className="rounded-lg border-2 border-dashed border-gray-700 text-gray-500 hover:border-accent-green/40 hover:text-accent-green text-xs font-medium flex items-center justify-center min-h-[80px]"
+          >
+            + Add Key
+          </button>
+        )}
+      </div>
+
+      <ProductPickerModal
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        branchId={branchId}
+      />
+    </div>
+  );
+};

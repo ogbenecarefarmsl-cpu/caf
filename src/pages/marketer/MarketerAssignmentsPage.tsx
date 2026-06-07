@@ -120,10 +120,10 @@ export const MarketerAssignmentsPage = () => {
   const { data: products } = useQuery<Product[]>({
     queryKey: queryKeys.products.list({ branchId }),
     queryFn: async () => {
-      const response = await apiClient.get('/products', { params: { branchId, limit: 500 } });
+      // Load ALL products (not filtered by branch) so marketers can be assigned any product
+      const response = await apiClient.get('/products', { params: { limit: 500 } });
       return asArray<Product>(response.data);
     },
-    enabled: !!branchId,
   });
 
   const createMutation = useMutation({

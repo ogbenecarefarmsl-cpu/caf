@@ -13,10 +13,11 @@ import { useCurrency } from '../../hooks/useCurrency';
 import { usePagination } from '../../hooks/usePagination';
 import { useToast } from '../../hooks/useToast';
 import { getErrorMessage } from '../../lib/error-utils';
+import { CustomerTypeahead } from '../../components/ui/CustomerTypeahead';
 
 interface Assignment {
   _id: string;
-  productId?: { _id?: string; name?: string; sku?: string };
+  productId?: { _id?: string; name?: string; sku?: string; brand?: string };
   assignedUnitPrice: number;
   remainingQuantity: number;
   status: 'pending' | 'accepted' | 'rejected';
@@ -35,7 +36,7 @@ interface SalesResponse {
     totalAmount: number;
     soldAt: string;
     customerName?: string;
-    productId?: { name?: string; sku?: string };
+    productId?: { name?: string; sku?: string; brand?: string };
   }>;
   count: number;
 }
@@ -50,6 +51,7 @@ export const MarketerSalesPage = () => {
   const [quantity, setQuantity] = useState('1');
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
+  const [customerId, setCustomerId] = useState<string | undefined>(undefined);
   const [notes, setNotes] = useState('');
 
   const { data: assignments } = useQuery<AssignmentResponse>({
@@ -84,6 +86,7 @@ export const MarketerSalesPage = () => {
         quantity: Number(quantity),
         customerName: customerName || undefined,
         customerPhone: customerPhone || undefined,
+        customerId: customerId || undefined,
         notes: notes || undefined,
       });
     },
@@ -94,6 +97,7 @@ export const MarketerSalesPage = () => {
       setQuantity('1');
       setCustomerName('');
       setCustomerPhone('');
+      setCustomerId(undefined);
       setNotes('');
     },
     onError: (error) => {
@@ -105,9 +109,16 @@ export const MarketerSalesPage = () => {
     {
       key: 'product',
       header: 'Product',
-      render: (item: SalesResponse['data'][number]) => (
-        <span>{item.productId?.name || '-'} ({item.productId?.sku || '-'})</span>
-      ),
+      render: (item: SalesResponse['data'][number]) => {
+        const brand = item.productId?.brand?.trim();
+        const showBrand = brand && brand.toLowerCase() !== 'unknown';
+        return (
+          <div className="whitespace-normal break-words">
+            <div className="font-medium text-white">{item.productId?.name || '-'} <span className="text-gray-400 font-normal">({item.productId?.sku || '-'})</span></div>
+            {showBrand ? <div className="text-xs text-accent-green">Brand: {brand}</div> : null}
+          </div>
+        );
+      },
     },
     { key: 'quantity', header: 'Quantity' },
     {
@@ -139,10 +150,14 @@ export const MarketerSalesPage = () => {
               onChange={(e) => setAssignmentId(e.target.value)}
               options={[
                 { value: '', label: 'Select assignment' },
-                ...(assignments?.data || []).map((item) => ({
-                  value: item._id,
-                  label: `${item.productId?.name || 'Product'} (Rem: ${item.remainingQuantity})`,
-                })),
+                ...(assignments?.data || []).map((item) => {
+                  const brand = item.productId?.brand?.trim();
+                  const showBrand = brand && brand.toLowerCase() !== 'unknown';
+                  const label = showBrand
+                    ? `${item.productId?.name || 'Product'} — ${brand} (Rem: ${item.remainingQuantity})`
+                    : `${item.productId?.name || 'Product'} (Rem: ${item.remainingQuantity})`;
+                  return { value: item._id, label };
+                }),
               ]}
             />
 
@@ -155,7 +170,21 @@ export const MarketerSalesPage = () => {
               max={selectedAssignment?.remainingQuantity || undefined}
             />
 
-            <Input label="Customer Name" value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
+            <div className="md:col-span-2">
+              <CustomerTypeahead
+                label="Customer Name"
+                value={customerName}
+                onChange={setCustomerName}
+                onSelectCustomer={(c) => {
+                  setCustomerId(c._id);
+                  if (!customerPhone.trim() && c.phone) setCustomerPhone(c.phone);
+                }}
+                onClearCustomer={() => setCustomerId(undefined)}
+                selectedCustomerId={customerId}
+                placeholder="Search customer or type walk-in name…"
+                helperText="Optional. Pick an existing customer to link this sale, or type a name for a walk-in."
+              />
+            </div>
             <Input label="Customer Phone" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} />
             <Input label="Notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
           </div>

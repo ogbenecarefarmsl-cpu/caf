@@ -9,6 +9,7 @@ import { Input } from '../../components/ui/Input';
 import { Loading } from '../../components/ui/Loading';
 import { Error } from '../../components/ui/Error';
 import { useBranchStore, getBranchId } from '../../stores/branch-store';
+import { useAuthStore } from '../../stores/auth-store';
 import { useCurrency } from '../../hooks/useCurrency';
 import { queryKeys } from '../../lib/query-keys';
 import { buildApiUrl } from '../../lib/api-utils';
@@ -45,13 +46,16 @@ export const PurchaseReportsPage = () => {
   const [dateTo, setDateTo] = useState(() => new Date().toISOString().split('T')[0]);
   const [groupBy, setGroupBy] = useState<'day' | 'week' | 'month'>('day');
   const selectedBranch = useBranchStore((state) => state.selectedBranch);
+  const user = useAuthStore((state) => state.user);
   const branchId = getBranchId(selectedBranch);
+  const isSuperAdmin = user?.role === 'super_admin';
+  const effectiveBranchId = isSuperAdmin ? undefined : branchId;
   const { format } = useCurrency();
 
   // Fetch purchase reports
   const { data: reportData, isLoading, error } = useQuery({
     queryKey: queryKeys.reports.purchase({
-      branchId,
+      branchId: effectiveBranchId,
       startDate: dateFrom,
       endDate: dateTo,
       groupBy,
@@ -61,11 +65,11 @@ export const PurchaseReportsPage = () => {
         from: dateFrom,
         to: dateTo,
         groupBy,
-        branchId,
+        branchId: effectiveBranchId,
       }));
       return unwrapResponse(response.data, {} as PurchaseReportData);
     },
-    enabled: !!dateFrom && !!dateTo && !!branchId,
+    enabled: !!dateFrom && !!dateTo && (isSuperAdmin || !!branchId),
   });
 
   const handleExport = async () => {
@@ -75,7 +79,7 @@ export const PurchaseReportsPage = () => {
         to: dateTo,
         groupBy,
         format: 'csv',
-        branchId,
+        branchId: effectiveBranchId,
       }), {
         responseType: 'blob',
       });
@@ -92,13 +96,13 @@ export const PurchaseReportsPage = () => {
     }
   };
 
-  if (!branchId) {
+  if (!isSuperAdmin && !branchId) {
     return (
       <AdminLayout>
         <div className="rounded-2xl border border-white/10 bg-primary-dark/60 p-8 text-center">
           <h2 className="text-xl font-semibold text-white">Select a Branch First</h2>
           <p className="mt-2 text-gray-400">
-            Purchase reports are branch-scoped. Choose a branch to continue.
+            Purchase reports use your assigned branch. Choose a branch to continue.
           </p>
         </div>
       </AdminLayout>
@@ -112,7 +116,7 @@ export const PurchaseReportsPage = () => {
     <AdminLayout>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Purchase Reports</h1>
+          <h1 className="text-2xl font-bold text-white">Purchase Reports</h1>
           <Button onClick={handleExport}>
             Export to CSV
           </Button>
@@ -120,7 +124,7 @@ export const PurchaseReportsPage = () => {
 
         {/* Filters */}
         <div className="bg-primary-dark/50 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-white/5">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Input
               label="From Date"
               type="date"
@@ -148,7 +152,7 @@ export const PurchaseReportsPage = () => {
         {/* Summary Cards */}
         {reportData && (
           <>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-primary-dark/50 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-white/5">
                 <p className="text-sm text-gray-400">Total Purchases</p>
                 <p className="text-3xl font-bold text-white">{reportData.totalPurchases}</p>

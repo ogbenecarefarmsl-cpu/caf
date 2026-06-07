@@ -90,6 +90,7 @@ export const ProductSearch = ({ branchId }: ProductSearchProps) => {
     addItem({
       productId: product._id,
       productName: packSize ? `${product.name} (${packSize.name})` : product.name,
+      brand: product.brand,
       sku: product.sku,
       barcode: packSize?.barcode || product.barcode,
       quantity: 1,

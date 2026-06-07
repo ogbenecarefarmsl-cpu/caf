@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { AdminLayout } from '../../components/AdminLayout';
+import { useAuthStore } from '../../stores/auth-store';
 import { 
   DollarSign, 
   FileText, 
@@ -14,85 +15,100 @@ import {
 } from 'lucide-react';
 
 export function SalesPage() {
+  const user = useAuthStore((state) => state.user);
   const salesModules = [
     {
       title: 'POS Terminal',
       description: 'Process sales transactions at the point of sale',
       icon: CreditCard,
       path: '/pos',
-      color: 'bg-green-500'
+      color: 'bg-green-500',
+      roles: ['cashier', 'branch_manager', 'super_admin', 'auditor']
     },
     {
       title: 'Sales Reports',
       description: 'Analyze sales performance and trends',
       icon: TrendingUp,
       path: '/admin/reports/sales',
-      color: 'bg-blue-500'
+      color: 'bg-blue-500',
+      roles: ['super_admin', 'branch_manager', 'auditor']
     },
     {
       title: 'Transactions',
       description: 'View transaction history and details',
       icon: FileText,
       path: '/pos/transactions',
-      color: 'bg-purple-500'
+      color: 'bg-purple-500',
+      roles: ['cashier', 'branch_manager', 'super_admin', 'auditor']
     },
     {
       title: 'Credit Sales',
       description: 'Track balances due and receive follow-up payments',
       icon: WalletCards,
       path: '/admin/sales/credit',
-      color: 'bg-amber-500'
+      color: 'bg-amber-500',
+      roles: ['super_admin', 'branch_manager', 'auditor']
     },
     {
       title: 'Request Uploads',
       description: 'Upload client request sheets and match them to stock',
       icon: Upload,
       path: '/admin/sales/request-analysis',
-      color: 'bg-cyan-500'
+      color: 'bg-cyan-500',
+      roles: ['super_admin', 'branch_manager']
     },
     {
       title: 'Customer Reports',
       description: 'Track customer purchase patterns',
       icon: Users,
       path: '/admin/reports/customers',
-      color: 'bg-orange-500'
+      color: 'bg-orange-500',
+      roles: ['super_admin', 'branch_manager', 'auditor']
     },
     {
       title: 'Promotions',
       description: 'Manage discounts and promotional campaigns',
       icon: Percent,
       path: '/admin/promotions',
-      color: 'bg-pink-500'
+      color: 'bg-pink-500',
+      roles: ['super_admin', 'branch_manager']
     },
     {
       title: 'Shift Management',
       description: 'Monitor cashier shifts and daily summaries',
       icon: DollarSign,
       path: '/pos/shifts',
-      color: 'bg-teal-500'
+      color: 'bg-teal-500',
+      roles: ['cashier', 'branch_manager', 'super_admin', 'auditor']
     },
     {
       title: 'Customer Orders',
       description: 'Upload customer POs and process items with AI',
       icon: ClipboardList,
       path: '/admin/customer-orders',
-      color: 'bg-indigo-500'
+      color: 'bg-indigo-500',
+      roles: ['super_admin', 'branch_manager', 'cashier']
     },
     {
       title: 'Proforma Invoices',
       description: 'Create, approve, and convert proforma invoices to sales',
       icon: FileText,
       path: '/admin/proforma-invoices',
-      color: 'bg-violet-500'
+      color: 'bg-violet-500',
+      roles: ['super_admin', 'branch_manager']
     },
     {
       title: 'Delivery Notes',
       description: 'Track deliveries for customer orders',
       icon: Truck,
       path: '/admin/delivery-notes',
-      color: 'bg-rose-500'
+      color: 'bg-rose-500',
+      roles: ['super_admin', 'branch_manager', 'cashier']
     }
   ];
+  const visibleSalesModules = salesModules.filter((module) =>
+    module.roles.includes(user?.role || ''),
+  );
 
   return (
     <AdminLayout>
@@ -125,7 +141,7 @@ export function SalesPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {salesModules.map((module) => {
+          {visibleSalesModules.map((module) => {
             const Icon = module.icon;
             return (
               <Link

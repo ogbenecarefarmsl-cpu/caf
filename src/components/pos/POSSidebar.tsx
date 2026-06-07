@@ -8,6 +8,7 @@ import { unwrapResponse } from '../../lib/unwrap-response';
 import { useToast } from '../../hooks/useToast';
 import { queryKeys } from '../../lib/query-keys';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
+import { NotificationBell } from '../NotificationBell';
 
 interface Shift {
   _id: string;
@@ -134,7 +135,7 @@ export const POSSidebar = () => {
       {/* Mobile Toggle Button */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="lg:hidden fixed top-4 left-4 z-50 w-12 h-12 bg-primary-dark border border-gray-700 rounded-xl flex items-center justify-center text-white hover:bg-gray-800 transition-colors shadow-lg"
+        className="lg:hidden fixed top-4 left-4 z-50 w-14 h-14 bg-primary-dark border border-gray-700 rounded-xl flex items-center justify-center text-white hover:bg-gray-800 transition-colors shadow-lg"
       >
         {isExpanded ? (
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -146,6 +147,11 @@ export const POSSidebar = () => {
           </svg>
         )}
       </button>
+
+      {/* Mobile floating notification bell */}
+      <div className="lg:hidden fixed top-4 right-4 z-50">
+        <NotificationBell />
+      </div>
 
       {/* Overlay for mobile */}
       {isExpanded && (
@@ -177,6 +183,7 @@ export const POSSidebar = () => {
               <h2 className="text-white font-bold text-base truncate">CAREFARM POS</h2>
               <p className="text-xs text-gray-400 truncate">{selectedBranch?.name}</p>
             </div>
+            <NotificationBell />
           </div>
         </div>
 

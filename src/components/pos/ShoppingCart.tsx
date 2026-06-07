@@ -71,6 +71,11 @@ export const ShoppingCart = ({ onCheckout }: ShoppingCartProps) => {
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex-1 min-w-0">
                     <h3 className="font-medium text-white leading-snug whitespace-normal break-words">{item.productName}</h3>
+                    {item.brand && item.brand.trim().toLowerCase() !== 'unknown' && (
+                      <p className="text-xs text-accent-green mt-0.5 whitespace-normal break-words">
+                        Brand: {item.brand}
+                      </p>
+                    )}
                     <p className="text-xs text-gray-400 mt-1">
                       SKU: {item.sku}
                       {item.packSize && (
@@ -107,7 +112,7 @@ export const ShoppingCart = ({ onCheckout }: ShoppingCartProps) => {
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={() => handleQuantityDecrement(item.productId, item.packSize, item.quantity)}
-                      className="w-8 h-8 flex items-center justify-center bg-[--color-primary-dark] text-white rounded-lg hover:bg-gray-700 transition-colors"
+                      className="w-10 h-10 flex items-center justify-center bg-[--color-primary-dark] text-white rounded-lg hover:bg-gray-700 transition-colors"
                       disabled={item.quantity <= 1}
                     >
                       <svg
@@ -135,7 +140,7 @@ export const ShoppingCart = ({ onCheckout }: ShoppingCartProps) => {
 
                     <button
                       onClick={() => handleQuantityIncrement(item.productId, item.packSize, item.quantity)}
-                      className="w-8 h-8 flex items-center justify-center bg-[--color-primary-dark] text-white rounded-lg hover:bg-gray-700 transition-colors"
+                      className="w-10 h-10 flex items-center justify-center bg-[--color-primary-dark] text-white rounded-lg hover:bg-gray-700 transition-colors"
                     >
                       <svg
                         className="w-4 h-4"

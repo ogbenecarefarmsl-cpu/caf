@@ -11,6 +11,7 @@ import { Input } from '../../components/ui/Input';
 import { Loading } from '../../components/ui/Loading';
 import { Error } from '../../components/ui/Error';
 import { useBranchStore, getBranchId } from '../../stores/branch-store';
+import { useAuthStore } from '../../stores/auth-store';
 import { queryKeys } from '../../lib/query-keys';
 import { useCurrency } from '../../hooks/useCurrency';
 import { useBranchAwareCRUDMutations } from '../../hooks/useCRUDMutations';
@@ -70,9 +71,11 @@ interface TxFormData {
 export function FinanceTransactionsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { selectedBranch } = useBranchStore();
+  const user = useAuthStore((state) => state.user);
   const { format } = useCurrency();
 
   const branchId = getBranchId(selectedBranch);
+  const canCreateTransaction = ['super_admin', 'branch_manager', 'finance_manager'].includes(user?.role || '');
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<TxFormData>({
     defaultValues: {
@@ -123,9 +126,11 @@ export function FinanceTransactionsPage() {
       <div className="max-w-6xl mx-auto py-6 px-4">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-white">Finance Transactions</h1>
-          <Button onClick={() => setIsModalOpen(true)} disabled={!selectedBranch}>
-            + Add Transaction
-          </Button>
+          {canCreateTransaction ? (
+            <Button onClick={() => setIsModalOpen(true)} disabled={!selectedBranch}>
+              + Add Transaction
+            </Button>
+          ) : null}
         </div>
 
         {!selectedBranch && (

@@ -90,7 +90,7 @@ export const Table = <T extends Record<string, any>>({
                 <th
                   key={column.key}
                   scope="col"
-                  className={`px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider ${
+                  className={`px-3 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider ${
                     column.sortable ? 'cursor-pointer hover:text-white' : ''
                   } ${column.className || ''}`}
                   onClick={() => column.sortable && handleSort(column.key)}
@@ -165,7 +165,7 @@ export const Table = <T extends Record<string, any>>({
                 {columns.map((column) => (
                   <td
                     key={column.key}
-                    className={`px-6 py-4 whitespace-nowrap text-sm ${
+                    className={`px-3 py-3 sm:px-6 sm:py-4 text-sm ${
                       column.className || ''
                     }`}
                   >

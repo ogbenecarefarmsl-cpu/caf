@@ -199,7 +199,7 @@ export const InventoryReportsPage = () => {
 
         {error && (
           <div className="bg-primary-dark/50 backdrop-blur-sm rounded-2xl shadow-xl border border-white/5 p-6">
-            <Error message="Failed to generate report. Please try again." />
+            <Error message="Failed to load report. Please try again." />
           </div>
         )}
 

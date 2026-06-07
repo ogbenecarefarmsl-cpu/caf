@@ -10,6 +10,7 @@ import { Input } from '../../components/ui/Input';
 import { Loading } from '../../components/ui/Loading';
 import { Error } from '../../components/ui/Error';
 import { useBranchStore, getBranchId } from '../../stores/branch-store';
+import { useAuthStore } from '../../stores/auth-store';
 import { queryKeys } from '../../lib/query-keys';
 import { buildApiUrl } from '../../lib/api-utils';
 
@@ -51,12 +52,15 @@ export const TransferReportsPage = () => {
   const [dateTo, setDateTo] = useState(() => new Date().toISOString().split('T')[0]);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const selectedBranch = useBranchStore((state) => state.selectedBranch);
+  const user = useAuthStore((state) => state.user);
   const branchId = getBranchId(selectedBranch);
+  const isSuperAdmin = user?.role === 'super_admin';
+  const effectiveBranchId = isSuperAdmin ? undefined : branchId;
 
   // Fetch transfer reports
   const { data: reportData, isLoading, error } = useQuery({
     queryKey: queryKeys.reports.transfer({
-      branchId,
+      branchId: effectiveBranchId,
       startDate: dateFrom,
       endDate: dateTo,
       status: statusFilter,
@@ -65,12 +69,12 @@ export const TransferReportsPage = () => {
       const response = await apiClient.get(buildApiUrl('/reports/transfers', {
         startDate: dateFrom,
         endDate: dateTo,
-        branchId,
+        branchId: effectiveBranchId,
         status: statusFilter !== 'all' ? statusFilter : undefined,
       }));
       return unwrapResponse(response.data, {} as TransferReportData);
     },
-    enabled: !!dateFrom && !!dateTo && !!branchId,
+    enabled: !!dateFrom && !!dateTo && (isSuperAdmin || !!branchId),
   });
 
   const handleExport = async () => {
@@ -79,7 +83,7 @@ export const TransferReportsPage = () => {
         startDate: dateFrom,
         endDate: dateTo,
         export: 'excel',
-        branchId,
+        branchId: effectiveBranchId,
         status: statusFilter !== 'all' ? statusFilter : undefined,
       }), {
         responseType: 'blob',
@@ -97,13 +101,13 @@ export const TransferReportsPage = () => {
     }
   };
 
-  if (!branchId) {
+  if (!isSuperAdmin && !branchId) {
     return (
       <AdminLayout>
         <div className="rounded-2xl border border-white/10 bg-primary-dark/60 p-8 text-center">
           <h2 className="text-xl font-semibold text-white">Select a Branch First</h2>
           <p className="mt-2 text-gray-400">
-            Transfer reports are branch-scoped. Choose a branch to continue.
+            Transfer reports use your assigned branch. Choose a branch to continue.
           </p>
         </div>
       </AdminLayout>
@@ -140,7 +144,7 @@ export const TransferReportsPage = () => {
     <AdminLayout>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Transfer Reports</h1>
+          <h1 className="text-2xl font-bold text-white">Transfer Reports</h1>
           <Button onClick={handleExport}>
             Export to Excel
           </Button>
@@ -148,7 +152,7 @@ export const TransferReportsPage = () => {
 
         {/* Filters */}
         <div className="bg-primary-dark/50 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-white/5">
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Input
               label="From Date"
               type="date"
@@ -178,7 +182,7 @@ export const TransferReportsPage = () => {
         {/* Summary Cards */}
         {reportData && (
           <>
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="bg-primary-dark/50 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-white/5">
                 <p className="text-sm text-gray-400">Total Transfers</p>
                 <p className="text-3xl font-bold text-white">{reportData.summary.totalTransfers}</p>
