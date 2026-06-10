@@ -6,12 +6,17 @@ import { Modal } from '../../components/ui/Modal';
 import { Loading } from '../../components/ui/Loading';
 import { Error } from '../../components/ui/Error';
 import { useToast } from '../../hooks/useToast';
-import { useBranchStore, getBranchId } from '../../stores/branch-store';
 import { queryKeys } from '../../lib/query-keys';
 import apiClient from '../../lib/api-client';
 import { buildApiUrl } from '../../lib/api-utils';
 import { getErrorMessage } from '../../lib/error-utils';
-import { CheckCircle, XCircle, Eye, Plus, Trash2 } from 'lucide-react';
+import { CheckCircle, XCircle, Eye, Plus } from 'lucide-react';
+
+interface PaymentBreakdown {
+  cash: number;
+  orangeMoney: number;
+  afrimoney: number;
+}
 
 interface Reconciliation {
   _id: string;
@@ -23,8 +28,12 @@ interface Reconciliation {
   actualCash: number;
   discrepancy: number;
   hasDiscrepancy: boolean;
+  expectedPaymentBreakdown?: PaymentBreakdown;
+  actualPaymentBreakdown?: PaymentBreakdown;
+  paymentDiscrepancy?: PaymentBreakdown;
   status: string;
   items: { description: string; amount: number; reference?: string }[];
+  branchId: { _id: string; name: string } | string;
   createdBy: { firstName: string; lastName: string };
   reviewedBy?: { firstName: string; lastName: string };
   reviewNotes?: string;
@@ -33,6 +42,12 @@ interface Reconciliation {
 
 function formatMoney(amount: number) {
   return `Le ${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function getBranchName(branchId: Reconciliation['branchId']) {
+  if (!branchId) return '—';
+  if (typeof branchId === 'string') return branchId.slice(0, 8);
+  return branchId.name || '—';
 }
 
 const statusBadge = (status: string) => {
@@ -53,61 +68,128 @@ const sourceBadge = (source: string) => {
   return s[source] || 'bg-gray-500/10 text-gray-400 border-gray-500/20';
 };
 
+function PaymentBreakdownDisplay({ label, data }: { label: string; data?: PaymentBreakdown }) {
+  if (!data) return null;
+  return (
+    <div>
+      <p className="text-sm font-medium text-white/50 mb-1">{label}</p>
+      <div className="grid grid-cols-3 gap-2">
+        <div className="bg-white/5 rounded-lg p-2 text-center">
+          <p className="text-xs text-white/40">Cash</p>
+          <p className="text-sm text-white font-medium">{formatMoney(data.cash || 0)}</p>
+        </div>
+        <div className="bg-white/5 rounded-lg p-2 text-center">
+          <p className="text-xs text-white/40">Orange Money</p>
+          <p className="text-sm text-white font-medium">{formatMoney(data.orangeMoney || 0)}</p>
+        </div>
+        <div className="bg-white/5 rounded-lg p-2 text-center">
+          <p className="text-xs text-white/40">Afrimoney</p>
+          <p className="text-sm text-white font-medium">{formatMoney(data.afrimoney || 0)}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PaymentBreakdownInput({ prefix, form, setForm }: { prefix: string; form: Record<string, string>; setForm: (f: any) => void }) {
+  const fields = [
+    { key: 'cash', label: 'Cash' },
+    { key: 'orangeMoney', label: 'Orange Money' },
+    { key: 'afrimoney', label: 'Afrimoney' },
+  ];
+  return (
+    <div className="grid grid-cols-3 gap-3">
+      {fields.map(({ key, label }) => (
+        <div key={key}>
+          <label className="block text-xs font-medium text-white/50 mb-1">{label}</label>
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            value={form[`${prefix}${key}`] || ''}
+            onChange={(e) => setForm({ ...form, [`${prefix}${key}`]: e.target.value })}
+            placeholder="0"
+            className="w-full px-3 py-2 rounded-lg bg-white/5 text-white border border-white/10 text-sm focus:border-accent-green/50 focus:outline-none"
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function getPaymentValues(form: Record<string, string>, prefix: string): PaymentBreakdown {
+  return {
+    cash: Number(form[`${prefix}cash`] || 0),
+    orangeMoney: Number(form[`${prefix}orangeMoney`] || 0),
+    afrimoney: Number(form[`${prefix}afrimoney`] || 0),
+  };
+}
+
 export function FinanceReconciliationsPage() {
   const [selected, setSelected] = useState<Reconciliation | null>(null);
   const [reviewModal, setReviewModal] = useState<Reconciliation | null>(null);
-  const [reviewNotes, setReviewNotes] = useState('');
+  const [reviewForm, setReviewForm] = useState<Record<string, string>>({});
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [createForm, setCreateForm] = useState<{
-    source: 'caf' | 'emr' | 'lab';
-    period: string;
-    actualCash: string;
-    notes: string;
-  }>({ source: 'caf', period: '', actualCash: '', notes: '' });
-  const { selectedBranch } = useBranchStore();
-  const branchId = getBranchId(selectedBranch);
+  const [createForm, setCreateForm] = useState<Record<string, string>>({});
+  const [filterStatus, setFilterStatus] = useState<string>('');
   const queryClient = useQueryClient();
   const { showSuccess, showError } = useToast();
 
   const { data: recons, isLoading, error, refetch } = useQuery({
-    queryKey: queryKeys.financeManager.reconciliations.list({ branchId }),
+    queryKey: queryKeys.financeManager.reconciliations.list({ status: filterStatus || undefined }),
     queryFn: async () => {
-      const res = await apiClient.get(buildApiUrl('/finance-manager/reconciliations', { branchId }));
+      const params: Record<string, string> = {};
+      if (filterStatus) params.status = filterStatus;
+      const res = await apiClient.get(buildApiUrl('/finance-manager/reconciliations', params));
       return (res.data?.data ?? res.data) as Reconciliation[];
     },
-    enabled: !!branchId,
   });
 
   const reviewMutation = useMutation({
-    mutationFn: async ({ id, status, notes }: { id: string; status: string; notes: string }) => {
-      await apiClient.patch(`/finance-manager/reconciliations/${id}/review`, { status, reviewNotes: notes });
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const payload: Record<string, any> = {
+        status,
+        reviewNotes: reviewForm.notes || undefined,
+      };
+      const actualCash = reviewForm.reviewActualCash;
+      if (actualCash !== undefined && actualCash !== '') {
+        payload.actualCash = Number(actualCash);
+      }
+      const pm = getPaymentValues(reviewForm, 'review');
+      if (pm.cash || pm.orangeMoney || pm.afrimoney) {
+        payload.actualPaymentBreakdown = pm;
+      }
+      await apiClient.patch(`/finance-manager/reconciliations/${id}/review`, payload);
     },
     onSuccess: () => {
       showSuccess('Reconciliation reviewed');
       queryClient.invalidateQueries({ queryKey: queryKeys.financeManager.reconciliations.all() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.financeManager.dashboard(branchId) });
       setReviewModal(null);
-      setReviewNotes('');
+      setReviewForm({});
     },
     onError: (err: any) => showError(err?.response?.data?.message || 'Review failed'),
   });
 
   const createMutation = useMutation({
     mutationFn: async () => {
+      const pm = getPaymentValues(createForm, 'create');
       await apiClient.post('/finance-manager/reconciliations', {
-        branchId,
         source: createForm.source,
+        branchId: createForm.branchId,
         period: createForm.period,
-        actualCash: Number(createForm.actualCash),
+        totalSales: Number(createForm.totalSales || 0),
+        totalExpenses: Number(createForm.totalExpenses || 0),
+        expectedCash: Number(createForm.expectedCash || 0),
+        actualCash: Number(createForm.actualCash || 0),
         notes: createForm.notes || undefined,
+        expectedPaymentBreakdown: (pm.cash || pm.orangeMoney || pm.afrimoney) ? pm : undefined,
       });
     },
     onSuccess: () => {
       showSuccess('Reconciliation created');
       queryClient.invalidateQueries({ queryKey: queryKeys.financeManager.reconciliations.all() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.financeManager.dashboard(branchId) });
       setIsCreateOpen(false);
-      setCreateForm({ source: 'caf', period: '', actualCash: '', notes: '' });
+      setCreateForm({});
     },
     onError: (err: unknown) => showError(getErrorMessage(err, 'Failed to create reconciliation')),
   });
@@ -115,10 +197,19 @@ export function FinanceReconciliationsPage() {
   return (
     <FinanceLayout title="Reconciliations">
       <div className="mb-6 flex items-center justify-between">
-        <p className="text-gray-400">Review and approve reconciliations from CAF, EMR, and Lab systems</p>
+        <p className="text-gray-400">Review and approve reconciliations from all branches</p>
         <Button onClick={() => setIsCreateOpen(true)}>
           <Plus className="w-4 h-4 mr-2" />New Reconciliation
         </Button>
+      </div>
+
+      <div className="mb-4 flex gap-2">
+        {['', 'pending', 'approved', 'rejected'].map((s) => (
+          <button key={s} onClick={() => setFilterStatus(s)}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${filterStatus === s ? 'bg-accent-green text-white' : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'}`}>
+            {s ? s.charAt(0).toUpperCase() + s.slice(1) : 'All'}
+          </button>
+        ))}
       </div>
 
       {isLoading ? <Loading variant="centered" text="Loading..." /> : error ? <Error message="Failed to load" onRetry={refetch} /> : (
@@ -127,6 +218,7 @@ export function FinanceReconciliationsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-white/10 bg-white/5">
+                  <th className="text-left text-gray-400 px-4 py-3 font-medium">Branch</th>
                   <th className="text-left text-gray-400 px-4 py-3 font-medium">Source</th>
                   <th className="text-left text-gray-400 px-4 py-3 font-medium">Period</th>
                   <th className="text-right text-gray-400 px-4 py-3 font-medium">Sales</th>
@@ -140,10 +232,11 @@ export function FinanceReconciliationsPage() {
               </thead>
               <tbody>
                 {(recons || []).length === 0 ? (
-                  <tr><td colSpan={9} className="px-4 py-8 text-center text-gray-400">No reconciliations found</td></tr>
+                  <tr><td colSpan={10} className="px-4 py-8 text-center text-gray-400">No reconciliations found</td></tr>
                 ) : (
                   (recons || []).map((r) => (
                     <tr key={r._id} className="border-b border-white/5 hover:bg-white/5 cursor-pointer" onClick={() => setSelected(r)}>
+                      <td className="px-4 py-3 text-white">{getBranchName(r.branchId)}</td>
                       <td className="px-4 py-3">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium border ${sourceBadge(r.source)}`}>{r.source.toUpperCase()}</span>
                       </td>
@@ -160,7 +253,13 @@ export function FinanceReconciliationsPage() {
                       </td>
                       <td className="px-4 py-3">
                         {r.status === 'pending' ? (
-                          <Button size="sm" onClick={(e: any) => { e?.stopPropagation(); setReviewModal(r); }}>Review</Button>
+                          <Button size="sm" onClick={(e: any) => {
+                            e?.stopPropagation();
+                            setReviewForm({ notes: '' });
+                            setReviewModal(r);
+                          }}>
+                            <Eye className="w-3 h-3 mr-1" />Review
+                          </Button>
                         ) : null}
                       </td>
                     </tr>
@@ -172,20 +271,46 @@ export function FinanceReconciliationsPage() {
         </div>
       )}
 
+      {/* Detail Modal */}
       <Modal isOpen={!!selected} onClose={() => setSelected(null)} title="Reconciliation Detail" size="lg">
         {selected ? (
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div><span className="text-gray-400 text-sm">Branch</span><p className="text-white font-medium">{getBranchName(selected.branchId)}</p></div>
               <div><span className="text-gray-400 text-sm">Source</span><p className="text-white font-medium">{selected.source.toUpperCase()}</p></div>
               <div><span className="text-gray-400 text-sm">Period</span><p className="text-white font-medium">{selected.period}</p></div>
+              <div><span className="text-gray-400 text-sm">Status</span><p><span className={`px-2 py-1 rounded-full text-xs font-medium border ${statusBadge(selected.status)}`}>{selected.status}</span></p></div>
               <div><span className="text-gray-400 text-sm">Total Sales</span><p className="text-white font-medium">{formatMoney(selected.totalSales)}</p></div>
               <div><span className="text-gray-400 text-sm">Total Expenses</span><p className="text-white font-medium">{formatMoney(selected.totalExpenses)}</p></div>
               <div><span className="text-gray-400 text-sm">Expected Cash</span><p className="text-white font-medium">{formatMoney(selected.expectedCash)}</p></div>
               <div><span className="text-gray-400 text-sm">Actual Cash</span><p className="text-white font-medium">{formatMoney(selected.actualCash)}</p></div>
-              <div><span className="text-gray-400 text-sm">Discrepancy</span><p className={`font-semibold ${selected.hasDiscrepancy ? 'text-red-400' : 'text-green-400'}`}>{formatMoney(selected.discrepancy)}</p></div>
-              <div><span className="text-gray-400 text-sm">Status</span><p><span className={`px-2 py-1 rounded-full text-xs font-medium border ${statusBadge(selected.status)}`}>{selected.status}</span></p></div>
+              <div className="sm:col-span-2">
+                <span className="text-gray-400 text-sm">Discrepancy</span>
+                <p className={`text-lg font-semibold ${selected.hasDiscrepancy ? 'text-red-400' : 'text-green-400'}`}>{formatMoney(selected.discrepancy)}</p>
+              </div>
             </div>
-            {selected.items.length > 0 ? (
+
+            <PaymentBreakdownDisplay label="Expected Payment Breakdown" data={selected.expectedPaymentBreakdown} />
+            <PaymentBreakdownDisplay label="Actual Payment Breakdown" data={selected.actualPaymentBreakdown} />
+
+            {selected.paymentDiscrepancy && (selected.paymentDiscrepancy.cash || selected.paymentDiscrepancy.orangeMoney || selected.paymentDiscrepancy.afrimoney) && (
+              <div>
+                <p className="text-sm font-medium text-white/50 mb-1">Payment Method Discrepancy</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {(['cash', 'orangeMoney', 'afrimoney'] as const).map((key) => {
+                    const val = selected.paymentDiscrepancy![key] || 0;
+                    return (
+                      <div key={key} className="bg-white/5 rounded-lg p-2 text-center">
+                        <p className="text-xs text-white/40">{key === 'orangeMoney' ? 'Orange Money' : key === 'afrimoney' ? 'Afrimoney' : 'Cash'}</p>
+                        <p className={`text-sm font-medium ${Math.abs(val) > 0.01 ? 'text-amber-400' : 'text-green-400'}`}>{formatMoney(val)}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {selected.items.length > 0 && (
               <div>
                 <h4 className="text-sm font-medium text-gray-400 mb-2">Line Items</h4>
                 <div className="space-y-1">
@@ -197,37 +322,67 @@ export function FinanceReconciliationsPage() {
                   ))}
                 </div>
               </div>
-            ) : null}
-            {selected.reviewedBy ? (
+            )}
+
+            {selected.reviewedBy && (
               <div><span className="text-gray-400 text-sm">Reviewed by</span><p className="text-white">{selected.reviewedBy.firstName} {selected.reviewedBy.lastName}</p></div>
-            ) : null}
-            {selected.reviewNotes ? (
+            )}
+            {selected.reviewNotes && (
               <div><span className="text-gray-400 text-sm">Review Notes</span><p className="text-white">{selected.reviewNotes}</p></div>
-            ) : null}
+            )}
           </div>
         ) : null}
       </Modal>
 
-      <Modal isOpen={!!reviewModal} onClose={() => setReviewModal(null)} title="Review Reconciliation">
+      {/* Review Modal */}
+      <Modal isOpen={!!reviewModal} onClose={() => setReviewModal(null)} title="Review Reconciliation" size="lg">
         {reviewModal ? (
           <div className="space-y-4">
             <div className="bg-white/5 rounded-xl p-4">
-              <p className="text-white font-medium">{reviewModal.source.toUpperCase()} — {reviewModal.period}</p>
-              <p className="text-sm text-gray-400">Expected: {formatMoney(reviewModal.expectedCash)} | Actual: {formatMoney(reviewModal.actualCash)}</p>
-              <p className={`text-sm font-semibold ${reviewModal.hasDiscrepancy ? 'text-red-400' : 'text-green-400'}`}>
-                Discrepancy: {formatMoney(reviewModal.discrepancy)}
-              </p>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div><span className="text-gray-400">Branch:</span> <span className="text-white ml-1">{getBranchName(reviewModal.branchId)}</span></div>
+                <div><span className="text-gray-400">Source:</span> <span className="text-white ml-1">{reviewModal.source.toUpperCase()}</span></div>
+                <div><span className="text-gray-400">Period:</span> <span className="text-white ml-1">{reviewModal.period}</span></div>
+                <div><span className="text-gray-400">Expected:</span> <span className="text-white ml-1">{formatMoney(reviewModal.expectedCash)}</span></div>
+              </div>
+              {reviewModal.expectedPaymentBreakdown && (
+                <div className="mt-3 pt-3 border-t border-white/10">
+                  <p className="text-xs text-white/40 mb-1">Expected breakdown:</p>
+                  <div className="flex gap-3 text-xs">
+                    <span className="text-white/60">Cash: {formatMoney(reviewModal.expectedPaymentBreakdown.cash)}</span>
+                    <span className="text-white/60">OM: {formatMoney(reviewModal.expectedPaymentBreakdown.orangeMoney)}</span>
+                    <span className="text-white/60">Afrimoney: {formatMoney(reviewModal.expectedPaymentBreakdown.afrimoney)}</span>
+                  </div>
+                </div>
+              )}
             </div>
+
             <div>
-              <label className="block text-sm font-medium text-white mb-1">Review Notes</label>
-              <textarea value={reviewNotes} onChange={(e) => setReviewNotes(e.target.value)} rows={3}
+              <label className="block text-sm font-medium text-white mb-1">Actual Cash Counted (total)</label>
+              <input type="number" step="0.01" min="0" value={reviewForm.reviewActualCash || reviewModal.actualCash}
+                onChange={(e) => setReviewForm({ ...reviewForm, reviewActualCash: e.target.value })}
                 className="w-full px-4 py-2.5 rounded-xl bg-white/5 text-white border border-white/10 focus:border-accent-green/50 focus:outline-none" />
             </div>
+
+            <div>
+              <label className="block text-sm font-medium text-white mb-2">Payment Method Breakdown (what you actually received)</label>
+              <PaymentBreakdownInput prefix="review" form={reviewForm} setForm={setReviewForm} />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-white mb-1">Review Notes</label>
+              <textarea value={reviewForm.notes || ''} onChange={(e) => setReviewForm({ ...reviewForm, notes: e.target.value })} rows={3}
+                placeholder="Optional notes about the review..."
+                className="w-full px-4 py-2.5 rounded-xl bg-white/5 text-white border border-white/10 focus:border-accent-green/50 focus:outline-none" />
+            </div>
+
             <div className="flex gap-3 justify-end">
-              <Button variant="danger" onClick={() => reviewMutation.mutate({ id: reviewModal._id, status: 'rejected', notes: reviewNotes })}>
+              <Button variant="danger" onClick={() => reviewMutation.mutate({ id: reviewModal._id, status: 'rejected' })}
+                isLoading={reviewMutation.isPending}>
                 <XCircle className="w-4 h-4 mr-2" />Reject
               </Button>
-              <Button variant="primary" onClick={() => reviewMutation.mutate({ id: reviewModal._id, status: 'approved', notes: reviewNotes })}>
+              <Button variant="primary" onClick={() => reviewMutation.mutate({ id: reviewModal._id, status: 'approved' })}
+                isLoading={reviewMutation.isPending}>
                 <CheckCircle className="w-4 h-4 mr-2" />Approve
               </Button>
             </div>
@@ -235,15 +390,13 @@ export function FinanceReconciliationsPage() {
         ) : null}
       </Modal>
 
-      <Modal isOpen={isCreateOpen} onClose={() => setIsCreateOpen(false)} title="New Reconciliation">
+      {/* Create Modal */}
+      <Modal isOpen={isCreateOpen} onClose={() => setIsCreateOpen(false)} title="New Reconciliation" size="lg">
         <div className="space-y-4">
-          <div className="rounded-md border border-amber-500/30 bg-amber-500/5 p-3 text-sm text-amber-200">
-            Expected cash (sales − expenses) will be calculated automatically from the {createForm.source.toUpperCase()} data for the chosen period.
-          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-white mb-1">Source</label>
-              <select value={createForm.source} onChange={(e) => setCreateForm({ ...createForm, source: e.target.value as 'caf' | 'emr' | 'lab' })}
+              <select value={createForm.source || 'caf'} onChange={(e) => setCreateForm({ ...createForm, source: e.target.value })}
                 className="w-full px-4 py-2.5 rounded-xl bg-white/5 text-white border border-white/10">
                 <option value="caf">CAF</option>
                 <option value="emr">EMR</option>
@@ -251,25 +404,54 @@ export function FinanceReconciliationsPage() {
               </select>
             </div>
             <div>
+              <label className="block text-sm font-medium text-white mb-1">Branch ID</label>
+              <input value={createForm.branchId || ''} onChange={(e) => setCreateForm({ ...createForm, branchId: e.target.value })}
+                placeholder="Branch ID" className="w-full px-4 py-2.5 rounded-xl bg-white/5 text-white border border-white/10" />
+            </div>
+            <div>
               <label className="block text-sm font-medium text-white mb-1">Period (YYYY-MM)</label>
-              <input value={createForm.period} onChange={(e) => setCreateForm({ ...createForm, period: e.target.value })} placeholder="2026-06"
+              <input value={createForm.period || ''} onChange={(e) => setCreateForm({ ...createForm, period: e.target.value })} placeholder="2026-06"
+                className="w-full px-4 py-2.5 rounded-xl bg-white/5 text-white border border-white/10" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-white mb-1">Total Sales</label>
+              <input type="number" step="0.01" min="0" value={createForm.totalSales || ''} onChange={(e) => setCreateForm({ ...createForm, totalSales: e.target.value })}
+                className="w-full px-4 py-2.5 rounded-xl bg-white/5 text-white border border-white/10" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-white mb-1">Total Expenses</label>
+              <input type="number" step="0.01" min="0" value={createForm.totalExpenses || ''} onChange={(e) => setCreateForm({ ...createForm, totalExpenses: e.target.value })}
                 className="w-full px-4 py-2.5 rounded-xl bg-white/5 text-white border border-white/10" />
             </div>
           </div>
+
+          <div>
+            <label className="block text-sm font-medium text-white mb-1">Expected Cash (Sales - Expenses)</label>
+            <input type="number" step="0.01" value={createForm.expectedCash || ''} onChange={(e) => setCreateForm({ ...createForm, expectedCash: e.target.value })}
+              className="w-full px-4 py-2.5 rounded-xl bg-white/5 text-white border border-white/10" />
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-white mb-1">Actual Cash Counted</label>
-            <input type="number" step="0.01" value={createForm.actualCash} onChange={(e) => setCreateForm({ ...createForm, actualCash: e.target.value })}
+            <input type="number" step="0.01" min="0" value={createForm.actualCash || ''} onChange={(e) => setCreateForm({ ...createForm, actualCash: e.target.value })}
               className="w-full px-4 py-2.5 rounded-xl bg-white/5 text-white border border-white/10" />
           </div>
+
+          <div>
+            <label className="block text-sm font-medium text-white mb-2">Expected Payment Breakdown (optional)</label>
+            <PaymentBreakdownInput prefix="create" form={createForm} setForm={setCreateForm} />
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-white mb-1">Notes (optional)</label>
-            <textarea value={createForm.notes} onChange={(e) => setCreateForm({ ...createForm, notes: e.target.value })} rows={2}
+            <textarea value={createForm.notes || ''} onChange={(e) => setCreateForm({ ...createForm, notes: e.target.value })} rows={2}
               className="w-full px-4 py-2.5 rounded-xl bg-white/5 text-white border border-white/10" />
           </div>
+
           <div className="flex justify-end gap-3">
             <Button variant="ghost" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
             <Button onClick={() => createMutation.mutate()} isLoading={createMutation.isPending}
-              disabled={!createForm.period || !createForm.actualCash}>
+              disabled={!createForm.period || !createForm.branchId || !createForm.actualCash}>
               <Plus className="w-4 h-4 mr-2" />Create
             </Button>
           </div>
