@@ -36,7 +36,7 @@ export const EmptyState = ({ icon, title, message, action }: EmptyStateProps) =>
       {action && (
         <button
           onClick={action.onClick}
-          className="mt-4 px-4 py-2 bg-accent-green text-primary-dark rounded-xl font-medium hover:bg-accent-light transition-colors"
+          className="mt-4 px-4 py-2 bg-accent-green text-primary-dark rounded-xl font-medium hover:bg-accent-light transition-colors focus:outline-none focus:ring-2 focus:ring-accent-green/50 focus:ring-offset-2 focus:ring-offset-primary-dark"
         >
           {action.label}
         </button>

@@ -51,7 +51,7 @@ export const MarketerLayout = ({ children, title = 'Marketer Dashboard' }: Marke
       <header className="bg-primary-dark border-b border-gray-800 sticky top-0 z-20">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex items-center justify-between">
           <div className="min-w-0">
-            <h1 className="text-xl font-bold text-white">CAREFARM POS</h1>
+            <div className="text-xl font-bold text-white select-none">CAREFARM POS</div>
             <p className="text-xs text-gray-400 truncate">
               {selectedBranch?.name || 'No branch selected'}
             </p>

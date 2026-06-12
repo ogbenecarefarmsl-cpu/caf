@@ -186,7 +186,7 @@ export const FinanceLayout = ({ children, title = 'Finance Hub' }: FinanceLayout
       <OfflineNotification />
       <aside className="hidden lg:flex fixed inset-y-0 left-0 z-30 w-64 bg-primary-dark border-r border-gray-800 flex-col">
         <div className="p-6 border-b border-gray-800">
-          <h1 className="text-2xl font-bold text-white">CAREFARM FINANCE</h1>
+          <div className="text-2xl font-bold text-white select-none">CAREFARM FINANCE</div>
           {selectedBranch ? (
             <p className="text-sm text-gray-400 mt-1">{selectedBranch.name}</p>
           ) : null}
@@ -235,7 +235,7 @@ export const FinanceLayout = ({ children, title = 'Finance Hub' }: FinanceLayout
       >
         <div className="p-5 border-b border-gray-800 flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-white">CAREFARM FINANCE</h1>
+            <div className="text-xl font-bold text-white select-none">CAREFARM FINANCE</div>
             {selectedBranch ? (
               <p className="text-xs text-gray-400 mt-1">{selectedBranch.name}</p>
             ) : null}
