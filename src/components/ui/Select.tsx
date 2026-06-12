@@ -39,6 +39,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             border ${error ? 'border-red-500/50 focus:border-red-500' : 'border-white/10 focus:border-accent-green/50'}
             focus:outline-none focus:ring-2 ${error ? 'focus:ring-red-500/20' : 'focus:ring-accent-green/20'}
             disabled:opacity-50 disabled:cursor-not-allowed
+            placeholder-gray-400
             transition-all duration-200
             [&>option]:bg-primary-dark [&>option]:text-white
             ${className}

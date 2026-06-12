@@ -78,7 +78,7 @@ const ToastContainer = ({ toasts, onRemove }: ToastContainerProps) => {
   if (toasts.length === 0) return null;
 
   return (
-    <div className="fixed top-4 right-4 z-50 space-y-2 max-w-sm">
+    <div className="fixed top-4 right-4 left-4 sm:left-auto z-50 space-y-2 sm:max-w-sm">
       {toasts.map((toast) => (
         <ToastItem key={toast.id} toast={toast} onRemove={onRemove} />
       ))}
@@ -158,7 +158,7 @@ const ToastItem = ({ toast, onRemove }: ToastItemProps) => {
   };
 
   return (
-    <div className={`${getToastStyles()} p-4 rounded-lg shadow-lg border text-white min-w-80`} role="alert" aria-live="polite">
+    <div className={`${getToastStyles()} p-4 rounded-lg shadow-lg border text-white w-full sm:min-w-80`} role="alert" aria-live="polite">
       <div className="flex items-start space-x-3">
         <div className="shrink-0" aria-hidden="true">
           {getIcon()}

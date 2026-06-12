@@ -82,8 +82,9 @@ export const Table = <T extends Record<string, any>>({
 
   return (
     <div className="bg-primary-dark rounded-xl border border-gray-700 overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-700">
+      <div className="relative">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-700">
           <thead className="bg-primary-darker">
             <tr>
               {columns.map((column) => (
@@ -178,6 +179,14 @@ export const Table = <T extends Record<string, any>>({
             ))}
           </tbody>
         </table>
+        </div>
+        <div className="absolute right-0 top-0 bottom-0 flex items-center pr-2 sm:hidden pointer-events-none">
+          <div className="w-8 h-full bg-gradient-to-l from-primary-dark to-transparent flex items-center justify-end">
+            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+        </div>
       </div>
 
       {/* Pagination */}

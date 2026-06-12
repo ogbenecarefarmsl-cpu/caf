@@ -199,7 +199,7 @@ export const MarketerAssignmentsPage = () => {
       <div className="max-w-7xl mx-auto p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-white">Marketer Assignments</h2>
+            <h1 className="text-2xl font-bold text-white">Marketer Assignments</h1>
             <p className="text-gray-400 mt-1">Assign products and selling prices to marketers.</p>
           </div>
           <Button onClick={() => setIsModalOpen(true)} disabled={!branchId}>New Assignment</Button>

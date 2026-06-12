@@ -278,7 +278,7 @@ export const UserManagementPage = () => {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-white">Users</h2>
+            <h1 className="text-2xl font-bold text-white">Users</h1>
             <p className="text-gray-400 mt-1">Manage system users and permissions</p>
           </div>
           <Button onClick={() => handleOpenModal()}>

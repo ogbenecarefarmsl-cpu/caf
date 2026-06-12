@@ -359,7 +359,7 @@ export const BatchManagementPage = () => {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-white">Batches</h2>
+            <h1 className="text-2xl font-bold text-white">Batches</h1>
             <p className="text-gray-400 mt-1">Manage inventory batches and expiry dates</p>
           </div>
           <Button onClick={() => handleOpenModal()}>
