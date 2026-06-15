@@ -9,6 +9,7 @@ import { NotificationBell } from './NotificationBell';
 import { PasskeySetupBanner } from './account';
 import { ConnectionStatus } from './ui/ConnectionStatus';
 import { OfflineNotification } from './ui/OfflineNotification';
+import { PWAUpdatePrompt } from './ui/PWAUpdatePrompt';
 import { ConfirmDialog } from './ui/ConfirmDialog';
 
 interface FinanceLayoutProps {
@@ -182,8 +183,9 @@ export const FinanceLayout = ({ children, title = 'Finance Hub' }: FinanceLayout
 
   return (
     <div className="h-screen overflow-hidden bg-primary-darker">
-      <ConnectionStatus />
-      <OfflineNotification />
+        <ConnectionStatus />
+        <OfflineNotification />
+        <PWAUpdatePrompt />
       <aside className="hidden lg:flex fixed inset-y-0 left-0 z-30 w-64 bg-primary-dark border-r border-gray-800 flex-col">
         <div className="p-6 border-b border-gray-800">
           <div className="text-2xl font-bold text-white select-none">CAREFARM FINANCE</div>

@@ -15,3 +15,4 @@ export { ToastProvider } from './Toast';
 export { ConnectionStatus } from './ConnectionStatus';
 export { CustomerTypeahead } from './CustomerTypeahead';
 export { OfflineNotification } from './OfflineNotification';
+export { PWAUpdatePrompt } from './PWAUpdatePrompt';
