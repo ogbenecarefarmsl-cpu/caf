@@ -32,6 +32,11 @@ dist-ssr
 android/keystore.properties
 android/*.jks
 android/*.keystore
+*.jks
+*.keystore
+keystore-base64.txt
+encrypted*.txt
+encrypted-*.txt
 
 # wrangler files
 .wrangler
