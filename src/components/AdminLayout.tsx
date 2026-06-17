@@ -469,16 +469,19 @@ export const AdminLayout = ({ children, title = 'Admin' }: AdminLayoutProps) => 
               </button>
               <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight truncate">{title}</h2>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex shrink-0 items-center gap-3">
               <NotificationBell />
               <div className="hidden sm:block w-64">
                 <BranchSelector />
               </div>
             </div>
           </div>
+          <div className="mt-3 sm:hidden">
+            <BranchSelector />
+          </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+        <main className="flex-1 overflow-y-auto p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:p-6 lg:p-8">
           <div className="max-w-7xl mx-auto space-y-4">
             <PasskeySetupBanner />
             {children}
