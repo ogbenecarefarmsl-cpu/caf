@@ -47,6 +47,11 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  /* Prevent iOS auto-zoom on focus by keeping form controls at 16px minimum */
+  input, select, textarea {
+    font-size: 1rem;
+  }
+
   /* Required for ML Kit barcode scanner: makes WebView background transparent
      so the native camera preview shows through behind HTML overlay elements */
   body.barcode-scan-active,

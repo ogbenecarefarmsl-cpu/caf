@@ -67,7 +67,7 @@ export const BranchSelector = () => {
 
   if (isLoading) {
     return (
-      <div className="w-64">
+      <div className="w-full sm:w-64">
         <Select
           label="Branch"
           options={[{ value: '', label: 'Loading...' }]}
@@ -84,7 +84,7 @@ export const BranchSelector = () => {
   // If user has only one branch, show it as read-only
   if (availableBranches.length === 1 && user?.role !== 'super_admin') {
     return (
-      <div className="w-64">
+      <div className="w-full sm:w-64">
         <Select
           label="Branch"
           options={[{ value: availableBranches[0]._id, label: availableBranches[0].name }]}
@@ -96,7 +96,7 @@ export const BranchSelector = () => {
   }
 
   return (
-    <div className="w-64">
+    <div className="w-full sm:w-64">
       <Select
         label="Branch"
         options={availableBranches.map(branch => ({

@@ -76,11 +76,11 @@ export const ProductPickerModal = ({ open, onClose, branchId }: ProductPickerMod
 
   return (
     <div
-      className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black/60 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4"
       onClick={onClose}
     >
       <div
-        className="bg-primary-dark border border-gray-700 rounded-2xl w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl"
+        className="bg-primary-dark border border-gray-700 rounded-t-2xl sm:rounded-2xl w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="px-5 py-4 border-b border-gray-700 flex items-center justify-between">
@@ -92,7 +92,7 @@ export const ProductPickerModal = ({ open, onClose, branchId }: ProductPickerMod
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white text-2xl leading-none"
+            className="w-11 h-11 flex items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-white/5 text-2xl leading-none"
           >
             x
           </button>
@@ -104,7 +104,7 @@ export const ProductPickerModal = ({ open, onClose, branchId }: ProductPickerMod
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search products by name, brand, SKU..."
-            className="w-full px-4 py-2 bg-primary-darker border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-accent-green"
+            className="w-full px-4 py-3 bg-primary-darker border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-accent-green"
             autoFocus
           />
         </div>
@@ -137,11 +137,11 @@ export const ProductPickerModal = ({ open, onClose, branchId }: ProductPickerMod
                       )}
                     </div>
                     {hasPacks ? (
-                      <div className="flex flex-col gap-1 shrink-0">
+                      <div className="flex flex-col gap-1.5 shrink-0">
                         <button
                           onClick={() => handleAdd(p)}
                           disabled={isFull}
-                          className="px-3 py-1 text-xs bg-accent-green text-primary-dark rounded-md font-semibold hover:bg-accent-light disabled:opacity-50"
+                          className="px-4 py-2 min-h-10 text-xs bg-accent-green text-primary-dark rounded-md font-semibold hover:bg-accent-light disabled:opacity-50"
                         >
                           + Base
                         </button>
@@ -150,8 +150,8 @@ export const ProductPickerModal = ({ open, onClose, branchId }: ProductPickerMod
                             key={pk.code ?? pk.name}
                             onClick={() => handleAdd(p, pk.code)}
                             disabled={isFull}
-                            className="px-3 py-1 text-xs bg-primary-dark border border-accent-green/30 text-accent-green rounded-md font-semibold hover:bg-accent-green/10 disabled:opacity-50"
-                            title={`Le ${pk.sellingPrice.toFixed(2)}`}
+                            className="px-4 py-2 min-h-10 text-xs bg-primary-dark border border-accent-green/30 text-accent-green rounded-md font-semibold hover:bg-accent-green/10 disabled:opacity-50 truncate max-w-[140px]"
+                            title={`+ ${pk.name} - Le ${pk.sellingPrice.toFixed(2)}`}
                           >
                             + {pk.name}
                           </button>
@@ -161,7 +161,7 @@ export const ProductPickerModal = ({ open, onClose, branchId }: ProductPickerMod
                       <button
                         onClick={() => handleAdd(p)}
                         disabled={isFull}
-                        className="px-4 py-2 text-sm bg-accent-green text-primary-dark rounded-lg font-semibold hover:bg-accent-light disabled:opacity-50 shrink-0"
+                        className="px-4 py-2.5 min-h-11 text-sm bg-accent-green text-primary-dark rounded-lg font-semibold hover:bg-accent-light disabled:opacity-50 shrink-0"
                       >
                         + Add
                       </button>

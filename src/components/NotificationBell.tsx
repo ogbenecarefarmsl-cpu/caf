@@ -127,7 +127,7 @@ export const NotificationBell = () => {
           setOpen((o) => !o);
           if (!open) clearHasNew();
         }}
-        className="relative w-10 h-10 rounded-xl bg-primary-dark border border-gray-700 flex items-center justify-center text-gray-300 hover:border-accent-green/50 hover:text-accent-green transition-colors"
+        className="relative w-12 h-12 rounded-xl bg-primary-dark border border-gray-700 flex items-center justify-center text-gray-300 hover:border-accent-green/50 hover:text-accent-green transition-colors"
         aria-label="Notifications"
       >
         <svg
@@ -161,7 +161,7 @@ export const NotificationBell = () => {
               <button
                 onClick={() => markAllReadMutation.mutate()}
                 disabled={markAllReadMutation.isPending}
-                className="text-xs text-accent-green hover:text-accent-light font-medium disabled:opacity-50"
+                className="px-3 py-2 min-h-9 text-xs text-accent-green hover:text-accent-light font-medium disabled:opacity-50 rounded-lg hover:bg-accent-green/10"
               >
                 Mark all read
               </button>
@@ -207,7 +207,7 @@ export const NotificationBell = () => {
                         e.stopPropagation();
                         removeMutation.mutate(n._id);
                       }}
-                      className="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-red-400 text-xs"
+                      className="p-2 min-w-9 min-h-9 rounded-lg text-gray-500 hover:text-red-400 hover:bg-white/5 text-xs sm:opacity-0 sm:group-hover:opacity-100"
                       title="Dismiss"
                     >
                       x

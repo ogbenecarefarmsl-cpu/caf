@@ -304,7 +304,7 @@ export const UserManagementPage = () => {
         >
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {/* Basic Information */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input
                 label="Username"
                 {...register('username', { required: 'Username is required' })}
@@ -328,7 +328,7 @@ export const UserManagementPage = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input
                 label="First Name"
                 {...register('firstName', nameValidation)}
@@ -355,7 +355,7 @@ export const UserManagementPage = () => {
             <div className="border-t border-gray-700 pt-4 mt-4">
               <h3 className="text-lg font-semibold text-white mb-4">Role & Access</h3>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Select
                   label="Role"
                   {...register('role', { required: 'Role is required' })}
@@ -394,7 +394,7 @@ export const UserManagementPage = () => {
             </div>
 
             {/* Actions */}
-            <div className="flex justify-end gap-3 pt-4 border-t border-gray-700">
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 border-t border-gray-700">
               <Button
                 type="button"
                 variant="secondary"

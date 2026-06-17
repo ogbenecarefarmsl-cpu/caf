@@ -182,8 +182,8 @@ export function CycleCountPage() {
 
           {activeDetail && (
             <>
-              <div className="mb-6 overflow-hidden rounded-xl border border-white/10 bg-white/5">
-                <table className="w-full text-sm">
+              <div className="mb-6 overflow-x-auto rounded-xl border border-white/10 bg-white/5">
+                <table className="w-full text-sm min-w-[600px]">
                   <thead className="bg-primary-darker text-gray-400 uppercase text-xs">
                     <tr>
                       <th className="px-4 py-3 text-left">Product</th>

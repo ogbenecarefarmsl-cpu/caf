@@ -87,7 +87,7 @@ export const ShoppingCart = ({ onCheckout }: ShoppingCartProps) => {
                   </div>
                   <button
                     onClick={() => removeItem(item.productId, item.packSize)}
-                    className="text-gray-400 hover:text-red-500 transition-colors ml-2"
+                    className="text-gray-400 hover:text-red-500 transition-colors ml-2 p-2 shrink-0"
                     title="Remove item"
                   >
                     <svg
@@ -112,7 +112,7 @@ export const ShoppingCart = ({ onCheckout }: ShoppingCartProps) => {
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={() => handleQuantityDecrement(item.productId, item.packSize, item.quantity)}
-                      className="w-10 h-10 flex items-center justify-center bg-[--color-primary-dark] text-white rounded-lg hover:bg-gray-700 transition-colors"
+                      className="w-12 h-12 flex items-center justify-center bg-[--color-primary-dark] text-white rounded-lg hover:bg-gray-700 transition-colors"
                       disabled={item.quantity <= 1}
                     >
                       <svg
@@ -135,12 +135,12 @@ export const ShoppingCart = ({ onCheckout }: ShoppingCartProps) => {
                       min="1"
                       value={item.quantity}
                       onChange={(e) => handleQuantityChange(item.productId, item.packSize, e.target.value)}
-                      className="w-16 px-2 py-1 text-center bg-[--color-primary-dark] text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[--color-accent-green]"
+                      className="w-16 px-2 py-2 text-center bg-[--color-primary-dark] text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[--color-accent-green]"
                     />
 
                     <button
                       onClick={() => handleQuantityIncrement(item.productId, item.packSize, item.quantity)}
-                      className="w-10 h-10 flex items-center justify-center bg-[--color-primary-dark] text-white rounded-lg hover:bg-gray-700 transition-colors"
+                      className="w-12 h-12 flex items-center justify-center bg-[--color-primary-dark] text-white rounded-lg hover:bg-gray-700 transition-colors"
                     >
                       <svg
                         className="w-4 h-4"

@@ -235,7 +235,7 @@ export const POSSidebar = () => {
               <p className="text-white text-sm font-medium truncate">
                 {user?.firstName} {user?.lastName}
               </p>
-              <p className="text-xs text-gray-400 capitalize">{user?.role?.replace('_', ' ')}</p>
+              <p className="text-xs text-gray-400 capitalize truncate">{user?.role?.replace('_', ' ')}</p>
             </div>
           </div>
 

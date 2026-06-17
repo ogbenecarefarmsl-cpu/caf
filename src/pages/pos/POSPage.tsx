@@ -643,46 +643,44 @@ export const POSPage = () => {
     <POSLayout>
       <div className="flex flex-col h-full overflow-hidden">
         {/* Top Bar */}
-        <div className="bg-linear-to-r from-primary-dark to-primary-darker border-b border-gray-700 px-6 py-3">
-        <div className="flex items-center justify-between">
+        <div className="bg-linear-to-r from-primary-dark to-primary-darker border-b border-gray-700 px-4 sm:px-6 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-y-2 gap-x-4">
           {/* Left: Branch Info */}
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 rounded-xl bg-linear-to-br from-accent-green to-emerald-600 flex items-center justify-center text-primary-dark font-bold text-lg">
-                {selectedBranch?.name?.charAt(0) || 'N'}
-              </div>
-              <div>
-                <h1 className="text-base font-bold text-white">{selectedBranch?.name || 'No Branch'}</h1>
-                <p className="text-xs text-gray-400">Terminal - {currentShift?.status === 'open' ? 'Shift Open' : 'No Shift'}</p>
-              </div>
+          <div className="flex items-center space-x-3 min-w-0">
+            <div className="w-12 h-12 rounded-xl bg-linear-to-br from-accent-green to-emerald-600 flex items-center justify-center text-primary-dark font-bold text-lg shrink-0">
+              {selectedBranch?.name?.charAt(0) || 'N'}
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-base font-bold text-white truncate">{selectedBranch?.name || 'No Branch'}</h1>
+              <p className="text-xs text-gray-400 truncate">Terminal - {currentShift?.status === 'open' ? 'Shift Open' : 'No Shift'}</p>
             </div>
           </div>
 
           {/* Center: Shift Status */}
-          <div className="flex items-center space-x-3">
+          <div className="flex flex-wrap items-center gap-2">
             {currentShift?.status === 'open' ? (
-              <div className="flex items-center space-x-2">
-                <div className="flex items-center space-x-2 px-3 py-1.5 bg-green-500/10 border border-green-500/30 rounded-lg">
+              <>
+                <div className="flex items-center space-x-2 px-3 py-1.5 min-h-10 bg-green-500/10 border border-green-500/30 rounded-lg">
                   <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
                   <span className="text-green-400 text-xs font-medium">Shift Active</span>
                 </div>
                 <button
                   onClick={() => setShowCloseShiftModal(true)}
-                  className="px-4 py-1.5 bg-red-500/10 border border-red-500/30 rounded-lg text-red-300 text-xs font-medium hover:bg-red-500/20 transition-colors"
+                  className="px-4 py-1.5 min-h-10 bg-red-500/10 border border-red-500/30 rounded-lg text-red-300 text-xs font-medium hover:bg-red-500/20 transition-colors"
                 >
                   Close Shift
                 </button>
                 <button
                   onClick={() => setShowExpenseModal(true)}
-                  className="px-4 py-1.5 bg-orange-500/10 border border-orange-500/30 rounded-lg text-orange-300 text-xs font-medium hover:bg-orange-500/20 transition-colors"
+                  className="px-4 py-1.5 min-h-10 bg-orange-500/10 border border-orange-500/30 rounded-lg text-orange-300 text-xs font-medium hover:bg-orange-500/20 transition-colors"
                 >
                   Log Expense
                 </button>
-              </div>
+              </>
             ) : (
               <button
                 onClick={() => setShowShiftModal(true)}
-                className="px-4 py-1.5 bg-amber-500/10 border border-amber-500/30 rounded-lg text-amber-400 text-xs font-medium hover:bg-amber-500/20 transition-colors"
+                className="px-4 py-1.5 min-h-10 bg-amber-500/10 border border-amber-500/30 rounded-lg text-amber-400 text-xs font-medium hover:bg-amber-500/20 transition-colors"
               >
                 Open Shift
               </button>
@@ -690,14 +688,14 @@ export const POSPage = () => {
           </div>
 
           {/* Right: User & Status */}
-          <div className="flex items-center space-x-3">
-            <div className={`flex items-center space-x-2 px-2 py-1 rounded-lg ${wsConnected ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
+          <div className="flex items-center gap-2">
+            <div className={`flex items-center space-x-2 px-2 py-1 min-h-10 rounded-lg ${wsConnected ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
               <div className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-green-400' : 'bg-red-400'} ${wsConnected ? 'animate-pulse' : ''}`} />
               <span className={`text-xs font-medium ${wsConnected ? 'text-green-400' : 'text-red-400'}`}>{wsConnected ? 'Online' : 'Offline'}</span>
             </div>
             <button 
               onClick={() => setShowProfile(true)}
-              className="w-10 h-10 rounded-xl bg-linear-to-br from-accent-green to-emerald-600 flex items-center justify-center text-primary-dark font-bold text-sm hover:shadow-lg hover:shadow-accent-green/50 transition-shadow"
+              className="w-12 h-12 rounded-xl bg-linear-to-br from-accent-green to-emerald-600 flex items-center justify-center text-primary-dark font-bold text-sm hover:shadow-lg hover:shadow-accent-green/50 transition-shadow"
             >
               {user?.firstName?.[0]}{user?.lastName?.[0]}
             </button>
@@ -1020,7 +1018,7 @@ export const POSPage = () => {
                     </div>
                     <button
                       onClick={() => removeItem(item.productId, item.packSize)}
-                      className="text-gray-500 hover:text-red-400 transition-colors ml-2 shrink-0"
+                      className="text-gray-500 hover:text-red-400 transition-colors ml-2 p-2 shrink-0"
                       title="Remove item"
                     >
                       <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -1033,7 +1031,7 @@ export const POSPage = () => {
                     <div className="flex items-center space-x-2 bg-primary-dark rounded-lg p-1">
                       <button
                         onClick={() => handleQuantityDecrement(item.productId, item.packSize, item.quantity)}
-                        className="w-6 h-6 flex items-center justify-center hover:bg-gray-700 rounded transition-colors text-gray-300"
+                        className="w-10 h-10 flex items-center justify-center hover:bg-gray-700 rounded transition-colors text-gray-300"
                       >
                         -
                       </button>
@@ -1041,11 +1039,11 @@ export const POSPage = () => {
                         type="text"
                         value={item.quantity}
                         onChange={(e) => handleQuantityChange(item.productId, item.packSize, e.target.value)}
-                        className="w-8 h-6 bg-transparent text-center text-white font-semibold text-sm focus:outline-none"
+                        className="w-12 h-10 bg-transparent text-center text-white font-semibold text-base focus:outline-none"
                       />
                       <button
                         onClick={() => handleQuantityIncrement(item.productId, item.packSize, item.quantity)}
-                        className="w-6 h-6 flex items-center justify-center hover:bg-gray-700 rounded transition-colors text-gray-300"
+                        className="w-10 h-10 flex items-center justify-center hover:bg-gray-700 rounded transition-colors text-gray-300"
                       >
                         +
                       </button>
@@ -1125,7 +1123,7 @@ export const POSPage = () => {
             </div>
             <button
               onClick={() => setShowMobileCart(false)}
-              className="w-10 h-10 flex items-center justify-center rounded-xl bg-primary-darker text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"
+              className="w-12 h-12 flex items-center justify-center rounded-xl bg-primary-darker text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1156,7 +1154,7 @@ export const POSPage = () => {
                   </div>
                   <button
                     onClick={() => removeItem(item.productId, item.packSize)}
-                    className="text-gray-500 hover:text-red-400 transition-colors ml-3 shrink-0"
+                    className="text-gray-500 hover:text-red-400 transition-colors ml-3 p-2 shrink-0"
                   >
                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
@@ -1164,29 +1162,29 @@ export const POSPage = () => {
                   </button>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2 bg-primary-darker rounded-lg p-1.5">
-                    <button
-                      onClick={() => handleQuantityDecrement(item.productId, item.packSize, item.quantity)}
-                      className="w-10 h-10 flex items-center justify-center hover:bg-gray-700 rounded transition-colors text-gray-300"
-                    >
-                      <span className="text-lg">-</span>
-                    </button>
-                    <input
-                      type="text"
-                      value={item.quantity}
-                      onChange={(e) => handleQuantityChange(item.productId, item.packSize, e.target.value)}
-                      className="w-10 h-10 bg-transparent text-center text-white font-semibold text-base focus:outline-none"
-                    />
-                    <button
-                      onClick={() => handleQuantityIncrement(item.productId, item.packSize, item.quantity)}
-                      className="w-10 h-10 flex items-center justify-center hover:bg-gray-700 rounded transition-colors text-gray-300"
-                    >
-                      <span className="text-lg">+</span>
-                    </button>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2 bg-primary-darker rounded-lg p-1.5">
+                      <button
+                        onClick={() => handleQuantityDecrement(item.productId, item.packSize, item.quantity)}
+                        className="w-12 h-12 flex items-center justify-center hover:bg-gray-700 rounded transition-colors text-gray-300"
+                      >
+                        <span className="text-lg">-</span>
+                      </button>
+                      <input
+                        type="text"
+                        value={item.quantity}
+                        onChange={(e) => handleQuantityChange(item.productId, item.packSize, e.target.value)}
+                        className="w-12 h-12 bg-transparent text-center text-white font-semibold text-base focus:outline-none"
+                      />
+                      <button
+                        onClick={() => handleQuantityIncrement(item.productId, item.packSize, item.quantity)}
+                        className="w-12 h-12 flex items-center justify-center hover:bg-gray-700 rounded transition-colors text-gray-300"
+                      >
+                        <span className="text-lg">+</span>
+                      </button>
+                    </div>
+                    <p className="text-white font-bold text-lg">{format(item.unitPrice * item.quantity)}</p>
                   </div>
-                  <p className="text-white font-bold text-lg">{format(item.unitPrice * item.quantity)}</p>
-                </div>
               </div>
             ))}
           </div>
@@ -1256,9 +1254,9 @@ export const POSPage = () => {
 
       {/* Open Shift Modal */}
       {showShiftModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
           <div className="absolute inset-0 bg-black/75" onClick={() => setShowShiftModal(false)} />
-          <div className="relative bg-primary-dark rounded-2xl p-6 w-full max-w-md mx-4 border border-gray-700">
+          <div className="relative bg-primary-dark rounded-t-2xl sm:rounded-2xl p-6 w-full max-w-md mx-0 sm:mx-4 border border-gray-700 max-h-[85vh] overflow-y-auto">
             <h2 className="text-xl font-bold text-white mb-4">Open Shift</h2>
             <p className="text-gray-400 mb-4">Enter the opening cash amount to start your shift.</p>
             
@@ -1297,9 +1295,9 @@ export const POSPage = () => {
 
       {/* Close Shift Modal */}
       {showCloseShiftModal && currentShift && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
           <div className="absolute inset-0 bg-black/75" onClick={() => setShowCloseShiftModal(false)} />
-          <div className="relative bg-primary-dark rounded-2xl p-6 w-full max-w-md mx-4 border border-gray-700">
+          <div className="relative bg-primary-dark rounded-t-2xl sm:rounded-2xl p-6 w-full max-w-md mx-0 sm:mx-4 border border-gray-700 max-h-[85vh] overflow-y-auto">
             <h2 className="text-xl font-bold text-white mb-4">Close Shift</h2>
             <p className="text-gray-400 mb-4">Count the cash in the register and confirm shift closure.</p>
 
@@ -1368,9 +1366,9 @@ export const POSPage = () => {
 
       {/* Expense Modal */}
       {showExpenseModal && currentShift && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
           <div className="absolute inset-0 bg-black/75" onClick={() => setShowExpenseModal(false)} />
-          <div className="relative bg-primary-dark rounded-2xl p-6 w-full max-w-md mx-4 border border-gray-700">
+          <div className="relative bg-primary-dark rounded-t-2xl sm:rounded-2xl p-6 w-full max-w-md mx-0 sm:mx-4 border border-gray-700 max-h-[85vh] overflow-y-auto">
             <h2 className="text-xl font-bold text-white mb-4">Log Expense</h2>
             <p className="text-gray-400 mb-4">Record a cash expense for this active shift.</p>
 
@@ -1433,9 +1431,9 @@ export const POSPage = () => {
 
       {/* Pack Size Selector Modal */}
       {showPackSizeModal && selectedProductForPack && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
           <div className="absolute inset-0 bg-black/75" onClick={() => setShowPackSizeModal(false)} />
-          <div className="relative bg-primary-dark rounded-2xl p-6 w-full max-w-md mx-4 border border-gray-700">
+          <div className="relative bg-primary-dark rounded-t-2xl sm:rounded-2xl p-6 w-full max-w-md mx-0 sm:mx-4 border border-gray-700 max-h-[85vh] overflow-y-auto">
             <h2 className="text-xl font-bold text-white mb-1">Select Pack Size</h2>
             <p className="text-gray-400 text-sm mb-4">{selectedProductForPack.name}</p>
 

@@ -780,7 +780,7 @@ export const ProductManagementPage = () => {
                   error={errors.name?.message}
                 />
 
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <Input
                     label="Barcode"
                     {...register('barcode', { required: 'Barcode is required' })}
@@ -792,7 +792,7 @@ export const ProductManagementPage = () => {
                     variant="secondary"
                     onClick={handleScanBarcode}
                     disabled={!cameraAvailable}
-                    className="mt-8"
+                    className="sm:mt-8"
                   >
                     {cameraAvailable ? 'Scan' : 'No Camera'}
                   </Button>
@@ -832,7 +832,7 @@ export const ProductManagementPage = () => {
                 >
                 </Select>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Input
                     label="Selling Price (per base unit)"
                     type="number"
@@ -856,7 +856,7 @@ export const ProductManagementPage = () => {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Input
                     label="Retail Price Override"
                     type="number"
@@ -983,7 +983,7 @@ export const ProductManagementPage = () => {
 
             {wizardStep === 2 ? (
               <>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Input
                     label={editingProduct ? 'Current Total Stock' : 'Opening Stock'}
                     type="number"

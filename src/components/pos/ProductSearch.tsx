@@ -216,7 +216,7 @@ export const ProductSearch = ({ branchId }: ProductSearchProps) => {
         <button
           type="button"
           onClick={() => setIsScannerActive(!isScannerActive)}
-          className={`absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-lg transition-all duration-200 ${
+          className={`absolute right-3 top-1/2 -translate-y-1/2 p-3 rounded-lg transition-all duration-200 ${
             isScannerActive
               ? 'bg-accent-green text-primary-dark shadow-lg shadow-accent-green/40'
               : 'bg-primary-darker text-gray-400 hover:text-white hover:bg-gray-800'
@@ -284,7 +284,7 @@ export const ProductSearch = ({ branchId }: ProductSearchProps) => {
                                 event.stopPropagation();
                                 handleProductSelect(product);
                               }}
-                              className="rounded-lg border border-gray-600 px-2.5 py-1 text-xs font-semibold text-gray-200 hover:border-accent-green hover:text-accent-green"
+                              className="rounded-lg border border-gray-600 px-3 py-2 min-h-10 text-xs font-semibold text-gray-200 hover:border-accent-green hover:text-accent-green"
                             >
                               {product.unit || 'Unit'} - {format(product.sellingPrice)}
                             </button>
@@ -300,7 +300,7 @@ export const ProductSearch = ({ branchId }: ProductSearchProps) => {
                                   handleProductSelect(product, pack);
                                 }}
                                 disabled={disabled}
-                                className={`rounded-lg border px-2.5 py-1 text-xs font-semibold ${
+                                className={`rounded-lg border px-3 py-2 min-h-10 text-xs font-semibold ${
                                   disabled
                                     ? 'cursor-not-allowed border-gray-700 text-gray-500'
                                     : 'border-accent-green/30 bg-accent-green/10 text-accent-green hover:bg-accent-green hover:text-primary-dark'
