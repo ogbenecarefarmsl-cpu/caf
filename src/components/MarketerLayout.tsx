@@ -47,8 +47,8 @@ export const MarketerLayout = ({ children, title = 'Marketer Dashboard' }: Marke
   ];
 
   return (
-    <div className="min-h-screen bg-primary-darker">
-      <header className="bg-primary-dark border-b border-gray-800 sticky top-0 z-20">
+    <div className="min-h-dvh bg-primary-darker">
+      <header className="bg-primary-dark border-b border-gray-800 sticky top-0 z-20 pt-safe-top">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex items-center justify-between">
           <div className="min-w-0">
             <div className="text-xl font-bold text-white select-none">CAREFARM POS</div>

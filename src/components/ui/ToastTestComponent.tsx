@@ -8,7 +8,7 @@ export const ToastTestComponent = () => {
   const { alertError, alertWarning, alertInfo, alertSuccess } = useAlertReplacement();
 
   return (
-    <div className="fixed bottom-4 left-4 z-50 space-x-2 flex">
+    <div className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] left-4 z-50 space-x-2 flex">
       <button
         onClick={() => alertSuccess('Success! Operation completed successfully.')}
         className="px-3 py-2 bg-green-600 text-white rounded text-sm hover:bg-green-700"

@@ -135,7 +135,7 @@ export const POSSidebar = () => {
       {/* Mobile Toggle Button */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="lg:hidden fixed top-4 left-4 z-50 w-14 h-14 bg-primary-dark border border-gray-700 rounded-xl flex items-center justify-center text-white hover:bg-gray-800 transition-colors shadow-lg"
+        className="lg:hidden fixed top-[calc(1rem+env(safe-area-inset-top))] left-4 z-50 w-14 h-14 bg-primary-dark border border-gray-700 rounded-xl flex items-center justify-center text-white hover:bg-gray-800 transition-colors shadow-lg"
       >
         {isExpanded ? (
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -149,7 +149,7 @@ export const POSSidebar = () => {
       </button>
 
       {/* Mobile floating notification bell */}
-      <div className="lg:hidden fixed top-4 right-4 z-50">
+      <div className="lg:hidden fixed top-[calc(1rem+env(safe-area-inset-top))] right-4 z-50">
         <NotificationBell />
       </div>
 
@@ -172,7 +172,7 @@ export const POSSidebar = () => {
         `}
       >
         {/* Header */}
-        <div className="p-4 border-b border-gray-700">
+        <div className="p-4 border-b border-gray-700 pt-safe-top">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-xl bg-linear-to-br from-accent-green to-emerald-600 flex items-center justify-center">
               <svg className="w-6 h-6 text-primary-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -226,7 +226,7 @@ export const POSSidebar = () => {
         </nav>
 
         {/* User Info */}
-        <div className="p-3 border-t border-gray-700">
+        <div className="p-3 border-t border-gray-700 pb-safe-bottom">
           <div className="flex items-center space-x-3 px-3 py-2 rounded-lg bg-gray-800/50">
             <div className="w-9 h-9 rounded-full bg-linear-to-br from-accent-green to-emerald-600 flex items-center justify-center text-primary-dark font-bold text-sm">
               {user?.firstName?.[0]}{user?.lastName?.[0]}

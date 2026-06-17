@@ -291,7 +291,7 @@ export const POSPage = () => {
     if (!found) {
       setScanFeedback({ message: `No product for barcode: ${barcode}`, ok: false });
     } else if (found.stock <= 0) {
-      setScanFeedback({ message: `${found.name} — out of stock`, ok: false });
+      setScanFeedback({ message: `${found.name} - out of stock`, ok: false });
     } else {
       if (!currentShift || currentShift.status !== 'open') {
         setShowShiftModal(true);
@@ -653,7 +653,7 @@ export const POSPage = () => {
               </div>
               <div>
                 <h1 className="text-base font-bold text-white">{selectedBranch?.name || 'No Branch'}</h1>
-                <p className="text-xs text-gray-400">Terminal · {currentShift?.status === 'open' ? 'Shift Open' : 'No Shift'}</p>
+                <p className="text-xs text-gray-400">Terminal - {currentShift?.status === 'open' ? 'Shift Open' : 'No Shift'}</p>
               </div>
             </div>
           </div>
@@ -754,7 +754,7 @@ export const POSPage = () => {
                 />
               </div>
 
-              {/* Scan Mode Toggle — native only */}
+              {/* Scan Mode Toggle - native only */}
               {cameraAvailable && (
                 <button
                   onClick={toggleScanMode}
@@ -878,7 +878,7 @@ export const POSPage = () => {
                         Brand: {getDisplayBrand(product.brand)}
                       </p>
                       <p className="mt-1 text-left text-xs text-gray-400 whitespace-normal break-words">
-                        {product.category || 'Uncategorized'} • {product.sku || 'No SKU'}
+                        {product.category || 'Uncategorized'} - {product.sku || 'No SKU'}
                       </p>
                       <div className="flex items-center justify-between mt-2">
                         <p className="text-accent-green font-bold text-base">{format(product.price)}</p>
@@ -1035,7 +1035,7 @@ export const POSPage = () => {
                         onClick={() => handleQuantityDecrement(item.productId, item.packSize, item.quantity)}
                         className="w-6 h-6 flex items-center justify-center hover:bg-gray-700 rounded transition-colors text-gray-300"
                       >
-                        −
+                        -
                       </button>
                       <input
                         type="text"
@@ -1101,7 +1101,7 @@ export const POSPage = () => {
       {items.length > 0 && (
         <button
           onClick={() => setShowMobileCart(true)}
-          className="lg:hidden fixed bottom-6 right-6 z-40 w-16 h-16 bg-linear-to-r from-accent-green to-emerald-500 rounded-full shadow-2xl shadow-accent-green/50 flex items-center justify-center hover:scale-110 transition-transform"
+          className="lg:hidden fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] right-6 z-40 w-16 h-16 bg-linear-to-r from-accent-green to-emerald-500 rounded-full shadow-2xl shadow-accent-green/50 flex items-center justify-center hover:scale-110 transition-transform"
         >
           <div className="relative">
             <svg className="w-7 h-7 text-primary-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1118,7 +1118,7 @@ export const POSPage = () => {
       {showMobileCart && (
         <div className="lg:hidden fixed inset-0 z-50 flex flex-col bg-primary-darker">
           {/* Mobile Cart Header */}
-          <div className="bg-primary-dark border-b border-gray-700 px-4 py-4 flex items-center justify-between">
+          <div className="bg-primary-dark border-b border-gray-700 px-4 py-4 flex items-center justify-between pt-safe-top">
             <div>
               <h2 className="text-xl font-bold text-white">Your Order</h2>
               <p className="text-sm text-gray-400 mt-0.5">{items.length} item{items.length !== 1 ? 's' : ''}</p>
@@ -1170,7 +1170,7 @@ export const POSPage = () => {
                       onClick={() => handleQuantityDecrement(item.productId, item.packSize, item.quantity)}
                       className="w-10 h-10 flex items-center justify-center hover:bg-gray-700 rounded transition-colors text-gray-300"
                     >
-                      <span className="text-lg">−</span>
+                      <span className="text-lg">-</span>
                     </button>
                     <input
                       type="text"
@@ -1236,7 +1236,7 @@ export const POSPage = () => {
 
       {/* Stock Warning Toast */}
       {stockWarning && (
-        <div className="fixed top-4 right-4 z-50 max-w-sm">
+        <div className="fixed top-[calc(1rem+env(safe-area-inset-top))] right-4 z-50 max-w-sm">
           <div className="bg-yellow-500 text-primary-dark px-4 py-3 rounded-xl shadow-lg flex items-start space-x-3">
             <svg className="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -1501,14 +1501,14 @@ export const POSPage = () => {
 
       <OfflineIndicator />
 
-      {/* ── Barcode Scan Mode Overlay ────────────────────────────────────────
+      {/* -- Barcode Scan Mode Overlay ----------------------------------------
            When active, the WebView background is transparent so the native
            camera shows behind this overlay. Only visible HTML elements are
            the targeting reticle, feedback toast, and the stop button.       */}
       {scanMode && (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-between pointer-events-none">
           {/* Top instruction bar */}
-          <div className="w-full px-4 pt-safe-top pt-6 flex justify-center pointer-events-auto">
+          <div className="w-full px-4 pt-[calc(1.5rem+env(safe-area-inset-top))] flex justify-center pointer-events-auto">
             <div className="bg-black/70 backdrop-blur-sm rounded-2xl px-5 py-3 flex items-center gap-3">
               <div className="w-2.5 h-2.5 rounded-full bg-accent-green animate-pulse" />
               <span className="text-white text-sm font-medium">Point camera at a barcode to add it to the cart</span>
@@ -1536,7 +1536,7 @@ export const POSPage = () => {
                     : 'bg-red-500/90 text-white'
                 }`}
               >
-                {scanFeedback.ok ? '✓ ' : '✗ '}{scanFeedback.message}
+                {scanFeedback.ok ? 'OK ' : 'Error '}{scanFeedback.message}
               </div>
             )}
 

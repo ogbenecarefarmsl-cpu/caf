@@ -53,7 +53,7 @@ export const PWAUpdatePrompt = () => {
   if (!needRefresh) return null;
 
   return (
-    <div className="fixed bottom-4 left-4 z-50 max-w-sm p-4 rounded-xl bg-primary-dark border border-accent-green/30 shadow-2xl" role="alert" aria-live="assertive">
+    <div className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] left-4 z-50 max-w-sm p-4 rounded-xl bg-primary-dark border border-accent-green/30 shadow-2xl" role="alert" aria-live="assertive">
       <div className="flex items-start gap-3">
         <div className="shrink-0 rounded-full bg-accent-green/20 p-2">
           <svg className="w-5 h-5 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">

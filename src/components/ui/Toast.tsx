@@ -78,7 +78,7 @@ const ToastContainer = ({ toasts, onRemove }: ToastContainerProps) => {
   if (toasts.length === 0) return null;
 
   return (
-    <div className="fixed top-4 right-4 left-4 sm:left-auto z-50 space-y-2 sm:max-w-sm">
+    <div className="fixed top-[calc(1rem+env(safe-area-inset-top))] right-4 left-4 sm:left-auto z-50 space-y-2 sm:max-w-sm">
       {toasts.map((toast) => (
         <ToastItem key={toast.id} toast={toast} onRemove={onRemove} />
       ))}

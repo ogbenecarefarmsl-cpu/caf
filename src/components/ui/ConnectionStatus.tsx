@@ -18,7 +18,7 @@ export const ConnectionStatus = () => {
   }, []);
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary-dark/80 backdrop-blur-md border border-white/10 shadow-lg transition-all" role="status" aria-live="polite">
+    <div className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] right-4 z-50 flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary-dark/80 backdrop-blur-md border border-white/10 shadow-lg transition-all" role="status" aria-live="polite">
       <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500 animate-pulse'}`} aria-hidden="true" />
       <span className="text-xs font-medium text-gray-300">
         {isConnected ? 'Online' : 'Offline'}

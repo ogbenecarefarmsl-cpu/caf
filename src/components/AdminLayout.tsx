@@ -342,11 +342,11 @@ export const AdminLayout = ({ children, title = 'Admin' }: AdminLayoutProps) => 
   );
 
   return (
-    <div className="h-screen overflow-hidden bg-primary-darker">
+    <div className="h-dvh overflow-hidden bg-primary-darker">
           <ConnectionStatus />
           <OfflineNotification />
           <PWAUpdatePrompt />
-      <aside className="hidden lg:flex fixed inset-y-0 left-0 z-30 w-64 bg-primary-dark border-r border-gray-800 flex-col">
+      <aside className="hidden lg:flex fixed inset-y-0 left-0 z-30 w-64 bg-primary-dark border-r border-gray-800 flex-col pt-safe-top">
         <div className="p-6 border-b border-gray-800">
           <div className="text-2xl font-bold text-white select-none">CAREFARM POS</div>
           {selectedBranch ? (
@@ -391,7 +391,7 @@ export const AdminLayout = ({ children, title = 'Admin' }: AdminLayoutProps) => 
       ></div>
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-72 bg-primary-dark border-r border-gray-800 flex flex-col transform transition-transform duration-200 lg:hidden ${
+        className={`fixed inset-y-0 left-0 z-50 w-72 bg-primary-dark border-r border-gray-800 flex flex-col transform transition-transform duration-200 lg:hidden pt-safe-top ${
           isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -454,7 +454,7 @@ export const AdminLayout = ({ children, title = 'Admin' }: AdminLayoutProps) => 
         variant="danger"
       />
 
-      <div className="flex h-screen min-w-0 flex-col bg-primary-darker lg:ml-64">
+      <div className="flex h-dvh min-w-0 flex-col bg-primary-darker lg:ml-64 pt-safe-top">
         <header className="bg-primary-dark/50 backdrop-blur-xl border-b border-white/5 px-4 py-4 sm:px-6 lg:px-8 lg:py-6 sticky top-0 z-30">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">

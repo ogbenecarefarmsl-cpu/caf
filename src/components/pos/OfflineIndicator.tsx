@@ -9,7 +9,7 @@ export const OfflineIndicator = () => {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50">
+    <div className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] right-4 z-50">
       {!isOnline ? (
         <div className="bg-orange-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-3">
           <svg

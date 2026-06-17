@@ -18,7 +18,7 @@ export const OfflineNotification = () => {
   if (pendingCount === 0) return null;
 
   return (
-    <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-xl bg-accent-green/90 backdrop-blur-sm text-primary-dark font-bold text-sm shadow-2xl border border-white/20 transition-all" role="status" aria-live="polite">
+    <div className="fixed top-[calc(1rem+env(safe-area-inset-top))] left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-xl bg-accent-green/90 backdrop-blur-sm text-primary-dark font-bold text-sm shadow-2xl border border-white/20 transition-all" role="status" aria-live="polite">
       {pendingCount} operation(s) pending synchronization
     </div>
   );

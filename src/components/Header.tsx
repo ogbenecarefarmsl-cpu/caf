@@ -49,7 +49,7 @@ export const Header = ({ title, showNav = false }: HeaderProps) => {
   );
 
   return (
-    <header className="bg-primary-dark/50 backdrop-blur-md border-b border-white/5 sticky top-0 z-20">
+    <header className="bg-primary-dark/50 backdrop-blur-md border-b border-white/5 sticky top-0 z-20 pt-safe-top">
       <div className="px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
