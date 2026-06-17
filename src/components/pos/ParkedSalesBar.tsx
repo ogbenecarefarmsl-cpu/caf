@@ -68,8 +68,8 @@ export const ParkedSalesBar = ({
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-white truncate">{sale.label}</p>
                 <p className="text-xs text-gray-400">
-                  {sale.items.length} item{sale.items.length !== 1 ? 's' : ''} · {format(sale.total)} · {timeAgo(sale.heldAt)}
-                  {sale.customerName ? ` · ${sale.customerName}` : ''}
+                  {sale.items.length} item{sale.items.length !== 1 ? 's' : ''} - {format(sale.total)} - {timeAgo(sale.heldAt)}
+                  {sale.customerName ? ` - ${sale.customerName}` : ''}
                 </p>
               </div>
               <div className="flex gap-2 shrink-0">

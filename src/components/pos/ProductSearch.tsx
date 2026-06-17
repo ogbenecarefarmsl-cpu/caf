@@ -348,7 +348,7 @@ export const ProductSearch = ({ branchId }: ProductSearchProps) => {
       {isScannerActive && (
         <div className="mt-2 p-3 bg-accent-green/10 border border-accent-green/30 rounded-lg animate-pulse">
           <p className="text-xs text-accent-green text-center font-medium">
-            Scanner Active • Ready to scan or search
+            Scanner Active - Ready to scan or search
           </p>
         </div>
       )}

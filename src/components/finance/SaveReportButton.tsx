@@ -215,7 +215,7 @@ export const SaveReportButton = ({
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-lg font-bold text-white mb-1">Saved reports</h3>
-            <p className="text-xs text-gray-400 mb-4">Click to load, or remove with ×</p>
+            <p className="text-xs text-gray-400 mb-4">Click to load, or remove with x</p>
 
             <div className="space-y-2 max-h-80 overflow-y-auto">
               {matchingReports.length === 0 ? (
@@ -230,7 +230,7 @@ export const SaveReportButton = ({
                       <p className="text-sm font-semibold text-white">{r.name}</p>
                       <p className="text-xs text-gray-400 truncate">
                         {SCHEDULE_LABELS[r.schedule]}
-                        {r.description ? ` · ${r.description}` : ''}
+                        {r.description ? ` - ${r.description}` : ''}
                       </p>
                     </button>
                     <button
@@ -238,7 +238,7 @@ export const SaveReportButton = ({
                       className="text-red-400 hover:text-red-300 text-sm"
                       title="Remove"
                     >
-                      ×
+                      x
                     </button>
                   </div>
                 ))

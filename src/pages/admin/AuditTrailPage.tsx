@@ -280,7 +280,7 @@ export const AuditTrailPage = () => {
                   onClick={() => setSelectedLog(null)}
                   className="text-white/50 hover:text-white"
                 >
-                  ✕
+                  x
                 </button>
               </div>
 

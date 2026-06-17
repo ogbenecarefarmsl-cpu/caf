@@ -7,11 +7,11 @@
  *
  * The encryption key is generated once per device and never leaves the browser.
  * The key is wrapped (encrypted) with a key derived from a stable per-device
- * secret — even if the IDB file is exfiltrated, the contents are useless
+ * secret - even if the IDB file is exfiltrated, the contents are useless
  * without the device.
  *
  * If the encryption key is lost (e.g. user clears IDB), the user must log in
- * again with a password or biometric — the encrypted refresh token is then
+ * again with a password or biometric - the encrypted refresh token is then
  * replaced on next login.
  */
 
@@ -187,7 +187,7 @@ export const secureSession = {
         username: record.username,
       };
     } catch {
-      // Decryption failed — corrupted or tampered
+      // Decryption failed - corrupted or tampered
       await this.clear();
       return null;
     }

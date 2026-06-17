@@ -122,7 +122,7 @@ export function FinancePayablesPage() {
                   (orders || []).map((o) => (
                     <tr key={o._id} className="border-b border-white/5 hover:bg-white/5">
                       <td className="px-4 py-3 text-white font-medium">{o.poNumber}</td>
-                      <td className="px-4 py-3 text-gray-300">{o.supplierId?.name || o.supplierName || '—'}</td>
+                      <td className="px-4 py-3 text-gray-300">{o.supplierId?.name || o.supplierName || '-'}</td>
                       <td className="px-4 py-3 text-right text-white font-semibold">{fmt(o.total)}</td>
                       <td className="px-4 py-3">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium border ${

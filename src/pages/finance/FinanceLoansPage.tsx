@@ -328,7 +328,7 @@ export function FinanceLoansPage() {
         {repayModal ? (
           <div className="space-y-4">
             <div className="bg-white/5 rounded-xl p-4">
-              <p className="text-white font-medium">{repayModal.referenceNumber} — {repayModal.counterpartyName}</p>
+              <p className="text-white font-medium">{repayModal.referenceNumber} - {repayModal.counterpartyName}</p>
               <p className="text-sm text-gray-400">Outstanding: {fmt(repayModal.outstandingPrincipal)} | Rate: {repayModal.interestRatePercent}%</p>
             </div>
             <div>
@@ -350,7 +350,7 @@ export function FinanceLoansPage() {
         {accrueModal ? (
           <div className="space-y-4">
             <div className="bg-white/5 rounded-xl p-4">
-              <p className="text-white font-medium">{accrueModal.referenceNumber} — {accrueModal.counterpartyName}</p>
+              <p className="text-white font-medium">{accrueModal.referenceNumber} - {accrueModal.counterpartyName}</p>
               <p className="text-sm text-gray-400">
                 Outstanding: {fmt(accrueModal.outstandingPrincipal)} | Rate: {accrueModal.interestRatePercent}%
               </p>
@@ -381,7 +381,7 @@ export function FinanceLoansPage() {
               This will mark the loan as cancelled. Only allowed if no repayments have been made.
             </div>
             <div className="bg-white/5 rounded-xl p-4">
-              <p className="text-white font-medium">{cancelModal.referenceNumber} — {cancelModal.counterpartyName}</p>
+              <p className="text-white font-medium">{cancelModal.referenceNumber} - {cancelModal.counterpartyName}</p>
               <p className="text-sm text-gray-400">Principal: {fmt(cancelModal.principalAmount)}</p>
             </div>
             <div>

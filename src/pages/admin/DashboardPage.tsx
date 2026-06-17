@@ -1,4 +1,4 @@
-﻿import { useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { AdminLayout } from '../../components/AdminLayout';
@@ -176,7 +176,7 @@ export const DashboardPage = () => {
               <StatCard
                 title="Products"
                 value={format(stats?.totalInventoryValue ?? 0)}
-                subtitle={`${stats?.totalProducts ?? 0} SKUs · ${stats?.lowStockProducts ?? 0} low stock`}
+                subtitle={`${stats?.totalProducts ?? 0} SKUs - ${stats?.lowStockProducts ?? 0} low stock`}
                 colorClass="bg-purple-500/10 text-purple-500"
                 icon={
                   <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

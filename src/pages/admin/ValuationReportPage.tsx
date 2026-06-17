@@ -133,7 +133,7 @@ export function ValuationReportPage() {
               <p className="text-4xl font-bold text-accent-green mt-1">{format(data.totalValue)}</p>
               <p className="text-xs text-gray-400 mt-1">
                 Method: <span className="font-semibold">{data.method}</span>
-                {data.products?.length != null && ` · ${data.products.length} products`}
+                {data.products?.length != null && ` - ${data.products.length} products`}
               </p>
             </div>
             <div className="w-16 h-16 bg-accent-green/10 rounded-full flex items-center justify-center">

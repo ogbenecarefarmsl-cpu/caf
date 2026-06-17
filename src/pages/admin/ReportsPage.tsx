@@ -140,20 +140,20 @@ export function ReportsPage() {
           <div className="bg-blue-900/20 rounded-lg p-6 border border-blue-700">
             <h3 className="text-lg font-semibold text-blue-300 mb-2">Report Features</h3>
             <ul className="space-y-2 text-sm text-blue-200">
-              <li>• Export reports to PDF and Excel formats</li>
-              <li>• Customize date ranges for detailed analysis</li>
-              <li>• Filter by branch, product, or category</li>
-              <li>• Schedule automated report delivery</li>
+              <li>- Export reports to PDF and Excel formats</li>
+              <li>- Customize date ranges for detailed analysis</li>
+              <li>- Filter by branch, product, or category</li>
+              <li>- Schedule automated report delivery</li>
             </ul>
           </div>
 
           <div className="bg-purple-900/20 rounded-lg p-6 border border-purple-700">
             <h3 className="text-lg font-semibold text-purple-300 mb-2">Analytics Tips</h3>
             <ul className="space-y-2 text-sm text-purple-200">
-              <li>• Review sales reports daily for insights</li>
-              <li>• Monitor expiry reports weekly</li>
-              <li>• Check inventory levels before ordering</li>
-              <li>• Analyze customer trends for targeted marketing</li>
+              <li>- Review sales reports daily for insights</li>
+              <li>- Monitor expiry reports weekly</li>
+              <li>- Check inventory levels before ordering</li>
+              <li>- Analyze customer trends for targeted marketing</li>
             </ul>
           </div>
         </div>

@@ -9,7 +9,7 @@ const SNOOZE_DURATION_MS = 24 * 60 * 60 * 1000; // 1 day
 
 /**
  * Banner that appears on every authenticated page until the user registers
- * a passkey. Dismissing it only snoozes for 24h — this is the "enterprise"
+ * a passkey. Dismissing it only snoozes for 24h - this is the "enterprise"
  * nudge that ensures every staff member has a passkey + can be recovered
  * via admin reset or recovery codes if their device is lost.
  */
@@ -80,7 +80,7 @@ export const PasskeySetupBanner = () => {
               Register a passkey for your account
             </p>
             <p className="text-sm text-gray-300 leading-6">
-              Use your fingerprint, face, or screen lock to sign in next time — no
+              Use your fingerprint, face, or screen lock to sign in next time - no
               password to type or forget. Passkeys are phishing-resistant and
               required by your organisation\u2019s security policy.
             </p>

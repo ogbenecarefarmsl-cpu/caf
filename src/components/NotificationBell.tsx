@@ -210,7 +210,7 @@ export const NotificationBell = () => {
                       className="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-red-400 text-xs"
                       title="Dismiss"
                     >
-                      ×
+                      x
                     </button>
                   </div>
                 );

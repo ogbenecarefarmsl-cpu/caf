@@ -161,7 +161,7 @@ export function CycleCountPage() {
 
   const activeDetail = countDetail ?? selectedCount;
 
-  // ─── Detail view ──────────────────────────────────────────────────────────
+  // --- Detail view ----------------------------------------------------------
   if (selectedCount) {
     return (
       <AdminLayout>
@@ -171,10 +171,10 @@ export function CycleCountPage() {
               className="text-sm text-accent-green hover:underline"
               onClick={() => setSelectedCount(null)}
             >
-              ← Back to list
+              Back to list
             </button>
             <h1 className="text-xl font-bold text-white">
-              Cycle Count — {activeDetail?.status && <StatusBadge status={activeDetail.status} />}
+              Cycle Count - {activeDetail?.status && <StatusBadge status={activeDetail.status} />}
             </h1>
           </div>
 
@@ -227,7 +227,7 @@ export function CycleCountPage() {
                                 }
                               />
                             ) : (
-                              line.countedQuantity ?? '—'
+                              line.countedQuantity ?? '-'
                             )}
                           </td>
                           {activeDetail.status !== CycleCountStatus.DRAFT && (
@@ -243,7 +243,7 @@ export function CycleCountPage() {
                               }`}
                             >
                               {variance == null
-                                ? '—'
+                                ? '-'
                                 : variance > 0
                                 ? `+${variance}`
                                 : variance}
@@ -299,7 +299,7 @@ export function CycleCountPage() {
     );
   }
 
-  // ─── List view ────────────────────────────────────────────────────────────
+  // --- List view ------------------------------------------------------------
   return (
     <AdminLayout>
       <div className="max-w-5xl mx-auto py-6 px-4">

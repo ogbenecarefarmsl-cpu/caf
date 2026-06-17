@@ -236,7 +236,7 @@ export const MarketerAssignmentsPage = () => {
               { value: '', label: 'Select product' },
               ...(products || []).map((p) => ({
                 value: p.id || p._id || '',
-                label: `${p.name} (${p.sku}) — Stock: ${p.quantityAvailable ?? p.stock ?? 'N/A'}`,
+                label: `${p.name} (${p.sku}) - Stock: ${p.quantityAvailable ?? p.stock ?? 'N/A'}`,
               })),
             ]}
           />

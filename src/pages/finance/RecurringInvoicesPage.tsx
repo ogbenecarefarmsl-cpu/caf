@@ -26,7 +26,7 @@ function fmtMoney(n: number) {
 }
 
 function fmtDate(iso?: string) {
-  if (!iso) return '—';
+  if (!iso) return '-';
   return new Date(iso).toLocaleDateString();
 }
 
@@ -129,7 +129,7 @@ export function RecurringInvoicesPage() {
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['recurring-invoices'] });
       if (result.shouldDeactivate) {
-        showSuccess(`Run #${result.runCount} completed — schedule reached max runs and was deactivated.`);
+        showSuccess(`Run #${result.runCount} completed - schedule reached max runs and was deactivated.`);
       } else {
         showSuccess(`Run #${result.runCount} completed. Next run: ${fmtDate(result.nextRunAt)}`);
       }
@@ -313,7 +313,7 @@ export function RecurringInvoicesPage() {
                     <tr key={t._id} className="hover:bg-primary-darker transition-colors">
                       <td className="px-3 py-3 sm:px-6 sm:py-3">
                         <p className="text-white font-semibold whitespace-normal break-words">
-                          {t.customerName || '—'}
+                          {t.customerName || '-'}
                         </p>
                         <p className="text-xs text-gray-400 whitespace-normal break-words">{t.description}</p>
                       </td>

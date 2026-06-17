@@ -155,7 +155,7 @@ export const PrintersPage: React.FC = () => {
                     <p className="text-xs uppercase tracking-wide text-gray-500">{getConnectionIcon(printer.connectionType)}</p>
                     <h3 className="truncate text-lg font-semibold text-white">{printer.name}</h3>
                     <p className="truncate text-xs text-gray-400">
-                      {typeof printer.branchId === 'object' ? printer.branchId.name : 'Unknown Branch'} • {printer.terminalId}
+                      {typeof printer.branchId === 'object' ? printer.branchId.name : 'Unknown Branch'} - {printer.terminalId}
                     </p>
                   </div>
                   <span

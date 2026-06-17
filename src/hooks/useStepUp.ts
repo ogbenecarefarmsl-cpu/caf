@@ -1,5 +1,5 @@
 /**
- * useStepUp — request a short-lived (5 min, single-use) step-up token from
+ * useStepUp - request a short-lived (5 min, single-use) step-up token from
  * the server after a fresh WebAuthn ceremony. Send it as `X-Step-Up-Token`
  * header on subsequent sensitive operations.
  *

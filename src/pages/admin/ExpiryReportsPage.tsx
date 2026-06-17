@@ -218,7 +218,7 @@ export const ExpiryReportsPage = () => {
                   <p className="text-2xl font-bold text-red-400">{totals.expiredCount}</p>
                 </div>
                 <div className="bg-orange-500/10 p-4 rounded-xl border border-orange-500/20">
-                  <p className="text-sm text-orange-200">Critical (≤30d)</p>
+                  <p className="text-sm text-orange-200">Critical (within 30d)</p>
                   <p className="text-2xl font-bold text-orange-400">{totals.criticalCount}</p>
                 </div>
                 <div className="bg-red-500/10 p-4 rounded-xl border border-red-500/20">

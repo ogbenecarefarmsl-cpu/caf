@@ -202,7 +202,7 @@ export function FinanceAdvancesPage() {
       });
     },
     onSuccess: () => {
-      showSuccess('Goods return recorded — stock restored');
+      showSuccess('Goods return recorded - stock restored');
       queryClient.invalidateQueries({ queryKey: ['finance', 'advances'] });
       queryClient.invalidateQueries({ queryKey: ['finance', 'advances-stats'] });
       setReturnModal(null);
@@ -337,7 +337,7 @@ export function FinanceAdvancesPage() {
                     <button key={p._id} type="button" onClick={() => addToCart(p)}
                       className="w-full text-left px-3 py-2 hover:bg-white/5 border-b border-white/5 last:border-0">
                       <p className="text-white text-sm">{p.name}</p>
-                      <p className="text-xs text-gray-400">{p.sku} · {fmt(p.sellingPrice)}</p>
+                      <p className="text-xs text-gray-400">{p.sku} - {fmt(p.sellingPrice)}</p>
                     </button>
                   ))}
                 </div>
@@ -391,7 +391,7 @@ export function FinanceAdvancesPage() {
         {repayModal ? (
           <div className="space-y-4">
             <div className="bg-white/5 rounded-xl p-4">
-              <p className="text-white font-medium">{repayModal.referenceNumber} — {repayModal.employeeId?.firstName} {repayModal.employeeId?.lastName}</p>
+              <p className="text-white font-medium">{repayModal.referenceNumber} - {repayModal.employeeId?.firstName} {repayModal.employeeId?.lastName}</p>
               <p className="text-sm text-gray-400">Outstanding: {fmt(repayModal.outstandingAmount)}</p>
             </div>
             <div>
@@ -437,7 +437,7 @@ export function FinanceAdvancesPage() {
               Returning items will restore inventory and reduce the advance outstanding amount.
             </div>
             <div className="bg-white/5 rounded-xl p-3 text-sm text-gray-300">
-              <span className="text-white font-medium">{returnModal.referenceNumber}</span> — {returnModal.employeeId?.firstName} {returnModal.employeeId?.lastName}
+              <span className="text-white font-medium">{returnModal.referenceNumber}</span> - {returnModal.employeeId?.firstName} {returnModal.employeeId?.lastName}
             </div>
             <div className="space-y-2 max-h-60 overflow-y-auto">
               {returnItems.map((it, idx) => (

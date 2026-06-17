@@ -318,7 +318,7 @@ export const UserManagementPage = () => {
                   type="password"
                   {...register('password', editingUser ? optionalPasswordValidation : passwordValidation)}
                   error={errors.password?.message}
-                  placeholder="••••••••"
+                  placeholder="--------"
                 />
                 {!editingUser && (
                   <p className="text-xs text-gray-400 mt-1">

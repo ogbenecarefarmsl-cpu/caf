@@ -13,7 +13,7 @@ export const currencyTests = {
   testSymbolPrefix() {
     const result = CURRENCY.format(100);
     console.assert(result.startsWith('Le '), `Expected "Le " prefix, got: ${result}`);
-    console.log('✓ Symbol prefix test passed');
+    console.log('OK Symbol prefix test passed');
   },
 
   // Property 2: Two decimal places
@@ -27,7 +27,7 @@ export const currencyTests = {
     const result3 = CURRENCY.format(100.567);
     console.assert(result3.includes('.57'), `Expected two decimal places (rounded), got: ${result3}`);
     
-    console.log('✓ Two decimal places test passed');
+    console.log('OK Two decimal places test passed');
   },
 
   // Property 3: Thousand separators
@@ -41,7 +41,7 @@ export const currencyTests = {
     const result3 = CURRENCY.format(999);
     console.assert(!result3.includes(','), `Expected no comma for < 1000, got: ${result3}`);
     
-    console.log('✓ Thousand separators test passed');
+    console.log('OK Thousand separators test passed');
   },
 
   // Test complete formatting
@@ -59,7 +59,7 @@ export const currencyTests = {
       console.assert(result === expected, `Expected "${expected}", got: "${result}"`);
     });
     
-    console.log('✓ Complete formatting test passed');
+    console.log('OK Complete formatting test passed');
   },
 
   // Test formatWithoutSymbol
@@ -70,7 +70,7 @@ export const currencyTests = {
     const result2 = CURRENCY.formatWithoutSymbol(100);
     console.assert(result2 === '100.00', `Expected "100.00", got: "${result2}"`);
     
-    console.log('✓ Format without symbol test passed');
+    console.log('OK Format without symbol test passed');
   },
 
   // Test formatCompact
@@ -84,7 +84,7 @@ export const currencyTests = {
     const result3 = CURRENCY.formatCompact(1234567890);
     console.assert(result3 === 'Le 1.23B', `Expected "Le 1.23B", got: "${result3}"`);
     
-    console.log('✓ Format compact test passed');
+    console.log('OK Format compact test passed');
   },
 
   // Test parse
@@ -98,7 +98,7 @@ export const currencyTests = {
     const result3 = CURRENCY.parse('100.00');
     console.assert(result3 === 100, `Expected 100, got: ${result3}`);
     
-    console.log('✓ Parse test passed');
+    console.log('OK Parse test passed');
   },
 
   // Test invalid inputs
@@ -112,7 +112,7 @@ export const currencyTests = {
     const result3 = CURRENCY.format(undefined as unknown as number);
     console.assert(result3 === 'Le 0.00', `Expected "Le 0.00" for undefined, got: "${result3}"`);
     
-    console.log('✓ Invalid inputs test passed');
+    console.log('OK Invalid inputs test passed');
   },
 
   // Run all tests
@@ -126,7 +126,7 @@ export const currencyTests = {
     this.testFormatCompact();
     this.testParse();
     this.testInvalidInputs();
-    console.log('\n✅ All currency utility tests passed!');
+    console.log('\nOK All currency utility tests passed!');
   },
 };
 

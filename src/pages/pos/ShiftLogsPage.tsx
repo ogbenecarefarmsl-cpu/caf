@@ -139,7 +139,7 @@ export const ShiftLogsPage = () => {
       {/* Header */}
       <div className="flex items-center px-4 py-4 border-b border-gray-800">
         <h1 className="text-xl font-bold text-white">Shift Management</h1>
-        <span className="text-gray-400 ml-2">• {selectedBranch?.name}</span>
+        <span className="text-gray-400 ml-2">- {selectedBranch?.name}</span>
       </div>
 
       <div className="p-4 space-y-6">

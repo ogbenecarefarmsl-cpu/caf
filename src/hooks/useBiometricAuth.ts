@@ -92,7 +92,7 @@ export function useBiometricAuth(
         allowDeviceCredential: false,
       });
 
-      // Biometric passed — exchange token for session
+      // Biometric passed - exchange token for session
       const response = await apiClient.post('/auth/biometric/verify', {
         username,
         deviceId,
@@ -115,7 +115,7 @@ export function useBiometricAuth(
     } catch (err: unknown) {
       const msg =
         err instanceof Error ? err.message : 'Biometric authentication failed';
-      // User cancelled — don't treat as error
+      // User cancelled - don't treat as error
       if (msg.includes('cancel') || msg.includes('Cancel')) {
         setError(null);
       } else {
@@ -155,7 +155,7 @@ export function useBiometricAuth(
         setIsEnabled(true);
         return true;
       } catch {
-        // User cancelled biometric prompt — treat as "skip"
+        // User cancelled biometric prompt - treat as "skip"
         return false;
       }
     },

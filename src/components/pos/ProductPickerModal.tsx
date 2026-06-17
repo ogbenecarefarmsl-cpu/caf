@@ -94,7 +94,7 @@ export const ProductPickerModal = ({ open, onClose, branchId }: ProductPickerMod
             onClick={onClose}
             className="text-gray-400 hover:text-white text-2xl leading-none"
           >
-            ×
+            x
           </button>
         </div>
 
@@ -128,7 +128,7 @@ export const ProductPickerModal = ({ open, onClose, branchId }: ProductPickerMod
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-white truncate">{p.name}</p>
                       <p className="text-xs text-gray-400 truncate">
-                        {p.brand ? `${p.brand} · ` : ''}SKU {p.sku} · {p.stock} in stock
+                        {p.brand ? `${p.brand} - ` : ''}SKU {p.sku} - {p.stock} in stock
                       </p>
                       {!hasPacks && (
                         <p className="text-xs text-accent-green font-bold mt-0.5">

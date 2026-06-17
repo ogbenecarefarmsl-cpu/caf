@@ -260,7 +260,7 @@ export function FinanceReceivablesPage() {
                       <div className="rounded-xl bg-white/5 p-3">
                         <p className="text-gray-400">Due</p>
                         <p className="mt-1 font-semibold text-white">
-                          {sale.dueDate ? new Date(sale.dueDate).toLocaleDateString() : '—'}
+                          {sale.dueDate ? new Date(sale.dueDate).toLocaleDateString() : '-'}
                         </p>
                       </div>
                     </div>

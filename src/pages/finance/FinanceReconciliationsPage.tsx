@@ -45,9 +45,9 @@ function formatMoney(amount: number) {
 }
 
 function getBranchName(branchId: Reconciliation['branchId']) {
-  if (!branchId) return '—';
+  if (!branchId) return '-';
   if (typeof branchId === 'string') return branchId.slice(0, 8);
-  return branchId.name || '—';
+  return branchId.name || '-';
 }
 
 const statusBadge = (status: string) => {

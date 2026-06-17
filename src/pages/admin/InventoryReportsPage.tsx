@@ -94,7 +94,7 @@ export const InventoryReportsPage = () => {
       render: (item: InventoryReportItem) => (
         <span className={item.isLowStock ? 'text-red-600 font-semibold' : ''}>
           {item.totalQuantity}
-          {item.isLowStock && ' ⚠️'}
+          {item.isLowStock && ' (!)'}
         </span>
       )
     },

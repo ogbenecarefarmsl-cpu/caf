@@ -76,7 +76,7 @@ export const QuickKeysGrid = ({
     <div className="mb-4 bg-primary-dark border border-gray-700 rounded-xl p-3">
       <div className="flex items-center justify-between mb-2 px-1">
         <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
-          Quick Keys · {keys.length}/{MAX_QUICK_KEYS}
+          Quick Keys - {keys.length}/{MAX_QUICK_KEYS}
         </h3>
         <div className="flex gap-2">
           {!isFull && (
@@ -120,7 +120,7 @@ export const QuickKeysGrid = ({
                   className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 text-white text-xs font-bold flex items-center justify-center shadow-md hover:bg-red-600"
                   title="Remove quick key"
                 >
-                  ×
+                  x
                 </button>
               )}
               <p className="text-[11px] font-semibold leading-tight line-clamp-2 break-words">

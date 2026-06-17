@@ -126,7 +126,7 @@ export const MarketerDashboardPage = () => {
                       <div className="min-w-0">
                       <p className="text-sm font-medium text-white">{sale.productId?.name || 'Assigned Product'}</p>
                       <p className="text-xs text-white/50">
-                        Qty {sale.quantity} · {new Date(sale.soldAt).toLocaleString()}
+                        Qty {sale.quantity} - {new Date(sale.soldAt).toLocaleString()}
                       </p>
                     </div>
                       <p className="text-sm font-semibold text-emerald-400 sm:pl-4">{format(sale.totalAmount)}</p>

@@ -154,7 +154,7 @@ export const MarketerSalesPage = () => {
                   const brand = item.productId?.brand?.trim();
                   const showBrand = brand && brand.toLowerCase() !== 'unknown';
                   const label = showBrand
-                    ? `${item.productId?.name || 'Product'} — ${brand} (Rem: ${item.remainingQuantity})`
+                    ? `${item.productId?.name || 'Product'} - ${brand} (Rem: ${item.remainingQuantity})`
                     : `${item.productId?.name || 'Product'} (Rem: ${item.remainingQuantity})`;
                   return { value: item._id, label };
                 }),
@@ -181,7 +181,7 @@ export const MarketerSalesPage = () => {
                 }}
                 onClearCustomer={() => setCustomerId(undefined)}
                 selectedCustomerId={customerId}
-                placeholder="Search customer or type walk-in name…"
+                placeholder="Search customer or type walk-in name..."
                 helperText="Optional. Pick an existing customer to link this sale, or type a name for a walk-in."
               />
             </div>

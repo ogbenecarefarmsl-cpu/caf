@@ -1,5 +1,5 @@
 /**
- * useWebAuthn — true FIDO2 biometric login & registration.
+ * useWebAuthn - true FIDO2 biometric login & registration.
  *
  * On a Capacitor native app we delegate the biometric prompt to the OS via
  * `@aparajita/capacitor-biometric-auth` and use the WebView's
@@ -44,7 +44,7 @@ export interface UseWebAuthnReturn {
   login: (username?: string) => Promise<boolean>;
   isLoading: boolean;
   error: string | null;
-  /** Trigger native biometric prompt only — returns true on success */
+  /** Trigger native biometric prompt only - returns true on success */
   ensureBiometric: (reason: string) => Promise<boolean>;
 }
 

@@ -147,7 +147,7 @@ export const PaymentPage = () => {
       total,
     });
     clearCart();
-    showSuccess(`Held "${held.label}" — ${heldSales.length + 1} sale(s) parked`);
+    showSuccess(`Held "${held.label}" - ${heldSales.length + 1} sale(s) parked`);
   };
 
   const handleEmailReceipt = () => {
@@ -453,7 +453,7 @@ export const PaymentPage = () => {
                   setLinkedCustomer(null);
                 }}
                 selectedCustomerId={creditCustomerId}
-                placeholder="Search customer or type walk-in name…"
+                placeholder="Search customer or type walk-in name..."
                 helperText="Optional. Select an existing customer to track their balance, or type a name for a walk-in."
               />
               <div>

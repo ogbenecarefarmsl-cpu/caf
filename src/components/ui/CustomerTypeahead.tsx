@@ -169,7 +169,7 @@ export function CustomerTypeahead({
       {showDropdown ? (
         <div className="absolute z-30 mt-1 w-full overflow-hidden rounded-xl border border-white/10 bg-primary-darker shadow-2xl shadow-black/40">
           {isLoading ? (
-            <div className="px-4 py-3 text-sm text-gray-400">Searching customers…</div>
+            <div className="px-4 py-3 text-sm text-gray-400">Searching customers...</div>
           ) : options.length === 0 ? (
             <div className="px-4 py-3 text-sm text-gray-400">
               No matches.{allowFreeText ? ' Press Enter to use as a walk-in name.' : ''}
@@ -192,7 +192,7 @@ export function CustomerTypeahead({
                 >
                   <div className="min-w-0">
                     <p className="truncate text-sm text-white">{c.name}</p>
-                    <p className="truncate text-xs text-gray-400">{c.phone}{c.email ? ` · ${c.email}` : ''}</p>
+                    <p className="truncate text-xs text-gray-400">{c.phone}{c.email ? ` - ${c.email}` : ''}</p>
                   </div>
                   <UserPlus className="h-4 w-4 shrink-0 text-accent-green" />
                 </li>
