@@ -14,24 +14,7 @@ import {
 import {
   DollarSign, TrendingUp, TrendingDown, AlertTriangle, CreditCard, ShoppingCart, Wallet, Activity, BarChart3, Package,
 } from 'lucide-react';
-
-interface UnifiedDashboard {
-  revenue: { totalSales: number; totalRevenue: number; totalReturns: number; netRevenue: number; salesCount: number };
-  expenses: { totalShiftExpenses: number; totalFinanceExpenses: number; totalExpenses: number; byCategory: { category: string; total: number; count: number }[] };
-  cashPosition: { totalOpeningCash: number; totalClosingCash: number; totalExpectedCash: number; totalVariance: number; openShifts: number; closedShifts: number };
-  creditOutstanding: { totalCreditSales: number; totalBalanceDue: number; overdueCount: number; overdueAmount: number };
-  marketer: { totalAssignedValue: number; totalSoldValue: number; totalOutstanding: number; unitsAssigned: number; unitsSold: number; unitsRemaining: number };
-  purchases: { totalPurchaseValue: number; receivedValue: number; pendingValue: number };
-  profitLoss: { grossRevenue: number; costOfGoods: number; grossProfit: number; operatingExpenses: number; netProfit: number; margin: number };
-  byBranch: { branchId: string; branchName: string; revenue: number; expenses: number; profit: number; salesCount: number }[];
-  byPaymentMethod: { method: string; count: number; total: number }[];
-  externalServices: {
-    caf: { revenue: number };
-    emr: { revenue: number };
-    lab: { revenue: number };
-    combined: { totalRevenue: number; totalExpenses: number; totalProfit: number; totalOutstanding: number };
-  };
-}
+import type { UnifiedDashboard } from '../../types/finance';
 
 function fmt(amount: number) {
   return `Le ${amount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;

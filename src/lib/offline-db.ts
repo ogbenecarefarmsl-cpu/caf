@@ -11,7 +11,7 @@ export type PaymentMethod =
   | 'qmoney'
   | 'bank_transfer';
 
-// ─── Queued Sales (for offline checkout) ────────────────────────
+// --- Queued Sales (for offline checkout) ------------------------
 export interface QueuedSale {
   id?: number;
   branchId: string;
@@ -31,7 +31,7 @@ export interface QueuedSale {
   lastError?: string;
 }
 
-// ─── Cached Products (for offline browsing) ────────────────────
+// --- Cached Products (for offline browsing) --------------------
 export interface CachedProduct {
   _id: string;
   branchId: string;
@@ -43,15 +43,24 @@ export interface CachedProduct {
   unit: string;
   basePrice: number;
   costPrice: number;
+  suggestedRetailPrice?: number;
   requiresPrescription: boolean;
   isActive: boolean;
   imageUrl?: string;
   localImage?: string; // base64 data URL for local images
   stock: number;
+  packSizes?: Array<{
+    code?: string;
+    name: string;
+    unit: string;
+    quantityPerPack: number;
+    sellingPrice: number;
+    barcode?: string;
+  }>;
   syncedAt: number;
 }
 
-// ─── Cached Batches (for offline FEFO) ─────────────────────────
+// --- Cached Batches (for offline FEFO) -------------------------
 export interface CachedBatch {
   _id: string;
   productId: string;
@@ -66,7 +75,7 @@ export interface CachedBatch {
   syncedAt: number;
 }
 
-// ─── Cached Customers (for offline lookup) ─────────────────────
+// --- Cached Customers (for offline lookup) ---------------------
 export interface CachedCustomer {
   _id: string;
   firstName: string;
@@ -77,7 +86,7 @@ export interface CachedCustomer {
   syncedAt: number;
 }
 
-// ─── Cached Branches ───────────────────────────────────────────
+// --- Cached Branches -------------------------------------------
 export interface CachedBranch {
   _id: string;
   name: string;
@@ -86,7 +95,7 @@ export interface CachedBranch {
   syncedAt: number;
 }
 
-// ─── Product Images (local camera captures) ────────────────────
+// --- Product Images (local camera captures) --------------------
 export interface ProductImage {
   id?: number;
   productId: string;
@@ -96,7 +105,7 @@ export interface ProductImage {
   syncedAt?: number;
 }
 
-// ─── Sync Metadata ─────────────────────────────────────────────
+// --- Sync Metadata ---------------------------------------------
 export interface SyncMeta {
   key: string;
   lastSync: number;
@@ -139,7 +148,7 @@ export class OfflineDatabase extends Dexie {
 
 export const offlineDb = new OfflineDatabase();
 
-// ─── Sync helpers ──────────────────────────────────────────────
+// --- Sync helpers ----------------------------------------------
 
 export async function getLastSync(key: string): Promise<number> {
   const meta = await offlineDb.syncMeta.get(key);

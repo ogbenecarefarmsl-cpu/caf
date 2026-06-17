@@ -17,24 +17,7 @@ import {
   CreditCard, Users, ShoppingCart, Package, Wallet, ArrowRightLeft,
   BarChart3, Activity, ChevronDown, ChevronRight,
 } from 'lucide-react';
-
-interface UnifiedDashboard {
-  revenue: { totalSales: number; totalRevenue: number; totalReturns: number; netRevenue: number; salesCount: number };
-  expenses: { totalShiftExpenses: number; totalFinanceExpenses: number; totalExpenses: number; byCategory: { category: string; total: number; count: number }[] };
-  cashPosition: { totalOpeningCash: number; totalClosingCash: number; totalExpectedCash: number; totalVariance: number; openShifts: number; closedShifts: number };
-  creditOutstanding: { totalCreditSales: number; totalBalanceDue: number; overdueCount: number; overdueAmount: number };
-  marketer: { totalAssignedValue: number; totalSoldValue: number; totalOutstanding: number; unitsAssigned: number; unitsSold: number; unitsRemaining: number };
-  purchases: { totalPurchaseValue: number; receivedValue: number; pendingValue: number };
-  profitLoss: { grossRevenue: number; costOfGoods: number; grossProfit: number; operatingExpenses: number; netProfit: number; margin: number };
-  byBranch: { branchId: string; branchName: string; revenue: number; expenses: number; profit: number; salesCount: number }[];
-  byPaymentMethod: { method: string; count: number; total: number }[];
-  externalServices: {
-    caf: { revenue: number; expenses: number; profit: number; outstanding: number; orders: number; byPaymentMethod: { method: string; count: number; total: number }[]; reconciliation: any };
-    emr: { revenue: number; expenses: number; profit: number; outstanding: number; orders: number; byPaymentMethod: { method: string; count: number; total: number }[]; reconciliation: any };
-    lab: { revenue: number; expenses: number; profit: number; outstanding: number; orders: number; byPaymentMethod: { method: string; count: number; total: number }[]; reconciliation: any };
-    combined: { totalRevenue: number; totalExpenses: number; totalProfit: number; totalOutstanding: number };
-  };
-}
+import type { UnifiedDashboard } from '../../types/finance';
 
 function fmt(amount: number) {
   return `Le ${amount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
@@ -161,7 +144,7 @@ export function FinanceManagerDashboardPage() {
         </div>
       </div>
 
-      {/* ═══ TAB: OVERVIEW ═══ */}
+      {/* === TAB: OVERVIEW === */}
       {activeTab === 'overview' && (
         <>
           {/* Source Revenue Chart + P&L Mini */}
@@ -296,7 +279,7 @@ export function FinanceManagerDashboardPage() {
         </>
       )}
 
-      {/* ═══ TAB: RECONCILIATION ═══ */}
+      {/* === TAB: RECONCILIATION === */}
       {activeTab === 'reconciliation' && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -363,7 +346,7 @@ export function FinanceManagerDashboardPage() {
         </div>
       )}
 
-      {/* ═══ TAB: P&L ═══ */}
+      {/* === TAB: P&L === */}
       {activeTab === 'profitloss' && (
         <div className="space-y-6">
           <CollapsibleSection title="Profit & Loss Statement" icon={<BarChart3 className="w-5 h-5 text-accent-green" />}>
@@ -424,7 +407,7 @@ export function FinanceManagerDashboardPage() {
         </div>
       )}
 
-      {/* ═══ TAB: BRANCHES ═══ */}
+      {/* === TAB: BRANCHES === */}
       {activeTab === 'branches' && (
         <div className="space-y-6">
           {branchBarData.length > 0 && (

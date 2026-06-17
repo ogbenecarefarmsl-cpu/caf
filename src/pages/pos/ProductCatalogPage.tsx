@@ -11,20 +11,7 @@ import { useAlertReplacement } from '../../hooks/useAlertReplacement';
 import { useDebounce } from '../../hooks/useDebounce';
 import { QRScannerModal } from '../../components/pos/QRScannerModal';
 import { queryKeys } from '../../lib/query-keys';
-
-interface Product {
-  _id: string;
-  name: string;
-  sku: string;
-  barcode?: string;
-  category: string;
-  brand?: string;
-  price: number;
-  imageUrl?: string;
-  stock: number;
-  requiresPrescription: boolean;
-  unit: string;
-}
+import type { POSProduct, PackSize } from '../../types/product';
 
 type Category = 'all' | 'otc' | 'prescription' | 'vitamins' | 'supplies';
 
@@ -82,7 +69,7 @@ export const ProductCatalogPage = () => {
   });
 
   const products = useMemo(
-    () => productsResponse?.pages.flatMap((page) => page.data || []) as Product[] || [],
+    () => productsResponse?.pages.flatMap((page) => page.data || []) as POSProduct[] || [],
     [productsResponse],
   );
   const paginationMeta = productsResponse?.pages.at(-1)?.pagination as
@@ -101,20 +88,55 @@ export const ProductCatalogPage = () => {
     return `Showing ${products.length} of ${paginationMeta.total} products`;
   }, [paginationMeta, products.length]);
 
-  const handleAddToCart = (product: Product) => {
+  const handleAddToCart = (product: POSProduct) => {
     if (product.stock <= 0) return;
-    addItem({
-      productId: product._id,
-      productName: product.name,
-      brand: product.brand,
-      sku: product.sku,
-      barcode: product.barcode || '',
-      quantity: 1,
-      unitPrice: product.price,
-      requiresPrescription: product.requiresPrescription,
-      baseUnit: product.unit || 'unit',
-      quantityInBaseUnits: 1,
-    });
+
+    const packSizes = product.packSizes || [];
+    const matchedPack = product.matchedPackSize;
+
+    if (matchedPack) {
+      addItem({
+        productId: product._id,
+        productName: product.name,
+        brand: product.brand,
+        sku: product.sku,
+        barcode: matchedPack.barcode || product.barcode || '',
+        quantity: 1,
+        unitPrice: matchedPack.sellingPrice,
+        requiresPrescription: product.requiresPrescription,
+        packSize: matchedPack,
+        baseUnit: product.unit || 'unit',
+        quantityInBaseUnits: matchedPack.quantityPerPack,
+      });
+    } else if (packSizes.length > 0) {
+      const smallestPack = [...packSizes].sort((a, b) => a.quantityPerPack - b.quantityPerPack)[0];
+      addItem({
+        productId: product._id,
+        productName: product.name,
+        brand: product.brand,
+        sku: product.sku,
+        barcode: smallestPack.barcode || product.barcode || '',
+        quantity: 1,
+        unitPrice: smallestPack.sellingPrice,
+        requiresPrescription: product.requiresPrescription,
+        packSize: smallestPack,
+        baseUnit: product.unit || 'unit',
+        quantityInBaseUnits: smallestPack.quantityPerPack,
+      });
+    } else {
+      addItem({
+        productId: product._id,
+        productName: product.name,
+        brand: product.brand,
+        sku: product.sku,
+        barcode: product.barcode || '',
+        quantity: 1,
+        unitPrice: product.price,
+        requiresPrescription: product.requiresPrescription,
+        baseUnit: product.unit || 'unit',
+        quantityInBaseUnits: 1,
+      });
+    }
   };
 
   const handleBarcodeScan = async (barcode: string) => {
@@ -122,7 +144,7 @@ export const ProductCatalogPage = () => {
       const response = await apiClient.get('/products', {
         params: { branchId, barcode },
       });
-      const product = (response.data?.data ?? response.data)[0] as Product | undefined;
+      const product = (response.data?.data ?? response.data)[0] as POSProduct | undefined;
       if (product) {
         handleAddToCart(product);
         alertInfo(`Added ${product.name} to cart`);

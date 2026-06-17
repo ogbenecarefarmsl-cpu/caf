@@ -16,64 +16,7 @@ import {
   CreditCard, Wallet, ArrowRightLeft, Package, Users,
   Receipt, FileText, BarChart3,
 } from 'lucide-react';
-
-interface CashPosition {
-  totalIncome: number;
-  totalExpense: number;
-  totalTransfer: number;
-  totalLoan: number;
-  totalSalary: number;
-  totalAdvance: number;
-  netCash: number;
-  byCategory: { category: string; total: number; count: number }[];
-}
-
-interface CreditOutstanding {
-  totalCreditSales: number;
-  totalBalanceDue: number;
-  overdueCount: number;
-  overdueAmount: number;
-}
-
-interface Purchases {
-  totalPurchaseValue: number;
-  receivedValue: number;
-  pendingValue: number;
-}
-
-interface Revenue {
-  totalSales: number;
-  totalDiscount: number;
-  netRevenue: number;
-  totalTax: number;
-  transactionCount: number;
-}
-
-interface Expenses {
-  totalExpenses: number;
-  byCategory: { category: string; total: number; count: number }[];
-}
-
-interface ProfitLoss {
-  grossRevenue: number;
-  costOfGoods: number;
-  grossProfit: number;
-  operatingExpenses: number;
-  netProfit: number;
-  margin: number;
-}
-
-interface UnifiedDashboard {
-  revenue: Revenue;
-  expenses: Expenses;
-  cashPosition: CashPosition;
-  creditOutstanding: CreditOutstanding;
-  purchases: Purchases;
-  profitLoss: ProfitLoss;
-  marketer?: { totalCommission: number; totalMarketerSales: number; marketerCount: number };
-  byBranch?: { branchId: string; branchName: string; totalSales: number; netRevenue: number }[];
-  byPaymentMethod?: { paymentMethod: string; total: number; count: number }[];
-}
+import type { UnifiedDashboard } from '../../types/finance';
 
 interface ReconciliationStats {
   pending: number;
@@ -107,11 +50,11 @@ function StatCard({ label, value, icon, color, link, sublabel, delta }: StatCard
       {delta ? (
         <div className="flex items-center gap-1 mt-1">
           {delta.value === 0 ? (
-            <span className="text-[10px] text-gray-500">— no change</span>
+            <span className="text-[10px] text-gray-500">- no change</span>
           ) : (
             <>
               <span className={`text-[10px] font-semibold ${delta.value > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                {delta.value > 0 ? '▲' : '▼'} {Math.abs(delta.pct).toFixed(1)}%
+                {delta.value > 0 ? 'up' : 'down'} {Math.abs(delta.pct).toFixed(1)}%
               </span>
               <span className="text-[10px] text-gray-500">vs {delta.comparisonLabel}</span>
             </>
@@ -315,7 +258,7 @@ export function FinanceHubPage() {
             reportKey="unified-dashboard"
             route="/finance"
             params={{ startDate, endDate, comparisonMode, branchId: effectiveBranchId ?? '' }}
-            defaultName={`Finance ${startDate} → ${endDate}`}
+            defaultName={`Finance ${startDate} -> ${endDate}`}
           />
         </div>
       </div>
@@ -422,7 +365,7 @@ export function FinanceHubPage() {
             icon={<TrendingUp className="w-4 h-4 text-emerald-400" />}
             color="bg-emerald-500/10 border-emerald-500/20"
             delta={deltaFor(profitLoss?.grossRevenue ?? 0, compProfit?.grossRevenue)}
-            sublabel={comparisonMode === 'none' ? `${revenue?.transactionCount ?? 0} transactions` : undefined}
+            sublabel={comparisonMode === 'none' ? `${revenue?.salesCount ?? 0} transactions` : undefined}
           />
           <StatCard
             label="Cost of Goods"
