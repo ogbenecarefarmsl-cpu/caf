@@ -7,10 +7,12 @@ import { Table } from '../../components/ui/Table';
 import { Modal } from '../../components/ui/Modal';
 import { Loading } from '../../components/ui/Loading';
 import { Error } from '../../components/ui/Error';
+import { AdminStatusBadge } from '../../components/admin';
 import { useToast } from '../../hooks/useToast';
 import { useBranchStore, getBranchId } from '../../stores/branch-store';
 import { queryKeys } from '../../lib/query-keys';
 import { buildApiUrl } from '../../lib/api-utils';
+import { formatStatusLabel, toneForStatus } from '../../lib/admin-tones';
 import { Truck, CheckCircle, Download, Eye } from 'lucide-react';
 
 interface DeliveryNoteItem {
@@ -31,14 +33,6 @@ interface DeliveryNote {
   notes?: string;
   createdAt: string;
 }
-
-const statusBadge = (status: string) => {
-  const styles: Record<string, string> = {
-    pending: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
-    delivered: 'bg-green-500/10 text-green-400 border-green-500/20',
-  };
-  return styles[status] || 'bg-gray-500/10 text-gray-400 border-gray-500/20';
-};
 
 export function DeliveryNotesPage() {
   const [selectedDn, setSelectedDn] = useState<DeliveryNote | null>(null);
@@ -98,9 +92,9 @@ export function DeliveryNotesPage() {
     {
       key: 'status', header: 'Status',
       render: (dn: DeliveryNote) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium border ${statusBadge(dn.status)}`}>
-          {dn.status}
-        </span>
+        <AdminStatusBadge tone={toneForStatus(dn.status)}>
+          {formatStatusLabel(dn.status)}
+        </AdminStatusBadge>
       ),
     },
     {
@@ -139,9 +133,9 @@ export function DeliveryNotesPage() {
                   <p className="text-sm text-gray-400">Delivered: {new Date(selectedDn.deliveredAt).toLocaleDateString()}</p>
                 )}
               </div>
-              <span className={`px-3 py-1 rounded-full text-sm font-medium border ${statusBadge(selectedDn.status)}`}>
-                {selectedDn.status}
-              </span>
+              <AdminStatusBadge tone={toneForStatus(selectedDn.status)}>
+                {formatStatusLabel(selectedDn.status)}
+              </AdminStatusBadge>
             </div>
 
             <div>

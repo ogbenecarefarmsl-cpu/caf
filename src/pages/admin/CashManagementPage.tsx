@@ -6,12 +6,14 @@ import { Table } from '../../components/ui/Table';
 import { Modal } from '../../components/ui/Modal';
 import { Loading } from '../../components/ui/Loading';
 import { Error } from '../../components/ui/Error';
+import { AdminStatusBadge } from '../../components/admin';
 import { useToast } from '../../hooks/useToast';
 import { useBranchStore, getBranchId } from '../../stores/branch-store';
 import { queryKeys } from '../../lib/query-keys';
 import apiClient from '../../lib/api-client';
 import { buildApiUrl } from '../../lib/api-utils';
 import { getErrorMessage } from '../../lib/error-utils';
+import { formatStatusLabel, toneForStatus } from '../../lib/admin-tones';
 import { Plus, TrendingUp, TrendingDown, DollarSign, ArrowRightLeft } from 'lucide-react';
 
 interface CashEntry {
@@ -39,18 +41,6 @@ interface CashSummary {
 function formatMoney(amount: number) {
   return `Le ${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
-
-const typeBadge = (type: string) => {
-  const s: Record<string, string> = {
-    income: 'bg-green-500/10 text-green-400 border-green-500/20',
-    expense: 'bg-red-500/10 text-red-400 border-red-500/20',
-    transfer: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-    loan: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-    salary: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
-    other: 'bg-gray-500/10 text-gray-400 border-gray-500/20',
-  };
-  return s[type] || s.other;
-};
 
 const CATEGORIES = ['sales', 'services', 'supplies', 'maintenance', 'utilities', 'rent', 'salaries', 'transport', 'marketing', 'insurance', 'tax', 'petty_cash', 'other'];
 const TYPES = ['income', 'expense', 'transfer', 'loan', 'salary', 'other'];
@@ -107,7 +97,9 @@ export function CashManagementPage() {
 
   const columns = [
     { key: 'type', header: 'Type', render: (e: CashEntry) => (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium border ${typeBadge(e.type)}`}>{e.type}</span>
+      <AdminStatusBadge tone={toneForStatus(e.type)}>
+        {formatStatusLabel(e.type)}
+      </AdminStatusBadge>
     )},
     { key: 'category', header: 'Category', render: (e: CashEntry) => <span className="text-gray-300 text-sm">{e.category.replace('_', ' ')}</span> },
     { key: 'description', header: 'Description' },

@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm, useFieldArray } from 'react-hook-form';
 import apiClient from '../../lib/api-client';
 import { AdminLayout } from '../../components/AdminLayout';
+import { AdminStatusBadge } from '../../components/admin';
 import { Button } from '../../components/ui/Button';
 import { Table } from '../../components/ui/Table';
 import { Modal } from '../../components/ui/Modal';
@@ -17,6 +18,7 @@ import { queryKeys } from '../../lib/query-keys';
 import { buildApiUrl } from '../../lib/api-utils';
 import { useCurrency } from '../../hooks/useCurrency';
 import { unwrapArray } from '../../lib/unwrap-response';
+import { formatStatusLabel, toneForStatus } from '../../lib/admin-tones';
 
 interface Supplier {
   _id: string;
@@ -230,20 +232,6 @@ export default function PurchaseOrderPage() {
   if (isLoading) return <AdminLayout><Loading /></AdminLayout>;
   if (error) return <AdminLayout><Error message="Failed to load purchase orders" /></AdminLayout>;
 
-  const getStatusBadge = (status: string) => {
-    const colors = {
-      pending: 'bg-yellow-500/15 text-yellow-200 border border-yellow-500/20',
-      partially_received: 'bg-blue-500/15 text-blue-300 border border-blue-500/20',
-      completed: 'bg-green-500/15 text-green-300 border border-green-500/20',
-      cancelled: 'bg-red-500/15 text-red-300 border border-red-500/20',
-    };
-    return (
-      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${colors[status as keyof typeof colors]}`}>
-        {status.toUpperCase().replace('_', ' ')}
-      </span>
-    );
-  };
-
   const columns = [
     { key: 'orderNumber', header: 'PO Number' },
     { 
@@ -274,7 +262,11 @@ export default function PurchaseOrderPage() {
     {
       key: 'status',
       header: 'Status',
-      render: (po: PurchaseOrder) => getStatusBadge(po.status)
+      render: (po: PurchaseOrder) => (
+        <AdminStatusBadge tone={toneForStatus(po.status)}>
+          {formatStatusLabel(po.status)}
+        </AdminStatusBadge>
+      )
     },
     {
       key: 'actions',

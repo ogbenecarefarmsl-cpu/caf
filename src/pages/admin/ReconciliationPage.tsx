@@ -6,11 +6,13 @@ import { Table } from '../../components/ui/Table';
 import { Modal } from '../../components/ui/Modal';
 import { Loading } from '../../components/ui/Loading';
 import { Error } from '../../components/ui/Error';
+import { AdminStatusBadge } from '../../components/admin';
 import { useToast } from '../../hooks/useToast';
 import { useBranchStore, getBranchId } from '../../stores/branch-store';
 import { queryKeys } from '../../lib/query-keys';
 import apiClient from '../../lib/api-client';
 import { buildApiUrl } from '../../lib/api-utils';
+import { formatStatusLabel, toneForStatus } from '../../lib/admin-tones';
 import { CheckCircle, XCircle, Eye } from 'lucide-react';
 
 interface Reconciliation {
@@ -34,24 +36,6 @@ interface Reconciliation {
 function formatMoney(amount: number) {
   return `Le ${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
-
-const statusBadge = (status: string) => {
-  const s: Record<string, string> = {
-    pending: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-    approved: 'bg-green-500/10 text-green-400 border-green-500/20',
-    rejected: 'bg-red-500/10 text-red-400 border-red-500/20',
-  };
-  return s[status] || 'bg-gray-500/10 text-gray-400 border-gray-500/20';
-};
-
-const sourceBadge = (source: string) => {
-  const s: Record<string, string> = {
-    caf: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-    emr: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
-    lab: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
-  };
-  return s[source] || 'bg-gray-500/10 text-gray-400 border-gray-500/20';
-};
 
 export function ReconciliationPage() {
   const [selected, setSelected] = useState<Reconciliation | null>(null);
@@ -87,7 +71,9 @@ export function ReconciliationPage() {
 
   const columns = [
     { key: 'source', header: 'Source', render: (r: Reconciliation) => (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium border ${sourceBadge(r.source)}`}>{r.source.toUpperCase()}</span>
+      <AdminStatusBadge tone={toneForStatus(r.source)}>
+        {r.source.toUpperCase()}
+      </AdminStatusBadge>
     )},
     { key: 'period', header: 'Period' },
     { key: 'totalSales', header: 'Sales', render: (r: Reconciliation) => formatMoney(r.totalSales) },
@@ -98,7 +84,9 @@ export function ReconciliationPage() {
       <span className={r.hasDiscrepancy ? 'text-red-400 font-semibold' : 'text-green-400'}>{formatMoney(r.discrepancy)}</span>
     )},
     { key: 'status', header: 'Status', render: (r: Reconciliation) => (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium border ${statusBadge(r.status)}`}>{r.status}</span>
+      <AdminStatusBadge tone={toneForStatus(r.status)}>
+        {formatStatusLabel(r.status)}
+      </AdminStatusBadge>
     )},
     { key: 'actions', header: 'Actions', render: (r: Reconciliation) => r.status === 'pending' ? (
       <Button size="sm" onClick={(e: any) => { e?.stopPropagation(); setReviewModal(r); }}>Review</Button>
@@ -131,7 +119,14 @@ export function ReconciliationPage() {
               <div><span className="text-gray-400 text-sm">Expected Cash</span><p className="text-white font-medium">{formatMoney(selected.expectedCash)}</p></div>
               <div><span className="text-gray-400 text-sm">Actual Cash</span><p className="text-white font-medium">{formatMoney(selected.actualCash)}</p></div>
               <div><span className="text-gray-400 text-sm">Discrepancy</span><p className={`font-semibold ${selected.hasDiscrepancy ? 'text-red-400' : 'text-green-400'}`}>{formatMoney(selected.discrepancy)}</p></div>
-              <div><span className="text-gray-400 text-sm">Status</span><p><span className={`px-2 py-1 rounded-full text-xs font-medium border ${statusBadge(selected.status)}`}>{selected.status}</span></p></div>
+              <div>
+                <span className="text-gray-400 text-sm">Status</span>
+                <p>
+                  <AdminStatusBadge tone={toneForStatus(selected.status)}>
+                    {formatStatusLabel(selected.status)}
+                  </AdminStatusBadge>
+                </p>
+              </div>
             </div>
             {selected.items.length > 0 && (
               <div>
@@ -160,7 +155,7 @@ export function ReconciliationPage() {
         {reviewModal && (
           <div className="space-y-4">
             <div className="bg-white/5 rounded-xl p-4">
-              <p className="text-white font-medium">{reviewModal.source.toUpperCase()} — {reviewModal.period}</p>
+              <p className="text-white font-medium">{reviewModal.source.toUpperCase()} - {reviewModal.period}</p>
               <p className="text-sm text-gray-400">Expected: {formatMoney(reviewModal.expectedCash)} | Actual: {formatMoney(reviewModal.actualCash)}</p>
               <p className={`text-sm font-semibold ${reviewModal.hasDiscrepancy ? 'text-red-400' : 'text-green-400'}`}>
                 Discrepancy: {formatMoney(reviewModal.discrepancy)}

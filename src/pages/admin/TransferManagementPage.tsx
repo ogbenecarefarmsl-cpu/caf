@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import apiClient from '../../lib/api-client';
 import { unwrapArray } from '../../lib/unwrap-response';
 import { AdminLayout } from '../../components/AdminLayout';
+import { AdminStatusBadge } from '../../components/admin';
 import { Button } from '../../components/ui/Button';
 import { Error } from '../../components/ui/Error';
 import { Input } from '../../components/ui/Input';
@@ -15,6 +16,7 @@ import { Table } from '../../components/ui/Table';
 import { useToast } from '../../hooks/useToast';
 import { buildApiUrl } from '../../lib/api-utils';
 import { getErrorMessage } from '../../lib/error-utils';
+import { formatStatusLabel, toneForStatus } from '../../lib/admin-tones';
 import { queryKeys } from '../../lib/query-keys';
 import { getBranchId, useBranchStore } from '../../stores/branch-store';
 
@@ -183,21 +185,6 @@ export default function TransferManagementPage() {
     });
   };
 
-  const getStatusBadge = (status: Transfer['status']) => {
-    const colors = {
-      pending: 'border border-yellow-500/20 bg-yellow-500/15 text-yellow-300',
-      approved: 'border border-blue-500/20 bg-blue-500/15 text-blue-300',
-      completed: 'border border-accent-green/20 bg-accent-green/15 text-accent-green',
-      rejected: 'border border-red-500/20 bg-red-500/15 text-red-300',
-    };
-
-    return (
-      <span className={`rounded-full px-2 py-1 text-xs font-semibold ${colors[status]}`}>
-        {status.toUpperCase()}
-      </span>
-    );
-  };
-
   const transferColumns = [
     {
       key: 'createdAt',
@@ -243,7 +230,11 @@ export default function TransferManagementPage() {
     {
       key: 'status',
       header: 'Status',
-      render: (transfer: Transfer) => getStatusBadge(transfer.status),
+      render: (transfer: Transfer) => (
+        <AdminStatusBadge tone={toneForStatus(transfer.status)}>
+          {formatStatusLabel(transfer.status)}
+        </AdminStatusBadge>
+      ),
     },
     {
       key: 'requestedBy',
@@ -378,7 +369,9 @@ export default function TransferManagementPage() {
                       <p className="truncate font-semibold text-white">{transfer.productId.name}</p>
                       <p className="text-xs text-gray-500">{transfer.productId.sku}</p>
                     </div>
-                    {getStatusBadge(transfer.status)}
+                    <AdminStatusBadge tone={toneForStatus(transfer.status)}>
+                      {formatStatusLabel(transfer.status)}
+                    </AdminStatusBadge>
                   </div>
                   <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
                     <div>
@@ -473,7 +466,7 @@ export default function TransferManagementPage() {
                   value={product._id}
                   className="bg-primary-dark text-white"
                 >
-                  {product.name} ({product.sku}) • Available: {product.quantityAvailable}
+                  {product.name} ({product.sku}) - Available: {product.quantityAvailable}
                 </option>
               ))}
             </Select>

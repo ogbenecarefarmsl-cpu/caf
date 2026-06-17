@@ -7,11 +7,13 @@ import { Table } from '../../components/ui/Table';
 import { Modal } from '../../components/ui/Modal';
 import { Loading } from '../../components/ui/Loading';
 import { Error } from '../../components/ui/Error';
+import { AdminStatusBadge } from '../../components/admin';
 import { useToast } from '../../hooks/useToast';
 import { useBranchStore, getBranchId } from '../../stores/branch-store';
 import { useAuth } from '../../contexts/AuthContext';
 import { queryKeys } from '../../lib/query-keys';
 import { buildApiUrl } from '../../lib/api-utils';
+import { formatStatusLabel, toneForStatus } from '../../lib/admin-tones';
 import { FileText, Upload, CheckCircle, XCircle, Eye } from 'lucide-react';
 
 interface CustomerOrderItem {
@@ -32,16 +34,6 @@ interface CustomerOrder {
   status: string;
   createdAt: string;
 }
-
-const statusBadge = (status: string) => {
-  const styles: Record<string, string> = {
-    received: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
-    reviewed: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-    converted: 'bg-green-500/10 text-green-400 border-green-500/20',
-    cancelled: 'bg-red-500/10 text-red-400 border-red-500/20',
-  };
-  return styles[status] || 'bg-gray-500/10 text-gray-400 border-gray-500/20';
-};
 
 export function CustomerOrdersPage() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -104,9 +96,9 @@ export function CustomerOrdersPage() {
     {
       key: 'status', header: 'Status',
       render: (item: CustomerOrder) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium border ${statusBadge(item.status)}`}>
-          {item.status}
-        </span>
+        <AdminStatusBadge tone={toneForStatus(item.status)}>
+          {formatStatusLabel(item.status)}
+        </AdminStatusBadge>
       ),
     },
     {
@@ -166,9 +158,9 @@ export function CustomerOrdersPage() {
                 <p className="text-sm text-gray-400">File: {selectedOrder.sourceFile?.originalName}</p>
                 <p className="text-sm text-gray-400">Date: {new Date(selectedOrder.createdAt).toLocaleDateString()}</p>
               </div>
-              <span className={`px-3 py-1 rounded-full text-sm font-medium border ${statusBadge(selectedOrder.status)}`}>
-                {selectedOrder.status}
-              </span>
+              <AdminStatusBadge tone={toneForStatus(selectedOrder.status)}>
+                {formatStatusLabel(selectedOrder.status)}
+              </AdminStatusBadge>
             </div>
 
             <div>
@@ -183,13 +175,9 @@ export function CustomerOrdersPage() {
                         <p className="text-white font-medium">{item.extractedName}</p>
                         <p className="text-sm text-gray-400">Qty: {item.extractedQuantity}{item.extractedUnitPrice ? ` @ $${item.extractedUnitPrice}` : ''}</p>
                       </div>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium border ${
-                        item.status === 'matched' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
-                        item.status === 'new_product_added' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
-                        'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                      }`}>
-                        {item.status}
-                      </span>
+                      <AdminStatusBadge tone={toneForStatus(item.status)}>
+                        {formatStatusLabel(item.status)}
+                      </AdminStatusBadge>
                     </div>
                   ))}
                 </div>

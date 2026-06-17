@@ -5,6 +5,7 @@ import apiClient from '../../lib/api-client';
 import { unwrapArray } from '../../lib/unwrap-response';
 import { AdminLayout } from '../../components/AdminLayout';
 import { BranchSelector } from '../../components/BranchSelector';
+import { AdminPageHeader, AdminStatusBadge } from '../../components/admin';
 import { Button } from '../../components/ui/Button';
 import { Table } from '../../components/ui/Table';
 import { Modal } from '../../components/ui/Modal';
@@ -24,6 +25,11 @@ import { useBranchAwareCRUDMutations } from '../../hooks/useCRUDMutations';
 import { saveProductImage, getProductImage } from '../../services/background-sync.service';
 import { useToast } from '../../hooks/useToast';
 import { getErrorMessage } from '../../lib/error-utils';
+import {
+  PACK_TYPE_OPTIONS,
+  PRODUCT_CATEGORY_OPTIONS,
+  PRODUCT_UNIT_OPTIONS,
+} from '../../lib/product-options';
 
 interface PackSize {
   code?: string;
@@ -599,13 +605,9 @@ export const ProductManagementPage = () => {
       header: 'Prescription',
       render: (product: Product) => (
         product.requiresPrescription ? (
-          <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-blue-500/10 text-blue-500 border border-blue-500/20">
-            Required
-          </span>
+          <AdminStatusBadge tone="info">Required</AdminStatusBadge>
         ) : (
-          <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-gray-500/10 text-gray-400 border border-gray-500/20">
-            Not Required
-          </span>
+          <AdminStatusBadge>Not Required</AdminStatusBadge>
         )
       ),
     },
@@ -614,13 +616,9 @@ export const ProductManagementPage = () => {
       header: 'Controlled',
       render: (product: Product) => (
         product.isControlled ? (
-          <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-red-500/10 text-red-500 border border-red-500/20">
-            Yes
-          </span>
+          <AdminStatusBadge tone="danger">Yes</AdminStatusBadge>
         ) : (
-          <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-gray-500/10 text-gray-400 border border-gray-500/20">
-            No
-          </span>
+          <AdminStatusBadge>No</AdminStatusBadge>
         )
       ),
     },
@@ -629,13 +627,9 @@ export const ProductManagementPage = () => {
       header: 'Status',
       render: (product: Product) => (
         product.isActive ? (
-          <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-green-500/10 text-green-500 border border-green-500/20">
-            Active
-          </span>
+          <AdminStatusBadge tone="success">Active</AdminStatusBadge>
         ) : (
-          <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-gray-500/10 text-gray-400 border border-gray-500/20">
-            Inactive
-          </span>
+          <AdminStatusBadge>Inactive</AdminStatusBadge>
         )
       ),
     },
@@ -644,12 +638,11 @@ export const ProductManagementPage = () => {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-white">Products</h1>
-            <p className="text-gray-400">{total} products</p>
-          </div>
-          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-end">
+        <AdminPageHeader
+          title="Products"
+          subtitle={`${total} products`}
+          actions={
+            <>
             <div className="sm:hidden">
               <BranchSelector />
             </div>
@@ -685,8 +678,9 @@ export const ProductManagementPage = () => {
               {isImportingProducts ? 'Importing...' : 'Import Excel'}
             </Button>
             <Button onClick={() => handleOpenModal()}>+ Add Product</Button>
-          </div>
-        </div>
+            </>
+          }
+        />
 
         {importSummary ? (
           <div className="rounded-2xl border border-white/10 bg-primary-dark/60 p-5">
@@ -814,21 +808,11 @@ export const ProductManagementPage = () => {
                   label="Category"
                   error={errors.category?.message}
                   {...register('category', { required: 'Category is required' })}
+                  options={[
+                    { value: '', label: 'Select Category' },
+                    ...PRODUCT_CATEGORY_OPTIONS,
+                  ]}
                 >
-                  <option value="" className="bg-primary-dark text-white">Select Category</option>
-                  <option value="prescription" className="bg-primary-dark text-white">Prescription Drugs</option>
-                  <option value="otc" className="bg-primary-dark text-white">Over-the-Counter (OTC)</option>
-                  <option value="vitamins" className="bg-primary-dark text-white">Vitamins & Supplements</option>
-                  <option value="medical-devices" className="bg-primary-dark text-white">Medical Devices</option>
-                  <option value="personal-care" className="bg-primary-dark text-white">Personal Care</option>
-                  <option value="baby-care" className="bg-primary-dark text-white">Baby & Child Care</option>
-                  <option value="first-aid" className="bg-primary-dark text-white">First Aid</option>
-                  <option value="diabetic-care" className="bg-primary-dark text-white">Diabetic Care</option>
-                  <option value="cosmetics" className="bg-primary-dark text-white">Cosmetics</option>
-                  <option value="laboratory" className="bg-primary-dark text-white">Laboratory</option>
-                  <option value="surgical" className="bg-primary-dark text-white">Surgical</option>
-                  <option value="dental" className="bg-primary-dark text-white">Dental</option>
-                  <option value="other" className="bg-primary-dark text-white">Other</option>
                 </Select>
 
                 <Input
@@ -841,30 +825,11 @@ export const ProductManagementPage = () => {
                   label="Unit"
                   error={errors.unit?.message}
                   {...register('unit', { required: 'Unit is required' })}
+                  options={[
+                    { value: '', label: 'Select Unit' },
+                    ...PRODUCT_UNIT_OPTIONS,
+                  ]}
                 >
-                  <option value="" className="bg-primary-dark text-white">Select Unit</option>
-                  <option value="tablet" className="bg-primary-dark text-white">Tablet</option>
-                  <option value="capsule" className="bg-primary-dark text-white">Capsule</option>
-                  <option value="bottle" className="bg-primary-dark text-white">Bottle</option>
-                  <option value="vial" className="bg-primary-dark text-white">Vial</option>
-                  <option value="ampule" className="bg-primary-dark text-white">Ampule</option>
-                  <option value="syringe" className="bg-primary-dark text-white">Syringe</option>
-                  <option value="tube" className="bg-primary-dark text-white">Tube</option>
-                  <option value="jar" className="bg-primary-dark text-white">Jar</option>
-                  <option value="pack" className="bg-primary-dark text-white">Pack</option>
-                  <option value="box" className="bg-primary-dark text-white">Box</option>
-                  <option value="card" className="bg-primary-dark text-white">Card</option>
-                  <option value="strip" className="bg-primary-dark text-white">Strip (Lab)</option>
-                  <option value="sachet" className="bg-primary-dark text-white">Sachet</option>
-                  <option value="kit" className="bg-primary-dark text-white">Kit</option>
-                  <option value="adult" className="bg-primary-dark text-white">Adult Size</option>
-                  <option value="children" className="bg-primary-dark text-white">Children Size</option>
-                  <option value="neonatal" className="bg-primary-dark text-white">Neonatal Size</option>
-                  <option value="pediatric" className="bg-primary-dark text-white">Pediatric Size</option>
-                  <option value="ml" className="bg-primary-dark text-white">Milliliter (ml)</option>
-                  <option value="mg" className="bg-primary-dark text-white">Milligram (mg)</option>
-                  <option value="g" className="bg-primary-dark text-white">Gram (g)</option>
-                  <option value="piece" className="bg-primary-dark text-white">Piece</option>
                 </Select>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -969,7 +934,7 @@ export const ProductManagementPage = () => {
                           onClick={() => { setProductImage(null); setImagePreview(null); }}
                           className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600"
                         >
-                          ×
+                          x
                         </button>
                       </div>
                     ) : (
@@ -1119,20 +1084,11 @@ export const ProductManagementPage = () => {
                                 className="px-2 py-1.5 bg-primary-dark border border-gray-600 rounded text-white text-sm"
                               >
                                 <option value="">Package type</option>
-                                <option value="Box">Box</option>
-                                <option value="Card">Card</option>
-                                <option value="Pack">Pack</option>
-                                <option value="Blister">Blister</option>
-                                <option value="Bottle">Bottle</option>
-                                <option value="Tube">Tube</option>
-                                <option value="Vial">Vial</option>
-                                <option value="Ampoule">Ampoule</option>
-                                <option value="Sachet">Sachet</option>
-                                <option value="Kit">Kit</option>
-                                <option value="Strip">Strip (Lab)</option>
-                                <option value="Adult">Adult</option>
-                                <option value="Children">Children</option>
-                                <option value="Neonatal">Neonatal</option>
+                                {PACK_TYPE_OPTIONS.map((option) => (
+                                  <option key={option.value} value={option.value}>
+                                    {option.label}
+                                  </option>
+                                ))}
                               </select>
                               <input
                                 placeholder="Custom label"

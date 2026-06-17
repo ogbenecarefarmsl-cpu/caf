@@ -6,6 +6,7 @@ import { Table } from '../../components/ui/Table';
 import { Modal } from '../../components/ui/Modal';
 import { Loading } from '../../components/ui/Loading';
 import { Error } from '../../components/ui/Error';
+import { AdminStatusBadge } from '../../components/admin';
 import { useToast } from '../../hooks/useToast';
 import { useBranchStore, getBranchId } from '../../stores/branch-store';
 import { useAuth } from '../../contexts/AuthContext';
@@ -13,6 +14,7 @@ import { queryKeys } from '../../lib/query-keys';
 import apiClient from '../../lib/api-client';
 import { buildApiUrl } from '../../lib/api-utils';
 import { getErrorMessage } from '../../lib/error-utils';
+import { formatStatusLabel, toneForStatus } from '../../lib/admin-tones';
 import { DollarSign, CheckCircle, Send } from 'lucide-react';
 
 interface Salary {
@@ -36,16 +38,6 @@ interface Employee { _id: string; firstName: string; lastName: string; username:
 function formatMoney(amount: number) {
   return `Le ${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
-
-const statusBadge = (status: string) => {
-  const s: Record<string, string> = {
-    draft: 'bg-gray-500/10 text-gray-400 border-gray-500/20',
-    pending_approval: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-    approved: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-    paid: 'bg-green-500/10 text-green-400 border-green-500/20',
-  };
-  return s[status] || 'bg-gray-500/10 text-gray-400 border-gray-500/20';
-};
 
 export function SalaryManagementPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -132,7 +124,9 @@ export function SalaryManagementPage() {
     { key: 'deductions', header: 'Ded.', render: (s: Salary) => formatMoney(s.deductions) },
     { key: 'netSalary', header: 'Net', render: (s: Salary) => <span className="font-semibold text-white">{formatMoney(s.netSalary)}</span> },
     { key: 'status', header: 'Status', render: (s: Salary) => (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium border ${statusBadge(s.status)}`}>{s.status.replace('_', ' ')}</span>
+      <AdminStatusBadge tone={toneForStatus(s.status)}>
+        {formatStatusLabel(s.status)}
+      </AdminStatusBadge>
     )},
     { key: 'actions', header: 'Actions', render: (s: Salary) => (
       <div className="flex gap-2">
