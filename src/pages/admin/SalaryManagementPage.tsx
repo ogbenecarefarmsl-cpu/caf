@@ -16,6 +16,7 @@ import { buildApiUrl } from '../../lib/api-utils';
 import { getErrorMessage } from '../../lib/error-utils';
 import { formatStatusLabel, toneForStatus } from '../../lib/admin-tones';
 import { DollarSign, CheckCircle, Send } from 'lucide-react';
+import { useCurrency } from '../../hooks/useCurrency';
 
 interface Salary {
   _id: string;
@@ -35,10 +36,6 @@ interface Salary {
 
 interface Employee { _id: string; firstName: string; lastName: string; username: string; role: string; branchId?: string }
 
-function formatMoney(amount: number) {
-  return `Le ${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
-
 export function SalaryManagementPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [form, setForm] = useState({ employeeId: '', baseSalary: '', allowances: '', deductions: '', paymentMethod: 'bank_transfer', notes: '' });
@@ -48,6 +45,7 @@ export function SalaryManagementPage() {
   const branchId = getBranchId(selectedBranch);
   const queryClient = useQueryClient();
   const { showSuccess, showError } = useToast();
+  const { format: formatMoney } = useCurrency();
 
   const currentMonth = new Date().toISOString().slice(0, 7);
 

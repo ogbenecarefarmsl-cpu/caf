@@ -8,6 +8,7 @@ import { useAuthStore } from '../../stores/auth-store';
 import apiClient from '../../lib/api-client';
 import { buildApiUrl } from '../../lib/api-utils';
 import { Package, Clock, CheckCircle } from 'lucide-react';
+import { useCurrency } from '../../hooks/useCurrency';
 
 interface PurchaseOrder {
   _id: string;
@@ -20,16 +21,13 @@ interface PurchaseOrder {
   createdAt: string;
 }
 
-function fmt(amount: number) {
-  return `Le ${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
-
 export function FinancePayablesPage() {
   const { selectedBranch } = useBranchStore();
   const user = useAuthStore((state) => state.user);
   const branchId = getBranchId(selectedBranch);
   const effectiveBranchId = user?.role === 'super_admin' ? undefined : branchId;
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'partial' | 'received'>('pending');
+  const { format } = useCurrency();
 
   const { data: orders, isLoading, error } = useQuery({
     queryKey: ['finance', 'payables', effectiveBranchId, statusFilter],
@@ -55,7 +53,7 @@ export function FinancePayablesPage() {
           <div className="flex items-center gap-2 text-amber-300 text-xs uppercase mb-1">
             <Clock className="w-4 h-4" /> Pending POs
           </div>
-          <p className="text-2xl font-bold text-white">{fmt(totalPayable)}</p>
+          <p className="text-2xl font-bold text-white">{format(totalPayable)}</p>
         </div>
         <div className="rounded-2xl border border-white/10 bg-primary-dark/70 p-4">
           <div className="flex items-center gap-2 text-gray-400 text-xs uppercase mb-1">
@@ -68,7 +66,7 @@ export function FinancePayablesPage() {
             <CheckCircle className="w-4 h-4" /> Avg. Value
           </div>
           <p className="text-2xl font-bold text-white">
-            {fmt((orders?.length ?? 0) > 0 ? totalPayable / orders!.length : 0)}
+            {format((orders?.length ?? 0) > 0 ? totalPayable / orders!.length : 0)}
           </p>
         </div>
       </div>
@@ -123,7 +121,7 @@ export function FinancePayablesPage() {
                     <tr key={o._id} className="border-b border-white/5 hover:bg-white/5">
                       <td className="px-4 py-3 text-white font-medium">{o.poNumber}</td>
                       <td className="px-4 py-3 text-gray-300">{o.supplierId?.name || o.supplierName || '-'}</td>
-                      <td className="px-4 py-3 text-right text-white font-semibold">{fmt(o.total)}</td>
+                      <td className="px-4 py-3 text-right text-white font-semibold">{format(o.total)}</td>
                       <td className="px-4 py-3">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium border ${
                           o.status === 'received' ? 'bg-green-500/10 text-green-400 border-green-500/20' :

@@ -15,6 +15,7 @@ import { buildApiUrl } from '../../lib/api-utils';
 import { getErrorMessage } from '../../lib/error-utils';
 import { formatStatusLabel, toneForStatus } from '../../lib/admin-tones';
 import { Plus, TrendingUp, TrendingDown, DollarSign, ArrowRightLeft } from 'lucide-react';
+import { useCurrency } from '../../hooks/useCurrency';
 
 interface CashEntry {
   _id: string;
@@ -38,10 +39,6 @@ interface CashSummary {
   byCategory: { category: string; total: number; count: number }[];
 }
 
-function formatMoney(amount: number) {
-  return `Le ${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
-
 const CATEGORIES = ['sales', 'services', 'supplies', 'maintenance', 'utilities', 'rent', 'salaries', 'transport', 'marketing', 'insurance', 'tax', 'petty_cash', 'other'];
 const TYPES = ['income', 'expense', 'transfer', 'loan', 'salary', 'other'];
 
@@ -54,6 +51,7 @@ export function CashManagementPage() {
   const branchId = getBranchId(selectedBranch);
   const queryClient = useQueryClient();
   const { showSuccess, showError } = useToast();
+  const { format: formatMoney } = useCurrency();
 
   const { data: entries, isLoading, error, refetch } = useQuery({
     queryKey: queryKeys.financeManager.cashEntries.list({ branchId, startDate: startDate || undefined, endDate: endDate || undefined }),

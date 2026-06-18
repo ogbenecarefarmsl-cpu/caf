@@ -14,6 +14,7 @@ import apiClient from '../../lib/api-client';
 import { buildApiUrl } from '../../lib/api-utils';
 import { formatStatusLabel, toneForStatus } from '../../lib/admin-tones';
 import { CheckCircle, XCircle, Eye } from 'lucide-react';
+import { useCurrency } from '../../hooks/useCurrency';
 
 interface Reconciliation {
   _id: string;
@@ -33,10 +34,6 @@ interface Reconciliation {
   createdAt: string;
 }
 
-function formatMoney(amount: number) {
-  return `Le ${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
-
 export function ReconciliationPage() {
   const [selected, setSelected] = useState<Reconciliation | null>(null);
   const [reviewModal, setReviewModal] = useState<Reconciliation | null>(null);
@@ -45,6 +42,7 @@ export function ReconciliationPage() {
   const branchId = getBranchId(selectedBranch);
   const queryClient = useQueryClient();
   const { showSuccess, showError } = useToast();
+  const { format: formatMoney } = useCurrency();
 
   const { data: recons, isLoading, error, refetch } = useQuery({
     queryKey: queryKeys.financeManager.reconciliations.list({ branchId }),

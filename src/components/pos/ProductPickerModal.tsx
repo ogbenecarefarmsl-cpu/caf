@@ -4,6 +4,7 @@ import apiClient from '../../lib/api-client';
 import { useDebounce } from '../../hooks/useDebounce';
 import { useQuickKeysStore, MAX_QUICK_KEYS } from '../../stores/quick-keys-store';
 import { useToast } from '../../hooks/useToast';
+import { useCurrency } from '../../hooks/useCurrency';
 
 interface ProductPickerModalProps {
   open: boolean;
@@ -26,6 +27,7 @@ export const ProductPickerModal = ({ open, onClose, branchId }: ProductPickerMod
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 200);
   const { showSuccess, showError } = useToast();
+  const { format } = useCurrency();
   const addKey = useQuickKeysStore((s) => s.addKey);
   const keysCount = useQuickKeysStore((s) => s.keys.length);
   const isFull = keysCount >= MAX_QUICK_KEYS;
@@ -132,7 +134,7 @@ export const ProductPickerModal = ({ open, onClose, branchId }: ProductPickerMod
                       </p>
                       {!hasPacks && (
                         <p className="text-xs text-accent-green font-bold mt-0.5">
-                          Le {p.price.toFixed(2)}
+                          {format(p.price)}
                         </p>
                       )}
                     </div>
@@ -151,7 +153,7 @@ export const ProductPickerModal = ({ open, onClose, branchId }: ProductPickerMod
                             onClick={() => handleAdd(p, pk.code)}
                             disabled={isFull}
                             className="px-4 py-2 min-h-10 text-xs bg-primary-dark border border-accent-green/30 text-accent-green rounded-md font-semibold hover:bg-accent-green/10 disabled:opacity-50 truncate max-w-[140px]"
-                            title={`+ ${pk.name} - Le ${pk.sellingPrice.toFixed(2)}`}
+                            title={`+ ${pk.name} - ${format(pk.sellingPrice)}`}
                           >
                             + {pk.name}
                           </button>

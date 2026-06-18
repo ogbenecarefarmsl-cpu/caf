@@ -8,7 +8,7 @@
  */
 
 import { useMemo } from 'react';
-import { formatCurrency, formatCurrencyWithoutSymbol, getCurrencyMeta, parseCurrency } from '../lib/currency';
+import { formatCurrency, formatCurrencyWithoutSymbol, formatCurrencyCompact, getCurrencyMeta, parseCurrency } from '../lib/currency';
 import { useBranchStore } from '../stores/branch-store';
 
 /**
@@ -43,22 +43,7 @@ export const useCurrency = () => {
     /**
      * Format a monetary amount in compact form
      */
-    formatCompact: (amount: number): string => {
-      if (amount === null || amount === undefined || isNaN(amount)) {
-        return `${meta.symbol} 0.00`;
-      }
-
-      if (Math.abs(amount) < 1000000) {
-        return formatCurrency(amount, meta.code);
-      }
-
-      const absAmount = Math.abs(amount);
-      const sign = amount < 0 ? '-' : '';
-      if (absAmount >= 1000000000) {
-        return `${sign}${meta.symbol} ${(absAmount / 1000000000).toFixed(2)}B`;
-      }
-      return `${sign}${meta.symbol} ${(absAmount / 1000000).toFixed(2)}M`;
-    },
+    formatCompact: (amount: number): string => formatCurrencyCompact(amount, meta.code),
     
     /**
      * Parse a formatted currency string back to a number

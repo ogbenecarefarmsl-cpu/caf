@@ -17,16 +17,13 @@ import {
   Receipt, FileText, BarChart3,
 } from 'lucide-react';
 import type { UnifiedDashboard } from '../../types/finance';
+import { useCurrency } from '../../hooks/useCurrency';
 
 interface ReconciliationStats {
   pending: number;
   approved: number;
   rejected: number;
   totalDiscrepancy: number;
-}
-
-function fmt(amount: number) {
-  return `Le ${amount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 }
 
 interface StatCardProps {
@@ -124,6 +121,7 @@ export function FinanceHubPage() {
   const user = useAuthStore((state) => state.user);
   const branchId = getBranchId(selectedBranch);
   const effectiveBranchId = user?.role === 'super_admin' ? undefined : branchId;
+  const { format } = useCurrency();
 
   const { data: dashboard, isLoading: cashLoading, error: cashError } = useQuery({
     queryKey: ['finance', 'unified-dashboard', effectiveBranchId, startDate, endDate],
@@ -268,42 +266,42 @@ export function FinanceHubPage() {
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           <StatCard
             label="Income"
-            value={fmt(cash?.totalIncome ?? 0)}
+            value={format(cash?.totalIncome ?? 0)}
             icon={<TrendingUp className="w-4 h-4 text-green-400" />}
             color="bg-green-500/10 border-green-500/20"
             delta={deltaFor(cash?.totalIncome ?? 0, compCash?.totalIncome)}
           />
           <StatCard
             label="Expenses"
-            value={fmt(cash?.totalExpense ?? 0)}
+            value={format(cash?.totalExpense ?? 0)}
             icon={<TrendingDown className="w-4 h-4 text-red-400" />}
             color="bg-red-500/10 border-red-500/20"
             delta={deltaFor(cash?.totalExpense ?? 0, compCash?.totalExpense)}
           />
           <StatCard
             label="Salaries"
-            value={fmt(cash?.totalSalary ?? 0)}
+            value={format(cash?.totalSalary ?? 0)}
             icon={<Users className="w-4 h-4 text-purple-400" />}
             color="bg-purple-500/10 border-purple-500/20"
             delta={deltaFor(cash?.totalSalary ?? 0, compCash?.totalSalary)}
           />
           <StatCard
             label="Loans"
-            value={fmt(cash?.totalLoan ?? 0)}
+            value={format(cash?.totalLoan ?? 0)}
             icon={<DollarSign className="w-4 h-4 text-amber-400" />}
             color="bg-amber-500/10 border-amber-500/20"
             delta={deltaFor(cash?.totalLoan ?? 0, compCash?.totalLoan)}
           />
           <StatCard
             label="Transfers"
-            value={fmt(cash?.totalTransfer ?? 0)}
+            value={format(cash?.totalTransfer ?? 0)}
             icon={<ArrowRightLeft className="w-4 h-4 text-blue-400" />}
             color="bg-blue-500/10 border-blue-500/20"
             delta={deltaFor(cash?.totalTransfer ?? 0, compCash?.totalTransfer)}
           />
           <StatCard
             label="Net Cash"
-            value={fmt(cash?.netCash ?? 0)}
+            value={format(cash?.netCash ?? 0)}
             icon={<Wallet className="w-4 h-4 text-cyan-400" />}
             color={
               (cash?.netCash ?? 0) >= 0
@@ -320,7 +318,7 @@ export function FinanceHubPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
             label="Receivables Outstanding"
-            value={fmt(receivables?.totalBalanceDue ?? 0)}
+            value={format(receivables?.totalBalanceDue ?? 0)}
             icon={<CreditCard className="w-5 h-5 text-amber-400" />}
             color="bg-amber-500/10 border-amber-500/20"
             link="/finance/receivables"
@@ -328,14 +326,14 @@ export function FinanceHubPage() {
           />
           <StatCard
             label="Pending POs"
-            value={fmt(purchases?.pendingValue ?? 0)}
+            value={format(purchases?.pendingValue ?? 0)}
             icon={<Package className="w-5 h-5 text-orange-400" />}
             color="bg-orange-500/10 border-orange-500/20"
-            sublabel={`${fmt(purchases?.totalPurchaseValue ?? 0)} total PO value`}
+            sublabel={`${format(purchases?.totalPurchaseValue ?? 0)} total PO value`}
           />
           <StatCard
             label="Pending Salaries"
-            value={fmt(salaryStats?.totalNet ?? 0)}
+            value={format(salaryStats?.totalNet ?? 0)}
             icon={<Users className="w-5 h-5 text-purple-400" />}
             color="bg-purple-500/10 border-purple-500/20"
             link="/finance/salaries"
@@ -343,7 +341,7 @@ export function FinanceHubPage() {
           />
           <StatCard
             label="Reconciliation Variance"
-            value={fmt(Math.abs(reconStats?.totalDiscrepancy ?? 0))}
+            value={format(Math.abs(reconStats?.totalDiscrepancy ?? 0))}
             icon={<AlertTriangle className="w-5 h-5 text-amber-400" />}
             color={
               Math.abs(reconStats?.totalDiscrepancy ?? 0) < 1
@@ -361,7 +359,7 @@ export function FinanceHubPage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <StatCard
             label="Gross Revenue"
-            value={fmt(profitLoss?.grossRevenue ?? 0)}
+            value={format(profitLoss?.grossRevenue ?? 0)}
             icon={<TrendingUp className="w-4 h-4 text-emerald-400" />}
             color="bg-emerald-500/10 border-emerald-500/20"
             delta={deltaFor(profitLoss?.grossRevenue ?? 0, compProfit?.grossRevenue)}
@@ -369,21 +367,21 @@ export function FinanceHubPage() {
           />
           <StatCard
             label="Cost of Goods"
-            value={fmt(profitLoss?.costOfGoods ?? 0)}
+            value={format(profitLoss?.costOfGoods ?? 0)}
             icon={<Package className="w-4 h-4 text-orange-400" />}
             color="bg-orange-500/10 border-orange-500/20"
             delta={deltaFor(profitLoss?.costOfGoods ?? 0, compProfit?.costOfGoods)}
           />
           <StatCard
             label="Gross Profit"
-            value={fmt(profitLoss?.grossProfit ?? 0)}
+            value={format(profitLoss?.grossProfit ?? 0)}
             icon={<BarChart3 className="w-4 h-4 text-cyan-400" />}
             color="bg-cyan-500/10 border-cyan-500/20"
             delta={deltaFor(profitLoss?.grossProfit ?? 0, compProfit?.grossProfit)}
           />
           <StatCard
             label="Net Profit"
-            value={fmt(profitLoss?.netProfit ?? 0)}
+            value={format(profitLoss?.netProfit ?? 0)}
             icon={<DollarSign className="w-4 h-4 text-white" />}
             color={
               (profitLoss?.netProfit ?? 0) >= 0

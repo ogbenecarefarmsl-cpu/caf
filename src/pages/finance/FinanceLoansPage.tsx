@@ -13,6 +13,7 @@ import apiClient from '../../lib/api-client';
 import { buildApiUrl } from '../../lib/api-utils';
 import { getErrorMessage } from '../../lib/error-utils';
 import { Plus, DollarSign, TrendingDown, Percent, Lock, Ban } from 'lucide-react';
+import { useCurrency } from '../../hooks/useCurrency';
 
 interface Loan {
   _id: string;
@@ -37,10 +38,6 @@ interface LoanStats {
   totalOutstanding: number;
   totalAccruedInterest: number;
   byStatus: { status: string; count: number; outstanding: number }[];
-}
-
-function fmt(amount: number) {
-  return `Le ${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 const statusBadge = (status: string) => {
@@ -79,6 +76,7 @@ export function FinanceLoansPage() {
   const effectiveBranchId = user?.role === 'super_admin' ? undefined : branchId;
   const queryClient = useQueryClient();
   const { showSuccess, showError } = useToast();
+  const { format } = useCurrency();
 
   const { data: loans, isLoading, error, refetch } = useQuery({
     queryKey: ['finance', 'loans', effectiveBranchId],
@@ -189,9 +187,9 @@ export function FinanceLoansPage() {
       }`}>{l.direction === 'received' ? 'Received' : 'Given'}</span>
     )},
     { key: 'counterpartyName', header: 'Counterparty' },
-    { key: 'principalAmount', header: 'Principal', render: (l: Loan) => fmt(l.principalAmount) },
+    { key: 'principalAmount', header: 'Principal', render: (l: Loan) => format(l.principalAmount) },
     { key: 'outstandingPrincipal', header: 'Outstanding', render: (l: Loan) => (
-      <span className="font-semibold text-amber-400">{fmt(l.outstandingPrincipal)}</span>
+      <span className="font-semibold text-amber-400">{format(l.outstandingPrincipal)}</span>
     )},
     { key: 'interestRatePercent', header: 'Rate', render: (l: Loan) => `${l.interestRatePercent}%` },
     { key: 'status', header: 'Status', render: (l: Loan) => (
@@ -227,19 +225,19 @@ export function FinanceLoansPage() {
           </div>
           <div className="rounded-xl border border-green-500/30 bg-green-500/10 p-4">
             <p className="text-xs text-green-300">Total Received</p>
-            <p className="text-2xl font-bold text-white">{fmt(stats.totalReceived)}</p>
+            <p className="text-2xl font-bold text-white">{format(stats.totalReceived)}</p>
           </div>
           <div className="rounded-xl border border-purple-500/30 bg-purple-500/10 p-4">
             <p className="text-xs text-purple-300">Total Given</p>
-            <p className="text-2xl font-bold text-white">{fmt(stats.totalGiven)}</p>
+            <p className="text-2xl font-bold text-white">{format(stats.totalGiven)}</p>
           </div>
           <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
             <p className="text-xs text-amber-300">Outstanding</p>
-            <p className="text-2xl font-bold text-white">{fmt(stats.totalOutstanding)}</p>
+            <p className="text-2xl font-bold text-white">{format(stats.totalOutstanding)}</p>
           </div>
           <div className="rounded-xl border border-white/10 bg-primary-dark/70 p-4">
             <p className="text-xs text-gray-400">Accrued Interest</p>
-            <p className="text-2xl font-bold text-white">{fmt(stats.totalAccruedInterest)}</p>
+            <p className="text-2xl font-bold text-white">{format(stats.totalAccruedInterest)}</p>
           </div>
         </div>
       ) : null}
@@ -329,7 +327,7 @@ export function FinanceLoansPage() {
           <div className="space-y-4">
             <div className="bg-white/5 rounded-xl p-4">
               <p className="text-white font-medium">{repayModal.referenceNumber} - {repayModal.counterpartyName}</p>
-              <p className="text-sm text-gray-400">Outstanding: {fmt(repayModal.outstandingPrincipal)} | Rate: {repayModal.interestRatePercent}%</p>
+              <p className="text-sm text-gray-400">Outstanding: {format(repayModal.outstandingPrincipal)} | Rate: {repayModal.interestRatePercent}%</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-white mb-1">Amount</label>
@@ -352,7 +350,7 @@ export function FinanceLoansPage() {
             <div className="bg-white/5 rounded-xl p-4">
               <p className="text-white font-medium">{accrueModal.referenceNumber} - {accrueModal.counterpartyName}</p>
               <p className="text-sm text-gray-400">
-                Outstanding: {fmt(accrueModal.outstandingPrincipal)} | Rate: {accrueModal.interestRatePercent}%
+                Outstanding: {format(accrueModal.outstandingPrincipal)} | Rate: {accrueModal.interestRatePercent}%
               </p>
             </div>
             <div>
@@ -360,7 +358,7 @@ export function FinanceLoansPage() {
               <input type="number" min="1" value={accrueMonths} onChange={(e) => setAccrueMonths(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-xl bg-white/5 text-white border border-white/10" />
               <p className="mt-2 text-xs text-gray-400">
-                Estimated interest: {fmt((accrueModal.outstandingPrincipal * (accrueModal.interestRatePercent / 100) / 12) * (Number(accrueMonths) || 0))}
+                Estimated interest: {format((accrueModal.outstandingPrincipal * (accrueModal.interestRatePercent / 100) / 12) * (Number(accrueMonths) || 0))}
               </p>
             </div>
             <div className="flex justify-end gap-3">
@@ -382,7 +380,7 @@ export function FinanceLoansPage() {
             </div>
             <div className="bg-white/5 rounded-xl p-4">
               <p className="text-white font-medium">{cancelModal.referenceNumber} - {cancelModal.counterpartyName}</p>
-              <p className="text-sm text-gray-400">Principal: {fmt(cancelModal.principalAmount)}</p>
+              <p className="text-sm text-gray-400">Principal: {format(cancelModal.principalAmount)}</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-white mb-1">Reason</label>

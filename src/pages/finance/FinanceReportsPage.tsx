@@ -15,10 +15,7 @@ import {
   DollarSign, TrendingUp, TrendingDown, AlertTriangle, CreditCard, ShoppingCart, Wallet, Activity, BarChart3, Package,
 } from 'lucide-react';
 import type { UnifiedDashboard } from '../../types/finance';
-
-function fmt(amount: number) {
-  return `Le ${amount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-}
+import { useCurrency } from '../../hooks/useCurrency';
 
 const COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#14b8a6'];
 const paymentLabels: Record<string, string> = {
@@ -50,6 +47,7 @@ export function FinanceReportsPage() {
   const user = useAuthStore((state) => state.user);
   const branchId = getBranchId(selectedBranch);
   const effectiveBranchId = user?.role === 'super_admin' ? undefined : branchId;
+  const { format } = useCurrency();
 
   const { data, isLoading, error } = useQuery({
     queryKey: [...queryKeys.financeManager.dashboard(effectiveBranchId), startDate, endDate],
@@ -90,10 +88,10 @@ export function FinanceReportsPage() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
-        <StatCard label="Net Revenue" value={fmt(d.revenue.netRevenue)} icon={<TrendingUp className="w-4 h-4 text-green-400" />} color="bg-green-500/10 border-green-500/20" />
-        <StatCard label="Total Expenses" value={fmt(d.expenses.totalExpenses)} icon={<TrendingDown className="w-4 h-4 text-red-400" />} color="bg-red-500/10 border-red-500/20" />
-        <StatCard label="Cash Variance" value={fmt(d.cashPosition.totalVariance)} icon={<AlertTriangle className="w-4 h-4 text-amber-400" />} color={d.cashPosition.totalVariance === 0 ? 'bg-green-500/10 border-green-500/20' : 'bg-amber-500/10 border-amber-500/20'} />
-        <StatCard label="Credit Outstanding" value={fmt(d.creditOutstanding.totalBalanceDue)} icon={<CreditCard className="w-4 h-4 text-orange-400" />} color="bg-orange-500/10 border-orange-500/20" />
+        <StatCard label="Net Revenue" value={format(d.revenue.netRevenue)} icon={<TrendingUp className="w-4 h-4 text-green-400" />} color="bg-green-500/10 border-green-500/20" />
+        <StatCard label="Total Expenses" value={format(d.expenses.totalExpenses)} icon={<TrendingDown className="w-4 h-4 text-red-400" />} color="bg-red-500/10 border-red-500/20" />
+        <StatCard label="Cash Variance" value={format(d.cashPosition.totalVariance)} icon={<AlertTriangle className="w-4 h-4 text-amber-400" />} color={d.cashPosition.totalVariance === 0 ? 'bg-green-500/10 border-green-500/20' : 'bg-amber-500/10 border-amber-500/20'} />
+        <StatCard label="Credit Outstanding" value={format(d.creditOutstanding.totalBalanceDue)} icon={<CreditCard className="w-4 h-4 text-orange-400" />} color="bg-orange-500/10 border-orange-500/20" />
         <StatCard label="Transactions" value={d.revenue.salesCount.toLocaleString()} icon={<ShoppingCart className="w-4 h-4 text-blue-400" />} color="bg-blue-500/10 border-blue-500/20" />
         <StatCard label="Open Shifts" value={String(d.cashPosition.openShifts)} icon={<Wallet className="w-4 h-4 text-cyan-400" />} color="bg-cyan-500/10 border-cyan-500/20" />
       </div>
@@ -109,7 +107,7 @@ export function FinanceReportsPage() {
                 <Pie data={sourceRevenueData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}>
                   {sourceRevenueData.map((_, i) => <Cell key={i} fill={COLORS[i]} />)}
                 </Pie>
-                <Tooltip formatter={(v: any) => fmt(Number(v))} />
+                <Tooltip formatter={(v: any) => format(Number(v))} />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
@@ -129,12 +127,12 @@ export function FinanceReportsPage() {
             ].map((item) => (
               <div key={item.label} className="flex justify-between items-center py-2 border-b border-white/5">
                 <span className="text-sm text-gray-400">{item.label}</span>
-                <span className={`text-sm font-semibold ${item.color}`}>{fmt(item.value)}</span>
+                <span className={`text-sm font-semibold ${item.color}`}>{format(item.value)}</span>
               </div>
             ))}
             <div className="flex justify-between items-center py-3 bg-white/5 rounded-lg px-3">
               <span className="text-white font-semibold">Net Profit</span>
-              <span className={`text-xl font-bold ${pl.netProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>{fmt(pl.netProfit)}</span>
+              <span className={`text-xl font-bold ${pl.netProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>{format(pl.netProfit)}</span>
             </div>
             <div className="flex justify-between items-center py-2">
               <span className="text-sm text-gray-400">Margin</span>
@@ -156,7 +154,7 @@ export function FinanceReportsPage() {
                   <Pie data={expensePieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80}>
                     {expensePieData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                   </Pie>
-                  <Tooltip formatter={(v: any) => fmt(Number(v))} />
+                  <Tooltip formatter={(v: any) => format(Number(v))} />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
@@ -171,15 +169,15 @@ export function FinanceReportsPage() {
           <div className="space-y-3">
             <div className="bg-white/5 rounded-lg p-3">
               <p className="text-xs text-gray-400">Assigned Value</p>
-              <p className="text-lg font-bold text-white">{fmt(d.marketer.totalAssignedValue)}</p>
+              <p className="text-lg font-bold text-white">{format(d.marketer.totalAssignedValue)}</p>
             </div>
             <div className="bg-white/5 rounded-lg p-3">
               <p className="text-xs text-gray-400">Sold Value</p>
-              <p className="text-lg font-bold text-green-400">{fmt(d.marketer.totalSoldValue)}</p>
+              <p className="text-lg font-bold text-green-400">{format(d.marketer.totalSoldValue)}</p>
             </div>
             <div className="bg-white/5 rounded-lg p-3">
               <p className="text-xs text-gray-400">Outstanding</p>
-              <p className="text-lg font-bold text-amber-400">{fmt(d.marketer.totalOutstanding)}</p>
+              <p className="text-lg font-bold text-amber-400">{format(d.marketer.totalOutstanding)}</p>
             </div>
           </div>
         </div>
@@ -193,7 +191,7 @@ export function FinanceReportsPage() {
               <BarChart data={branchBarData}>
                 <XAxis dataKey="name" tick={{ fill: '#9ca3af', fontSize: 12 }} />
                 <YAxis tick={{ fill: '#9ca3af', fontSize: 12 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`} />
-                <Tooltip formatter={(v: any) => fmt(Number(v))} contentStyle={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 8 }} />
+                <Tooltip formatter={(v: any) => format(Number(v))} contentStyle={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 8 }} />
                 <Legend />
                 <Bar dataKey="Revenue" fill="#22c55e" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="Expenses" fill="#ef4444" radius={[4, 4, 0, 0]} />

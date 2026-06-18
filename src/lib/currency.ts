@@ -36,6 +36,25 @@ export const formatCurrency = (amount: number, code?: string): string => {
   return `${currency.symbol} ${formattedInteger}.${decimalPart}`;
 };
 
+export const formatCurrencyCompact = (amount: number, code?: string): string => {
+  const currency = getCurrencyMeta(code);
+
+  if (amount === null || amount === undefined || isNaN(amount)) {
+    return `${currency.symbol} 0.00`;
+  }
+
+  if (Math.abs(amount) < 1000000) {
+    return formatCurrency(amount, code);
+  }
+
+  const absAmount = Math.abs(amount);
+  const sign = amount < 0 ? '-' : '';
+  if (absAmount >= 1000000000) {
+    return `${sign}${currency.symbol} ${(absAmount / 1000000000).toFixed(2)}B`;
+  }
+  return `${sign}${currency.symbol} ${(absAmount / 1000000).toFixed(2)}M`;
+};
+
 export const formatCurrencyWithoutSymbol = (amount: number, code?: string): string => {
   const currency = getCurrencyMeta(code);
 
@@ -114,27 +133,7 @@ export const CURRENCY = {
    * CURRENCY.formatCompact(1234567.89) // "Le 1.23M"
    */
   formatCompact(amount: number): string {
-    // Handle invalid inputs
-    if (amount === null || amount === undefined || isNaN(amount)) {
-      return `${this.symbol} 0.00`;
-    }
-
-    // For amounts less than 1 million, use regular formatting
-    if (Math.abs(amount) < 1000000) {
-      return this.format(amount);
-    }
-
-    // For larger amounts, use compact notation
-    const absAmount = Math.abs(amount);
-    const sign = amount < 0 ? '-' : '';
-    
-    if (absAmount >= 1000000000) {
-      return `${sign}${this.symbol} ${(absAmount / 1000000000).toFixed(2)}B`;
-    } else if (absAmount >= 1000000) {
-      return `${sign}${this.symbol} ${(absAmount / 1000000).toFixed(2)}M`;
-    }
-    
-    return this.format(amount);
+    return formatCurrencyCompact(amount, this.code);
   },
 
   /**

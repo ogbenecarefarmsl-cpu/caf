@@ -13,6 +13,7 @@ import {
   type RecurringCadence,
   type RecurringItem,
 } from '../../lib/recurring-invoices-api';
+import { useCurrency } from '../../hooks/useCurrency';
 
 const CADENCE_LABELS: Record<RecurringCadence, string> = {
   weekly: 'Weekly',
@@ -20,10 +21,6 @@ const CADENCE_LABELS: Record<RecurringCadence, string> = {
   monthly: 'Monthly',
   quarterly: 'Quarterly',
 };
-
-function fmtMoney(n: number) {
-  return `Le ${n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-}
 
 function fmtDate(iso?: string) {
   if (!iso) return '-';
@@ -72,6 +69,7 @@ export function RecurringInvoicesPage() {
   const branchId = getBranchId(selectedBranch);
   const { showSuccess, showError } = useToast();
   const queryClient = useQueryClient();
+  const { format: fmtMoney } = useCurrency();
   const [editing, setEditing] = useState<RecurringInvoice | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [showForm, setShowForm] = useState(false);

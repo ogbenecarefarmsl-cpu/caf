@@ -7,6 +7,7 @@ import { Button } from '../../components/ui/Button';
 import { Table } from '../../components/ui/Table';
 import { Modal } from '../../components/ui/Modal';
 import { Input } from '../../components/ui/Input';
+import { Select } from '../../components/ui/Select';
 import { Loading } from '../../components/ui/Loading';
 import { Error } from '../../components/ui/Error';
 import { useToast } from '../../hooks/useToast';
@@ -20,6 +21,7 @@ interface Branch {
   address: string;
   phone: string;
   email: string;
+  currencyCode: 'SLE' | 'USD';
   isHeadquarters: boolean;
   config: {
     reorderThreshold: number;
@@ -37,6 +39,7 @@ interface BranchFormData {
   address: string;
   phone: string;
   email: string;
+  currencyCode: 'SLE' | 'USD';
   isHeadquarters: boolean;
   reorderThreshold: number;
   expiryAlertDays: string;
@@ -74,6 +77,7 @@ export const BranchManagementPage = () => {
         .filter((value) => Number.isFinite(value));
       const payload = {
         ...data,
+        currencyCode: data.currencyCode,
         config: {
           reorderThreshold: data.reorderThreshold,
           expiryAlertDays,
@@ -102,6 +106,7 @@ export const BranchManagementPage = () => {
         .filter((value) => Number.isFinite(value));
       const payload = {
         ...data,
+        currencyCode: data.currencyCode,
         config: {
           reorderThreshold: data.reorderThreshold,
           expiryAlertDays,
@@ -130,6 +135,7 @@ export const BranchManagementPage = () => {
         address: branch.address,
         phone: branch.phone,
         email: branch.email,
+        currencyCode: branch.currencyCode || 'SLE',
         isHeadquarters: branch.isHeadquarters,
         reorderThreshold: branch.config.reorderThreshold,
         expiryAlertDays: branch.config.expiryAlertDays.join(', '),
@@ -143,6 +149,7 @@ export const BranchManagementPage = () => {
         address: '',
         phone: '',
         email: '',
+        currencyCode: 'SLE',
         isHeadquarters: false,
         reorderThreshold: 10,
         expiryAlertDays: '30, 60, 90',
@@ -301,16 +308,28 @@ export const BranchManagementPage = () => {
                 error={errors.phone?.message}
                 placeholder="+232-XX-XXX-XXX"
               />
-              <Input
-                label="Email"
-                type="email"
-                {...register('email', { required: 'Email is required' })}
-                error={errors.email?.message}
-                placeholder="branch.name@pharmacy.com"
-              />
-            </div>
+            <Input
+              label="Email"
+              type="email"
+              {...register('email', { required: 'Email is required' })}
+              error={errors.email?.message}
+              placeholder="branch.name@pharmacy.com"
+            />
+          </div>
 
-            {/* Configuration */}
+          <div className="grid grid-cols-2 gap-4">
+            <Select
+              label="Currency"
+              {...register('currencyCode', { required: 'Currency is required' })}
+              error={errors.currencyCode?.message}
+              options={[
+                { value: 'SLE', label: 'SLE - Sierra Leone Leone' },
+                { value: 'USD', label: 'USD - US Dollar' },
+              ]}
+            />
+          </div>
+
+          {/* Configuration */}
             <div className="border-t border-gray-700 pt-4 mt-4">
               <h3 className="text-lg font-semibold text-white mb-4">Configuration</h3>
               

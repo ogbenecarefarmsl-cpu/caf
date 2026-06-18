@@ -315,7 +315,7 @@ export const PricingManagementPage = () => {
           </div>
 
           <Input
-            label="New Base Price (Le)"
+            label="New Base Price"
             type="number"
             min="0"
             step="0.01"

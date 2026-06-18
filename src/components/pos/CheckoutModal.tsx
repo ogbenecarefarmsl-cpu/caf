@@ -142,7 +142,7 @@ export const CheckoutModal = ({
           <Input
             type="number"
             label="Discount Amount"
-            placeholder="Le 0.00"
+            placeholder="0.00"
             value={discountInput}
             onChange={(e) => handleDiscountChange(e.target.value)}
             min="0"

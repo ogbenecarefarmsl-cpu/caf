@@ -11,6 +11,7 @@ import apiClient from '../../lib/api-client';
 import { buildApiUrl } from '../../lib/api-utils';
 import { getErrorMessage } from '../../lib/error-utils';
 import { CheckCircle, XCircle, Eye, Plus } from 'lucide-react';
+import { useCurrency } from '../../hooks/useCurrency';
 
 interface PaymentBreakdown {
   cash: number;
@@ -40,10 +41,6 @@ interface Reconciliation {
   createdAt: string;
 }
 
-function formatMoney(amount: number) {
-  return `Le ${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
-
 function getBranchName(branchId: Reconciliation['branchId']) {
   if (!branchId) return '-';
   if (typeof branchId === 'string') return branchId.slice(0, 8);
@@ -68,7 +65,7 @@ const sourceBadge = (source: string) => {
   return s[source] || 'bg-gray-500/10 text-gray-400 border-gray-500/20';
 };
 
-function PaymentBreakdownDisplay({ label, data }: { label: string; data?: PaymentBreakdown }) {
+function PaymentBreakdownDisplay({ label, data, format }: { label: string; data?: PaymentBreakdown; format: (amount: number) => string }) {
   if (!data) return null;
   return (
     <div>
@@ -76,15 +73,15 @@ function PaymentBreakdownDisplay({ label, data }: { label: string; data?: Paymen
       <div className="grid grid-cols-3 gap-2">
         <div className="bg-white/5 rounded-lg p-2 text-center">
           <p className="text-xs text-white/40">Cash</p>
-          <p className="text-sm text-white font-medium">{formatMoney(data.cash || 0)}</p>
+          <p className="text-sm text-white font-medium">{format(data.cash || 0)}</p>
         </div>
         <div className="bg-white/5 rounded-lg p-2 text-center">
           <p className="text-xs text-white/40">Orange Money</p>
-          <p className="text-sm text-white font-medium">{formatMoney(data.orangeMoney || 0)}</p>
+          <p className="text-sm text-white font-medium">{format(data.orangeMoney || 0)}</p>
         </div>
         <div className="bg-white/5 rounded-lg p-2 text-center">
           <p className="text-xs text-white/40">Afrimoney</p>
-          <p className="text-sm text-white font-medium">{formatMoney(data.afrimoney || 0)}</p>
+          <p className="text-sm text-white font-medium">{format(data.afrimoney || 0)}</p>
         </div>
       </div>
     </div>
@@ -134,6 +131,7 @@ export function FinanceReconciliationsPage() {
   const [filterStatus, setFilterStatus] = useState<string>('');
   const queryClient = useQueryClient();
   const { showSuccess, showError } = useToast();
+  const { format } = useCurrency();
 
   const { data: recons, isLoading, error, refetch } = useQuery({
     queryKey: queryKeys.financeManager.reconciliations.list({ status: filterStatus || undefined }),
@@ -241,12 +239,12 @@ export function FinanceReconciliationsPage() {
                         <span className={`px-2 py-1 rounded-full text-xs font-medium border ${sourceBadge(r.source)}`}>{r.source.toUpperCase()}</span>
                       </td>
                       <td className="px-4 py-3 text-white">{r.period}</td>
-                      <td className="px-4 py-3 text-right text-white">{formatMoney(r.totalSales)}</td>
-                      <td className="px-4 py-3 text-right text-white">{formatMoney(r.totalExpenses)}</td>
-                      <td className="px-4 py-3 text-right text-white">{formatMoney(r.expectedCash)}</td>
-                      <td className="px-4 py-3 text-right text-white">{formatMoney(r.actualCash)}</td>
+                      <td className="px-4 py-3 text-right text-white">{format(r.totalSales)}</td>
+                      <td className="px-4 py-3 text-right text-white">{format(r.totalExpenses)}</td>
+                      <td className="px-4 py-3 text-right text-white">{format(r.expectedCash)}</td>
+                      <td className="px-4 py-3 text-right text-white">{format(r.actualCash)}</td>
                       <td className="px-4 py-3 text-right">
-                        <span className={r.hasDiscrepancy ? 'text-red-400 font-semibold' : 'text-green-400'}>{formatMoney(r.discrepancy)}</span>
+                        <span className={r.hasDiscrepancy ? 'text-red-400 font-semibold' : 'text-green-400'}>{format(r.discrepancy)}</span>
                       </td>
                       <td className="px-4 py-3">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium border ${statusBadge(r.status)}`}>{r.status}</span>
@@ -280,18 +278,18 @@ export function FinanceReconciliationsPage() {
               <div><span className="text-gray-400 text-sm">Source</span><p className="text-white font-medium">{selected.source.toUpperCase()}</p></div>
               <div><span className="text-gray-400 text-sm">Period</span><p className="text-white font-medium">{selected.period}</p></div>
               <div><span className="text-gray-400 text-sm">Status</span><p><span className={`px-2 py-1 rounded-full text-xs font-medium border ${statusBadge(selected.status)}`}>{selected.status}</span></p></div>
-              <div><span className="text-gray-400 text-sm">Total Sales</span><p className="text-white font-medium">{formatMoney(selected.totalSales)}</p></div>
-              <div><span className="text-gray-400 text-sm">Total Expenses</span><p className="text-white font-medium">{formatMoney(selected.totalExpenses)}</p></div>
-              <div><span className="text-gray-400 text-sm">Expected Cash</span><p className="text-white font-medium">{formatMoney(selected.expectedCash)}</p></div>
-              <div><span className="text-gray-400 text-sm">Actual Cash</span><p className="text-white font-medium">{formatMoney(selected.actualCash)}</p></div>
+              <div><span className="text-gray-400 text-sm">Total Sales</span><p className="text-white font-medium">{format(selected.totalSales)}</p></div>
+              <div><span className="text-gray-400 text-sm">Total Expenses</span><p className="text-white font-medium">{format(selected.totalExpenses)}</p></div>
+              <div><span className="text-gray-400 text-sm">Expected Cash</span><p className="text-white font-medium">{format(selected.expectedCash)}</p></div>
+              <div><span className="text-gray-400 text-sm">Actual Cash</span><p className="text-white font-medium">{format(selected.actualCash)}</p></div>
               <div className="sm:col-span-2">
                 <span className="text-gray-400 text-sm">Discrepancy</span>
-                <p className={`text-lg font-semibold ${selected.hasDiscrepancy ? 'text-red-400' : 'text-green-400'}`}>{formatMoney(selected.discrepancy)}</p>
+                <p className={`text-lg font-semibold ${selected.hasDiscrepancy ? 'text-red-400' : 'text-green-400'}`}>{format(selected.discrepancy)}</p>
               </div>
             </div>
 
-            <PaymentBreakdownDisplay label="Expected Payment Breakdown" data={selected.expectedPaymentBreakdown} />
-            <PaymentBreakdownDisplay label="Actual Payment Breakdown" data={selected.actualPaymentBreakdown} />
+            <PaymentBreakdownDisplay label="Expected Payment Breakdown" data={selected.expectedPaymentBreakdown} format={format} />
+            <PaymentBreakdownDisplay label="Actual Payment Breakdown" data={selected.actualPaymentBreakdown} format={format} />
 
             {selected.paymentDiscrepancy && (selected.paymentDiscrepancy.cash || selected.paymentDiscrepancy.orangeMoney || selected.paymentDiscrepancy.afrimoney) && (
               <div>
@@ -302,7 +300,7 @@ export function FinanceReconciliationsPage() {
                     return (
                       <div key={key} className="bg-white/5 rounded-lg p-2 text-center">
                         <p className="text-xs text-white/40">{key === 'orangeMoney' ? 'Orange Money' : key === 'afrimoney' ? 'Afrimoney' : 'Cash'}</p>
-                        <p className={`text-sm font-medium ${Math.abs(val) > 0.01 ? 'text-amber-400' : 'text-green-400'}`}>{formatMoney(val)}</p>
+                        <p className={`text-sm font-medium ${Math.abs(val) > 0.01 ? 'text-amber-400' : 'text-green-400'}`}>{format(val)}</p>
                       </div>
                     );
                   })}
@@ -317,7 +315,7 @@ export function FinanceReconciliationsPage() {
                   {selected.items.map((item, i) => (
                     <div key={i} className="flex justify-between bg-white/5 rounded-lg p-2">
                       <span className="text-white text-sm">{item.description}</span>
-                      <span className="text-white text-sm">{formatMoney(item.amount)}</span>
+                      <span className="text-white text-sm">{format(item.amount)}</span>
                     </div>
                   ))}
                 </div>
@@ -343,15 +341,15 @@ export function FinanceReconciliationsPage() {
                 <div><span className="text-gray-400">Branch:</span> <span className="text-white ml-1">{getBranchName(reviewModal.branchId)}</span></div>
                 <div><span className="text-gray-400">Source:</span> <span className="text-white ml-1">{reviewModal.source.toUpperCase()}</span></div>
                 <div><span className="text-gray-400">Period:</span> <span className="text-white ml-1">{reviewModal.period}</span></div>
-                <div><span className="text-gray-400">Expected:</span> <span className="text-white ml-1">{formatMoney(reviewModal.expectedCash)}</span></div>
+                <div><span className="text-gray-400">Expected:</span> <span className="text-white ml-1">{format(reviewModal.expectedCash)}</span></div>
               </div>
               {reviewModal.expectedPaymentBreakdown && (
                 <div className="mt-3 pt-3 border-t border-white/10">
                   <p className="text-xs text-white/40 mb-1">Expected breakdown:</p>
                   <div className="flex gap-3 text-xs">
-                    <span className="text-white/60">Cash: {formatMoney(reviewModal.expectedPaymentBreakdown.cash)}</span>
-                    <span className="text-white/60">OM: {formatMoney(reviewModal.expectedPaymentBreakdown.orangeMoney)}</span>
-                    <span className="text-white/60">Afrimoney: {formatMoney(reviewModal.expectedPaymentBreakdown.afrimoney)}</span>
+                    <span className="text-white/60">Cash: {format(reviewModal.expectedPaymentBreakdown.cash)}</span>
+                    <span className="text-white/60">OM: {format(reviewModal.expectedPaymentBreakdown.orangeMoney)}</span>
+                    <span className="text-white/60">Afrimoney: {format(reviewModal.expectedPaymentBreakdown.afrimoney)}</span>
                   </div>
                 </div>
               )}

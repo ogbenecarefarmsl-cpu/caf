@@ -9,6 +9,7 @@ import { useBranchStore, getBranchId } from '../../stores/branch-store';
 import apiClient from '../../lib/api-client';
 import { buildApiUrl } from '../../lib/api-utils';
 import { UserCheck, AlertCircle, CheckCircle2, Calendar, FileText, ListChecks } from 'lucide-react';
+import { useCurrency } from '../../hooks/useCurrency';
 
 interface SettlementAdvance {
   id: string;
@@ -42,10 +43,6 @@ interface Employee {
   role: string;
 }
 
-function fmt(amount: number) {
-  return `Le ${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
-
 function fmtDate(s: string) {
   return new Date(s).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 }
@@ -53,6 +50,7 @@ function fmtDate(s: string) {
 export function FinanceFinalSettlementPage() {
   const branchId = useBranchStore((s) => getBranchId(s.selectedBranch));
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('');
+  const { format: fmt } = useCurrency();
 
   const employeesQuery = useQuery({
     queryKey: ['employees-for-settlement', branchId],

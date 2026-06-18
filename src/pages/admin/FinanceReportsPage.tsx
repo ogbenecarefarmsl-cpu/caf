@@ -10,10 +10,7 @@ import { queryKeys } from '../../lib/query-keys';
 import apiClient from '../../lib/api-client';
 import { buildApiUrl } from '../../lib/api-utils';
 import { Download, DollarSign, TrendingUp, TrendingDown, Users } from 'lucide-react';
-
-function formatMoney(amount: number) {
-  return `Le ${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
+import { useCurrency } from '../../hooks/useCurrency';
 
 export function FinanceReportsPage() {
   const [startDate, setStartDate] = useState('');
@@ -24,6 +21,7 @@ export function FinanceReportsPage() {
   const branchId = getBranchId(selectedBranch);
   const effectiveBranchId = user?.role === 'super_admin' ? undefined : branchId;
   const canLoadReports = user?.role === 'super_admin' || !!effectiveBranchId;
+  const { format: formatMoney } = useCurrency();
 
   const { data: cashSummary, isLoading: loadingCash } = useQuery({
     queryKey: queryKeys.financeManager.cashEntries.summary(effectiveBranchId, startDate, endDate),

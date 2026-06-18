@@ -13,6 +13,7 @@ import apiClient from '../../lib/api-client';
 import { buildApiUrl } from '../../lib/api-utils';
 import { getErrorMessage } from '../../lib/error-utils';
 import { Plus, DollarSign, Trash2, Undo2 } from 'lucide-react';
+import { useCurrency } from '../../hooks/useCurrency';
 
 interface Advance {
   _id: string;
@@ -39,10 +40,6 @@ interface AdvanceStats {
 
 interface Product { _id: string; name: string; sku: string; sellingPrice: number; quantityAvailable?: number }
 interface Employee { _id: string; firstName: string; lastName: string; username: string }
-
-function fmt(amount: number) {
-  return `Le ${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
 
 const statusBadge = (status: string) => {
   const s: Record<string, string> = {
@@ -81,6 +78,7 @@ export function FinanceAdvancesPage() {
   const effectiveBranchId = user?.role === 'super_admin' ? undefined : branchId;
   const queryClient = useQueryClient();
   const { showSuccess, showError } = useToast();
+  const { format } = useCurrency();
 
   const { data: advances, isLoading, error, refetch } = useQuery({
     queryKey: ['finance', 'advances', effectiveBranchId],
@@ -234,9 +232,9 @@ export function FinanceAdvancesPage() {
         a.type === 'goods' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : 'bg-green-500/10 text-green-400 border-green-500/20'
       }`}>{a.type}</span>
     )},
-    { key: 'totalAmount', header: 'Total', render: (a: Advance) => fmt(a.totalAmount) },
+    { key: 'totalAmount', header: 'Total', render: (a: Advance) => format(a.totalAmount) },
     { key: 'outstandingAmount', header: 'Outstanding', render: (a: Advance) => (
-      <span className="font-semibold text-amber-400">{fmt(a.outstandingAmount)}</span>
+      <span className="font-semibold text-amber-400">{format(a.outstandingAmount)}</span>
     )},
     { key: 'status', header: 'Status', render: (a: Advance) => (
       <span className={`px-2 py-1 rounded-full text-xs font-medium border ${statusBadge(a.status)}`}>{a.status.replace('_', ' ')}</span>
@@ -270,15 +268,15 @@ export function FinanceAdvancesPage() {
           </div>
           <div className="rounded-xl border border-white/10 bg-primary-dark/70 p-4">
             <p className="text-xs text-gray-400">Total Outstanding</p>
-            <p className="text-2xl font-bold text-white">{fmt(stats.totalOutstanding)}</p>
+            <p className="text-2xl font-bold text-white">{format(stats.totalOutstanding)}</p>
           </div>
           <div className="rounded-xl border border-blue-500/30 bg-blue-500/10 p-4">
             <p className="text-xs text-blue-300">Goods Advances</p>
-            <p className="text-2xl font-bold text-white">{fmt(stats.totalGoodsAdvances)}</p>
+            <p className="text-2xl font-bold text-white">{format(stats.totalGoodsAdvances)}</p>
           </div>
           <div className="rounded-xl border border-green-500/30 bg-green-500/10 p-4">
             <p className="text-xs text-green-300">Cost to Company</p>
-            <p className="text-2xl font-bold text-white">{fmt(stats.totalCostToCompany)}</p>
+            <p className="text-2xl font-bold text-white">{format(stats.totalCostToCompany)}</p>
           </div>
         </div>
       ) : null}
@@ -337,7 +335,7 @@ export function FinanceAdvancesPage() {
                     <button key={p._id} type="button" onClick={() => addToCart(p)}
                       className="w-full text-left px-3 py-2 hover:bg-white/5 border-b border-white/5 last:border-0">
                       <p className="text-white text-sm">{p.name}</p>
-                      <p className="text-xs text-gray-400">{p.sku} - {fmt(p.sellingPrice)}</p>
+                      <p className="text-xs text-gray-400">{p.sku} - {format(p.sellingPrice)}</p>
                     </button>
                   ))}
                 </div>
@@ -351,7 +349,7 @@ export function FinanceAdvancesPage() {
                         className="w-20 px-2 py-1 rounded bg-primary-darker border border-white/10 text-white text-sm" />
                       <input type="number" min="0" step="0.01" value={c.unitPrice} onChange={(e) => updateCartItem(c.productId, 'unitPrice', Number(e.target.value))}
                         className="w-28 px-2 py-1 rounded bg-primary-darker border border-white/10 text-white text-sm" />
-                      <span className="w-28 text-right text-white font-semibold text-sm">{fmt(c.quantity * c.unitPrice)}</span>
+                      <span className="w-28 text-right text-white font-semibold text-sm">{format(c.quantity * c.unitPrice)}</span>
                       <button type="button" onClick={() => removeFromCart(c.productId)} className="text-red-400 hover:text-red-300">
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -359,14 +357,14 @@ export function FinanceAdvancesPage() {
                   ))}
                   <div className="flex justify-between items-center pt-2 border-t border-white/10">
                     <span className="text-gray-400 text-sm">Total</span>
-                    <span className="text-white font-bold">{fmt(cartTotal)}</span>
+                    <span className="text-white font-bold">{format(cartTotal)}</span>
                   </div>
                 </div>
               ) : null}
             </div>
           ) : (
             <div>
-              <label className="block text-sm font-medium text-white mb-1">Amount (Le)</label>
+              <label className="block text-sm font-medium text-white mb-1">Amount</label>
               <input type="number" value={form.notes?.match(/amount:(\d+)/)?.[1] || ''}
                 onChange={(e) => setForm({ ...form, notes: `amount:${e.target.value}` })}
                 className="w-full px-4 py-2.5 rounded-xl bg-white/5 text-white border border-white/10" />
@@ -392,7 +390,7 @@ export function FinanceAdvancesPage() {
           <div className="space-y-4">
             <div className="bg-white/5 rounded-xl p-4">
               <p className="text-white font-medium">{repayModal.referenceNumber} - {repayModal.employeeId?.firstName} {repayModal.employeeId?.lastName}</p>
-              <p className="text-sm text-gray-400">Outstanding: {fmt(repayModal.outstandingAmount)}</p>
+              <p className="text-sm text-gray-400">Outstanding: {format(repayModal.outstandingAmount)}</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-white mb-1">Amount</label>
@@ -411,7 +409,7 @@ export function FinanceAdvancesPage() {
         {writeOffModal ? (
           <div className="space-y-4">
             <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4">
-              <p className="text-white font-medium">Write off {fmt(writeOffModal.outstandingAmount)}?</p>
+              <p className="text-white font-medium">Write off {format(writeOffModal.outstandingAmount)}?</p>
               <p className="text-sm text-gray-400">This will create a bad-debt expense entry. This cannot be undone.</p>
             </div>
             <div>
@@ -450,7 +448,7 @@ export function FinanceAdvancesPage() {
                       setReturnItems(returnItems.map((x, i) => i === idx ? { ...x, returnQuantity: v } : x));
                     }}
                     className="w-20 px-2 py-1 rounded bg-primary-darker border border-white/10 text-white text-sm" />
-                  <span className="w-28 text-right text-white text-sm">{fmt(it.returnQuantity * it.unitPrice)}</span>
+                  <span className="w-28 text-right text-white text-sm">{format(it.returnQuantity * it.unitPrice)}</span>
                 </div>
               ))}
             </div>
@@ -461,7 +459,7 @@ export function FinanceAdvancesPage() {
             </div>
             <div className="flex justify-between items-center pt-2 border-t border-white/10">
               <span className="text-gray-400 text-sm">Return value</span>
-              <span className="text-white font-bold">{fmt(returnItems.reduce((s, it) => s + it.returnQuantity * it.unitPrice, 0))}</span>
+              <span className="text-white font-bold">{format(returnItems.reduce((s, it) => s + it.returnQuantity * it.unitPrice, 0))}</span>
             </div>
             <div className="flex justify-end gap-3">
               <Button variant="ghost" onClick={() => setReturnModal(null)}>Cancel</Button>

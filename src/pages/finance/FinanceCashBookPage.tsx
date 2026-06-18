@@ -13,6 +13,7 @@ import apiClient from '../../lib/api-client';
 import { buildApiUrl } from '../../lib/api-utils';
 import { getErrorMessage } from '../../lib/error-utils';
 import { Plus, TrendingUp, TrendingDown, DollarSign, ArrowRightLeft } from 'lucide-react';
+import { useCurrency } from '../../hooks/useCurrency';
 
 interface CashEntry {
   _id: string;
@@ -34,10 +35,6 @@ interface CashSummary {
   totalSalary: number;
   netCash: number;
   byCategory: { category: string; total: number; count: number }[];
-}
-
-function formatMoney(amount: number) {
-  return `Le ${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 const typeBadge = (type: string) => {
@@ -68,6 +65,7 @@ export function FinanceCashBookPage() {
   const branchId = getBranchId(selectedBranch);
   const queryClient = useQueryClient();
   const { showSuccess, showError } = useToast();
+  const { format } = useCurrency();
 
   const { data: entries, isLoading, error, refetch } = useQuery({
     queryKey: queryKeys.financeManager.cashEntries.list({ branchId, startDate, endDate, page: 1, limit: 200 }),
@@ -117,7 +115,7 @@ export function FinanceCashBookPage() {
     { key: 'description', header: 'Description' },
     { key: 'amount', header: 'Amount', render: (e: CashEntry) => (
       <span className={`font-semibold ${e.type === 'income' ? 'text-green-400' : 'text-red-400'}`}>
-        {e.type === 'income' ? '+' : '-'}{formatMoney(e.amount)}
+        {e.type === 'income' ? '+' : '-'}{format(e.amount)}
       </span>
     )},
     { key: 'entryDate', header: 'Date', render: (e: CashEntry) => new Date(e.entryDate).toLocaleDateString() },
@@ -153,7 +151,7 @@ export function FinanceCashBookPage() {
                 <span className="text-xs text-gray-400">{c.label}</span>
                 {c.icon}
               </div>
-              <p className="text-lg font-bold text-white">{formatMoney(c.value)}</p>
+              <p className="text-lg font-bold text-white">{format(c.value)}</p>
             </div>
           ))}
         </div>
