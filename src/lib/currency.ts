@@ -7,10 +7,71 @@
  * It matches the backend implementation to ensure consistency.
  */
 
+export type CurrencyCode = 'SLE' | 'USD';
+
+const CURRENCY_META: Record<CurrencyCode, { symbol: string; decimalPlaces: number }> = {
+  SLE: { symbol: 'Le', decimalPlaces: 2 },
+  USD: { symbol: '$', decimalPlaces: 2 },
+};
+
+export const getCurrencyMeta = (code: string | undefined): { code: CurrencyCode; symbol: string; decimalPlaces: number } => {
+  const currencyCode = code === 'USD' ? 'USD' : 'SLE';
+  return {
+    code: currencyCode,
+    ...CURRENCY_META[currencyCode],
+  };
+};
+
+export const formatCurrency = (amount: number, code?: string): string => {
+  const currency = getCurrencyMeta(code);
+
+  if (amount === null || amount === undefined || isNaN(amount)) {
+    return `${currency.symbol} 0.00`;
+  }
+
+  const fixedAmount = amount.toFixed(currency.decimalPlaces);
+  const [integerPart, decimalPart] = fixedAmount.split('.');
+  const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+  return `${currency.symbol} ${formattedInteger}.${decimalPart}`;
+};
+
+export const formatCurrencyWithoutSymbol = (amount: number, code?: string): string => {
+  const currency = getCurrencyMeta(code);
+
+  if (amount === null || amount === undefined || isNaN(amount)) {
+    return '0.00';
+  }
+
+  const fixedAmount = amount.toFixed(currency.decimalPlaces);
+  const [integerPart, decimalPart] = fixedAmount.split('.');
+  const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+  return `${formattedInteger}.${decimalPart}`;
+};
+
+export const parseCurrency = (formattedAmount: string, code?: string): number => {
+  if (!formattedAmount || typeof formattedAmount !== 'string') {
+    return 0;
+  }
+
+  const currency = getCurrencyMeta(code);
+  const cleanedAmount = formattedAmount
+    .replace(currency.symbol, '')
+    .replace('Le', '')
+    .replace('$', '')
+    .replace(/\s/g, '')
+    .replace(/,/g, '');
+
+  const parsed = parseFloat(cleanedAmount);
+
+  return isNaN(parsed) ? 0 : parsed;
+};
+
 export const CURRENCY = {
-  code: 'SLE',
-  symbol: 'Le',
-  decimalPlaces: 2,
+  code: 'SLE' as CurrencyCode,
+  symbol: CURRENCY_META.SLE.symbol,
+  decimalPlaces: CURRENCY_META.SLE.decimalPlaces,
 
   /**
    * Format a monetary amount with SLE currency symbol and proper formatting
@@ -26,21 +87,7 @@ export const CURRENCY = {
    * CURRENCY.format(100) // "Le 100.00"
    */
   format(amount: number): string {
-    // Handle invalid inputs
-    if (amount === null || amount === undefined || isNaN(amount)) {
-      return `${this.symbol} 0.00`;
-    }
-
-    // Format with two decimal places
-    const fixedAmount = amount.toFixed(this.decimalPlaces);
-    
-    // Split into integer and decimal parts
-    const [integerPart, decimalPart] = fixedAmount.split('.');
-    
-    // Add thousand separators
-    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    
-    return `${this.symbol} ${formattedInteger}.${decimalPart}`;
+    return formatCurrency(amount, this.code);
   },
 
   /**
@@ -53,21 +100,7 @@ export const CURRENCY = {
    * CURRENCY.formatWithoutSymbol(1234.56) // "1,234.56"
    */
   formatWithoutSymbol(amount: number): string {
-    // Handle invalid inputs
-    if (amount === null || amount === undefined || isNaN(amount)) {
-      return '0.00';
-    }
-
-    // Format with two decimal places
-    const fixedAmount = amount.toFixed(this.decimalPlaces);
-    
-    // Split into integer and decimal parts
-    const [integerPart, decimalPart] = fixedAmount.split('.');
-    
-    // Add thousand separators
-    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    
-    return `${formattedInteger}.${decimalPart}`;
+    return formatCurrencyWithoutSymbol(amount, this.code);
   },
 
   /**
@@ -114,18 +147,6 @@ export const CURRENCY = {
    * CURRENCY.parse("1,234.56") // 1234.56
    */
   parse(formattedAmount: string): number {
-    if (!formattedAmount || typeof formattedAmount !== 'string') {
-      return 0;
-    }
-
-    // Remove currency symbol, spaces, and commas
-    const cleanedAmount = formattedAmount
-      .replace(this.symbol, '')
-      .replace(/\s/g, '')
-      .replace(/,/g, '');
-    
-    const parsed = parseFloat(cleanedAmount);
-    
-    return isNaN(parsed) ? 0 : parsed;
+    return parseCurrency(formattedAmount, this.code);
   },
 };

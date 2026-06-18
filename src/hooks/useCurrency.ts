@@ -8,7 +8,8 @@
  */
 
 import { useMemo } from 'react';
-import { CURRENCY } from '../lib/currency';
+import { formatCurrency, formatCurrencyWithoutSymbol, getCurrencyMeta, parseCurrency } from '../lib/currency';
+import { useBranchStore } from '../stores/branch-store';
 
 /**
  * Hook for consistent currency formatting throughout the application
@@ -20,7 +21,11 @@ import { CURRENCY } from '../lib/currency';
  * const displayPrice = format(1234.56); // "Le 1,234.56"
  */
 export const useCurrency = () => {
+  const selectedBranch = useBranchStore((state) => state.selectedBranch);
+  const branchCurrencyCode = selectedBranch?.currencyCode;
+
   // Memoize the currency object to prevent unnecessary re-renders
+  const meta = getCurrencyMeta(branchCurrencyCode);
   const currency = useMemo(() => ({
     /**
      * Format a monetary amount with SLE currency symbol
@@ -28,38 +33,53 @@ export const useCurrency = () => {
      * Property 2: Two decimal places
      * Property 3: Thousand separators
      */
-    format: (amount: number): string => CURRENCY.format(amount),
+    format: (amount: number): string => formatCurrency(amount, meta.code),
     
     /**
      * Format a monetary amount without the currency symbol
      */
-    formatWithoutSymbol: (amount: number): string => CURRENCY.formatWithoutSymbol(amount),
+    formatWithoutSymbol: (amount: number): string => formatCurrencyWithoutSymbol(amount, meta.code),
     
     /**
      * Format a monetary amount in compact form
      */
-    formatCompact: (amount: number): string => CURRENCY.formatCompact(amount),
+    formatCompact: (amount: number): string => {
+      if (amount === null || amount === undefined || isNaN(amount)) {
+        return `${meta.symbol} 0.00`;
+      }
+
+      if (Math.abs(amount) < 1000000) {
+        return formatCurrency(amount, meta.code);
+      }
+
+      const absAmount = Math.abs(amount);
+      const sign = amount < 0 ? '-' : '';
+      if (absAmount >= 1000000000) {
+        return `${sign}${meta.symbol} ${(absAmount / 1000000000).toFixed(2)}B`;
+      }
+      return `${sign}${meta.symbol} ${(absAmount / 1000000).toFixed(2)}M`;
+    },
     
     /**
      * Parse a formatted currency string back to a number
      */
-    parse: (formattedAmount: string): number => CURRENCY.parse(formattedAmount),
+    parse: (formattedAmount: string): number => parseCurrency(formattedAmount, meta.code),
     
     /**
      * Currency symbol (Le)
      */
-    symbol: CURRENCY.symbol,
+    symbol: meta.symbol,
     
     /**
      * Currency code (SLE)
      */
-    code: CURRENCY.code,
+    code: meta.code,
     
     /**
      * Number of decimal places (2)
      */
-    decimalPlaces: CURRENCY.decimalPlaces,
-  }), []);
+    decimalPlaces: meta.decimalPlaces,
+  }), [meta.code, meta.decimalPlaces, meta.symbol]);
 
   return currency;
 };

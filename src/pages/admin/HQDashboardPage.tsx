@@ -13,18 +13,33 @@ import { queryKeys } from '../../lib/query-keys';
 interface BranchInventory {
   branchId: string;
   branchName: string;
+  currencyCode: string;
   totalProducts: number;
   totalQuantity: number;
   totalValue: number;
+  totalValueFormatted?: string;
   lowStockItems: number;
 }
 
 interface BranchSales {
   branchId: string;
   branchName: string;
+  currencyCode: string;
   totalSales: number;
   totalRevenue: number;
+  totalRevenueFormatted?: string;
   averageOrderValue: number;
+  averageOrderValueFormatted?: string;
+}
+
+interface CurrencyTotal {
+  currencyCode: string;
+  totalValue?: number;
+  totalQuantity?: number;
+  totalRevenue?: number;
+  totalSales?: number;
+  totalValueFormatted?: string;
+  totalRevenueFormatted?: string;
 }
 
 interface PendingTransfer {
@@ -59,6 +74,8 @@ interface ExpiryAlert {
 interface HQDashboardData {
   inventory: BranchInventory[];
   sales: BranchSales[];
+  inventoryTotalsByCurrency?: CurrencyTotal[];
+  salesTotalsByCurrency?: CurrencyTotal[];
   pendingTransfers: PendingTransfer[];
   lowStockAlerts: LowStockAlert[];
   expiryAlerts: ExpiryAlert[];
@@ -87,7 +104,7 @@ export default function HQDashboardPage() {
     { 
       key: 'totalValue', 
       header: 'Total Value',
-      render: (item: BranchInventory) => format(item.totalValue)
+      render: (item: BranchInventory) => item.totalValueFormatted || format(item.totalValue)
     },
     { 
       key: 'lowStockItems', 
@@ -106,12 +123,12 @@ export default function HQDashboardPage() {
     { 
       key: 'totalRevenue', 
       header: 'Revenue',
-      render: (item: BranchSales) => format(item.totalRevenue)
+      render: (item: BranchSales) => item.totalRevenueFormatted || format(item.totalRevenue)
     },
     { 
       key: 'averageOrderValue', 
       header: 'Avg Order Value',
-      render: (item: BranchSales) => format(item.averageOrderValue)
+      render: (item: BranchSales) => item.averageOrderValueFormatted || format(item.averageOrderValue)
     },
   ];
 
@@ -172,13 +189,14 @@ export default function HQDashboardPage() {
   const pendingTransfers = dashboard?.pendingTransfers || [];
   const lowStockAlerts = dashboard?.lowStockAlerts || [];
   const expiryAlerts = dashboard?.expiryAlerts || [];
+  const inventoryTotalsByCurrency = dashboard?.inventoryTotalsByCurrency || [];
+  const salesTotalsByCurrency = dashboard?.salesTotalsByCurrency || [];
 
   // Calculate totals
   const inventoryTotals = inventory?.reduce((acc, item) => ({
-    totalValue: acc.totalValue + item.totalValue,
     totalQuantity: acc.totalQuantity + item.totalQuantity,
     lowStockItems: acc.lowStockItems + item.lowStockItems,
-  }), { totalValue: 0, totalQuantity: 0, lowStockItems: 0 });
+  }), { totalQuantity: 0, lowStockItems: 0 });
 
   const salesTotals = sales?.reduce((acc, item) => ({
     totalSales: acc.totalSales + item.totalSales,
@@ -221,9 +239,17 @@ export default function HQDashboardPage() {
           </div>
           <div className="bg-primary-dark rounded-xl border border-gray-700 p-4 sm:p-6">
             <p className="text-sm text-gray-400">Total Inventory Value</p>
-            <p className="text-2xl sm:text-3xl font-bold text-accent-green wrap-break-word">
-              {format(inventoryTotals?.totalValue || 0)}
-            </p>
+            <div className="mt-2 space-y-1">
+              {inventoryTotalsByCurrency.length > 0 ? (
+                inventoryTotalsByCurrency.map((total) => (
+                  <p key={total.currencyCode} className="text-xl sm:text-2xl font-bold text-accent-green wrap-break-word">
+                    {total.totalValueFormatted || format(total.totalValue || 0)}
+                  </p>
+                ))
+              ) : (
+                <p className="text-xl sm:text-2xl font-bold text-accent-green wrap-break-word">{format(0)}</p>
+              )}
+            </div>
           </div>
           <div className="bg-primary-dark rounded-xl border border-gray-700 p-4 sm:p-6">
             <p className="text-sm text-gray-400">Sales (30 days)</p>
@@ -231,9 +257,17 @@ export default function HQDashboardPage() {
           </div>
           <div className="bg-primary-dark rounded-xl border border-gray-700 p-4 sm:p-6">
             <p className="text-sm text-gray-400">Revenue (30 days)</p>
-            <p className="text-2xl sm:text-3xl font-bold text-indigo-400 wrap-break-word">
-              {format(salesTotals?.totalRevenue || 0)}
-            </p>
+            <div className="mt-2 space-y-1">
+              {salesTotalsByCurrency.length > 0 ? (
+                salesTotalsByCurrency.map((total) => (
+                  <p key={total.currencyCode} className="text-xl sm:text-2xl font-bold text-indigo-400 wrap-break-word">
+                    {total.totalRevenueFormatted || format(total.totalRevenue || 0)}
+                  </p>
+                ))
+              ) : (
+                <p className="text-xl sm:text-2xl font-bold text-indigo-400 wrap-break-word">{format(0)}</p>
+              )}
+            </div>
           </div>
         </div>
 

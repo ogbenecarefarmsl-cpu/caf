@@ -8,6 +8,7 @@ export interface Branch {
   address: string;
   phone: string;
   email: string;
+  currencyCode: 'SLE' | 'USD';
   isHeadquarters: boolean;
 }
 
@@ -19,6 +20,7 @@ export const normalizeBranch = (branch: Partial<Branch & { id?: string }>): Bran
   address: branch.address || '',
   phone: branch.phone || '',
   email: branch.email || '',
+  currencyCode: branch.currencyCode === 'USD' ? 'USD' : 'SLE',
   isHeadquarters: branch.isHeadquarters || false,
 });
 
