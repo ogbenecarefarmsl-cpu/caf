@@ -7,6 +7,7 @@ export const getDefaultRouteForRole = (role?: User['role']) => {
     case 'marketer':
       return '/marketer/dashboard';
     case 'branch_manager':
+      return '/admin/dashboard';
     case 'super_admin':
       return '/admin/hq-dashboard';
     case 'auditor':
