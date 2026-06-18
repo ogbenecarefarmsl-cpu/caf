@@ -7,7 +7,7 @@ import { useCartStore } from '../../stores/cart-store';
 import { useAlertReplacement } from '../../hooks/useAlertReplacement';
 import apiClient from '../../lib/api-client';
 import { PAYMENT_METHODS, isMobileMoneyMethod } from '../../config/payment-methods';
-import { CURRENCY } from '../../lib/currency';
+import { useCurrency } from '../../hooks/useCurrency';
 import { getErrorMessage } from '../../lib/error-utils';
 
 interface SaleData {
@@ -45,6 +45,7 @@ export const CheckoutModal = ({
 }: CheckoutModalProps) => {
   const { items, subtotal, discount, total, setDiscount } = useCartStore();
   const { alertError } = useAlertReplacement();
+  const { format } = useCurrency();
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
   const [paymentReference, setPaymentReference] = useState('');
@@ -124,15 +125,15 @@ export const CheckoutModal = ({
           <div className="bg-[--color-primary-darker] rounded-lg p-4 space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-gray-400">Items ({items.length}):</span>
-              <span className="text-white">{CURRENCY.format(subtotal)}</span>
+              <span className="text-white">{format(subtotal)}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-gray-400">Discount:</span>
-              <span className="text-red-400">-{CURRENCY.format(discount)}</span>
+              <span className="text-red-400">-{format(discount)}</span>
             </div>
             <div className="flex justify-between text-lg font-bold pt-2 border-t border-gray-700">
               <span className="text-white">Total:</span>
-              <span className="text-[--color-accent-green]">{CURRENCY.format(total)}</span>
+              <span className="text-[--color-accent-green]">{format(total)}</span>
             </div>
           </div>
         </div>
@@ -156,7 +157,7 @@ export const CheckoutModal = ({
           <label className="block text-sm font-medium text-white mb-3">
             Payment Method <span className="text-red-500">*</span>
           </label>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
             {PAYMENT_METHODS.map((method) => (
               <button
                 key={method.id}
@@ -168,7 +169,7 @@ export const CheckoutModal = ({
                     setPaymentReference('');
                   }
                 }}
-                className={`p-4 rounded-lg border-2 transition-all ${
+                className={`p-3 sm:p-4 rounded-lg border-2 transition-all min-h-[76px] sm:min-h-[88px] ${
                   paymentMethod === method.id
                     ? 'border-[--color-accent-green] bg-[--color-accent-green] bg-opacity-20'
                     : 'border-gray-600 bg-[--color-primary-darker] hover:border-gray-500'
@@ -176,10 +177,10 @@ export const CheckoutModal = ({
                 title={method.description}
               >
                 <div className="flex flex-col items-center">
-                  {method.icon}
-                  <span className="text-white font-medium text-sm">{method.label}</span>
+                  {method.icon && <div className="mb-1 text-accent-green">{method.icon}</div>}
+                  <span className="text-white font-medium text-xs sm:text-sm text-center">{method.label}</span>
                   {method.description && (
-                    <span className="text-gray-400 text-xs mt-1 text-center">
+                    <span className="text-gray-400 text-[10px] sm:text-xs mt-0.5 text-center line-clamp-1">
                       {method.description}
                     </span>
                   )}

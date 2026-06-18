@@ -355,8 +355,8 @@ export const PaymentPage = () => {
   return (
     <div className="min-h-screen bg-primary-darker flex flex-col">
       {/* Header */}
-      <div className="flex items-center px-4 py-4 border-b border-gray-800">
-        <button onClick={() => navigate(-1)} className="text-white mr-4">
+      <div className="flex items-center px-4 py-4 border-b border-gray-800 pt-safe-top">
+        <button onClick={() => navigate(-1)} className="text-white mr-4 min-w-11 min-h-11 flex items-center justify-center rounded-lg hover:bg-white/5 -ml-2">
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
@@ -368,18 +368,18 @@ export const PaymentPage = () => {
         {/* Total Amount */}
         <div className="text-center py-4">
           <p className="text-gray-400 text-sm">Total Amount Due</p>
-          <p className="text-5xl font-bold text-white mt-2">{format(total)}</p>
+          <p className="text-4xl sm:text-5xl font-bold text-white mt-2 break-words leading-tight">{format(total)}</p>
         </div>
 
         {/* Payment Methods */}
         <div>
           <h2 className="text-white font-semibold mb-3">Select Payment Method</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
             {paymentMethods.map((method) => (
               <button
                 key={method.id}
                 onClick={() => setPaymentMethod(method.id as PaymentMethod)}
-                className={`p-5 rounded-xl border-2 transition-all flex flex-col items-center justify-center ${
+                className={`p-3 sm:p-5 rounded-xl border-2 transition-all flex flex-col items-center justify-center min-h-[88px] sm:min-h-[110px] ${
                   paymentMethod === method.id
                     ? 'border-accent-green bg-accent-green text-primary-dark'
                     : 'border-gray-700 bg-primary-dark text-white hover:border-gray-600'
@@ -388,7 +388,7 @@ export const PaymentPage = () => {
                 <div className={paymentMethod === method.id ? 'text-primary-dark' : 'text-accent-green'}>
                   {method.icon}
                 </div>
-                <span className="mt-2 font-medium">{method.label}</span>
+                <span className="mt-1.5 sm:mt-2 font-medium text-sm sm:text-base text-center">{method.label}</span>
               </button>
             ))}
           </div>
@@ -521,7 +521,7 @@ export const PaymentPage = () => {
       </div>
 
       {/* Bottom Actions */}
-      <div className="p-4 space-y-3 border-t border-gray-800">
+      <div className="p-4 pb-safe-bottom space-y-3 border-t border-gray-800 bg-primary-darker">
         <button
           onClick={handleHoldSale}
           disabled={items.length === 0}
@@ -554,14 +554,14 @@ export const PaymentPage = () => {
               : 'Confirm Payment'}
         </button>
 
-        <div className="flex justify-center space-x-8">
-          <button onClick={() => window.print()} className="flex items-center text-accent-green">
+        <div className="flex justify-center space-x-6 sm:space-x-8">
+          <button onClick={() => window.print()} className="flex items-center text-accent-green text-sm sm:text-base py-2 px-3 rounded-lg hover:bg-white/5">
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
             </svg>
             Print Receipt
           </button>
-          <button onClick={() => lastSaleId && setShowEmailModal(true)} disabled={!lastSaleId} className="flex items-center text-accent-green disabled:opacity-50 disabled:cursor-not-allowed">
+          <button onClick={() => lastSaleId && setShowEmailModal(true)} disabled={!lastSaleId} className="flex items-center text-accent-green disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base py-2 px-3 rounded-lg hover:bg-white/5">
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
@@ -572,8 +572,8 @@ export const PaymentPage = () => {
 
       {/* Email Modal */}
       {showEmailModal && (
-        <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50" onClick={() => setShowEmailModal(false)}>
-          <div className="bg-primary-dark rounded-2xl p-6 w-[90%] max-w-md" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/75 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4" onClick={() => setShowEmailModal(false)}>
+          <div className="bg-primary-dark rounded-t-2xl sm:rounded-2xl p-6 w-full max-w-md border border-white/10" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-white">Email Receipt</h2>
               <button onClick={() => setShowEmailModal(false)} className="text-gray-400">

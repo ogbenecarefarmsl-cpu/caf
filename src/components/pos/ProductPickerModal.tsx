@@ -111,7 +111,7 @@ export const ProductPickerModal = ({ open, onClose, branchId }: ProductPickerMod
           />
         </div>
 
-        <div className="flex-1 overflow-y-auto p-3">
+        <div className="flex-1 overflow-y-auto p-3 pb-safe-bottom">
           {isLoading ? (
             <div className="flex items-center justify-center h-32 text-gray-400">Loading...</div>
           ) : !products || products.length === 0 ? (

@@ -98,7 +98,7 @@ export const Modal = ({
       {/* Modal */}
       <div
         ref={containerRef}
-        className={`relative flex max-h-[92vh] w-full ${sizeStyles[size]} flex-col overflow-hidden rounded-t-2xl border border-white/10 bg-primary-dark shadow-2xl sm:my-8 sm:rounded-2xl`}
+        className={`relative flex max-h-[92dvh] w-full ${sizeStyles[size]} flex-col overflow-hidden rounded-t-2xl border border-white/10 bg-primary-dark shadow-2xl sm:my-8 sm:rounded-2xl sm:max-h-[85dvh]`}
         onClick={(event) => event.stopPropagation()}
       >
         {/* Header */}
@@ -153,7 +153,7 @@ export const Modal = ({
         )}
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto px-5 py-5 sm:px-6 sm:py-6">
+        <div className="flex-1 overflow-y-auto px-5 py-5 pb-safe-bottom sm:px-6 sm:py-6">
           {children}
         </div>
       </div>
