@@ -13,6 +13,7 @@ import { Error } from '../../components/ui/Error';
 import { useToast } from '../../hooks/useToast';
 import { getErrorMessage } from '../../lib/error-utils';
 import { queryKeys } from '../../lib/query-keys';
+import { useAuthStore } from '../../stores/auth-store';
 import {
   passwordValidation,
   optionalPasswordValidation,
@@ -40,6 +41,7 @@ interface Branch {
   _id?: string;
   name: string;
   code: string;
+  isHeadquarters?: boolean;
 }
 
 interface UserFormData {
@@ -57,6 +59,7 @@ export const UserManagementPage = () => {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const queryClient = useQueryClient();
   const { showSuccess, showError } = useToast();
+  const currentUser = useAuthStore((state) => state.user);
 
   const {
     register,
@@ -70,6 +73,7 @@ export const UserManagementPage = () => {
 
   // Check if role requires branch assignment
   const needsBranch = requiresBranchAssignment(selectedRole);
+  const requiresBranch = needsBranch;
 
   // Fetch users
   const { data: users, isLoading, error } = useQuery({
@@ -91,12 +95,59 @@ export const UserManagementPage = () => {
     },
   });
 
+  const currentUserBranch = branches?.find(
+    (branch) => (branch._id || branch.id) === currentUser?.branchId,
+  );
+  const canChooseBranch =
+    currentUser?.role === 'super_admin' ||
+    (currentUser?.role === 'branch_manager' && Boolean(currentUserBranch?.isHeadquarters));
+  const outletBranchId = canChooseBranch ? '' : currentUser?.branchId || '';
+  const branchOptions = canChooseBranch
+    ? [
+        { value: '', label: requiresBranch ? 'Select a branch' : 'No branch (HQ)' },
+        ...(branches || []).map(branch => ({
+          value: branch._id || branch.id,
+          label: `${branch.name} (${branch.code})`,
+        })),
+      ]
+    : [
+        {
+          value: outletBranchId,
+          label: currentUserBranch
+            ? `${currentUserBranch.name} (${currentUserBranch.code})`
+            : 'Your outlet',
+        },
+      ];
+  const roleOptions =
+    currentUser?.role === 'super_admin'
+      ? [
+          { value: 'cashier', label: 'Cashier' },
+          { value: 'marketer', label: 'Marketer' },
+          { value: 'finance_manager', label: 'Finance Manager' },
+          { value: 'branch_manager', label: 'Branch Manager' },
+          { value: 'auditor', label: 'Auditor' },
+          { value: 'super_admin', label: 'Super Admin' },
+        ]
+      : canChooseBranch
+        ? [
+            { value: 'cashier', label: 'Cashier' },
+            { value: 'marketer', label: 'Marketer' },
+            { value: 'finance_manager', label: 'Finance Manager' },
+            { value: 'branch_manager', label: 'Branch Manager' },
+            { value: 'auditor', label: 'Auditor' },
+          ]
+        : [
+            { value: 'cashier', label: 'Cashier' },
+            { value: 'marketer', label: 'Marketer' },
+          ];
+
   // Create user mutation
   const createMutation = useMutation({
     mutationFn: async (data: UserFormData) => {
+      const branchId = requiresBranch ? (canChooseBranch ? data.branchId : outletBranchId) : '';
       const payload = {
         ...data,
-        branchId: data.branchId || undefined,
+        branchId: branchId || undefined,
       };
       const response = await apiClient.post('/users', payload);
       return response.data;
@@ -116,12 +167,13 @@ export const UserManagementPage = () => {
   const updateMutation = useMutation({
     mutationFn: async (data: UserFormData) => {
       if (!editingUser) return;
+      const branchId = requiresBranch ? (canChooseBranch ? data.branchId : outletBranchId) : '';
       const payload: Partial<UserFormData> = {
         email: data.email,
         firstName: data.firstName,
         lastName: data.lastName,
         role: data.role,
-        branchId: data.branchId || undefined,
+        branchId: branchId || undefined,
       };
       // Only include password if it's provided
       if (data.password) {
@@ -151,7 +203,7 @@ export const UserManagementPage = () => {
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
-        branchId: user.branchId || '',
+        branchId: canChooseBranch ? user.branchId || '' : outletBranchId,
         password: '',
       });
     } else {
@@ -162,7 +214,7 @@ export const UserManagementPage = () => {
         firstName: '',
         lastName: '',
         role: 'cashier',
-        branchId: '',
+        branchId: outletBranchId,
         password: '',
       });
     }
@@ -203,9 +255,6 @@ export const UserManagementPage = () => {
     marketer: 'bg-orange-600',
     finance_manager: 'bg-emerald-600',
   };
-
-  // Check if role requires branch assignment
-  const requiresBranch = needsBranch;
 
   const columns = [
     {
@@ -360,14 +409,7 @@ export const UserManagementPage = () => {
                   label="Role"
                   {...register('role', { required: 'Role is required' })}
                   error={errors.role?.message}
-                  options={[
-                    { value: 'cashier', label: 'Cashier' },
-                    { value: 'marketer', label: 'Marketer' },
-                    { value: 'finance_manager', label: 'Finance Manager' },
-                    { value: 'branch_manager', label: 'Branch Manager' },
-                    { value: 'auditor', label: 'Auditor' },
-                    { value: 'super_admin', label: 'Super Admin' },
-                  ]}
+                  options={roleOptions}
                 />
                 <Select
                   label="Branch"
@@ -375,20 +417,16 @@ export const UserManagementPage = () => {
                     required: requiresBranch ? 'Branch is required for this role' : false 
                   })}
                   error={errors.branchId?.message}
-                  options={[
-                    { value: '', label: requiresBranch ? 'Select a branch' : 'No branch (HQ)' },
-                    ...(branches || []).map(branch => ({
-                      value: branch._id || branch.id,
-                      label: `${branch.name} (${branch.code})`,
-                    })),
-                  ]}
-                  disabled={!requiresBranch}
+                  options={branchOptions}
+                  disabled={!requiresBranch || !canChooseBranch}
                 />
               </div>
 
               {requiresBranch && (
                 <p className="text-sm text-gray-400 mt-2">
-                  This role requires branch assignment
+                  {canChooseBranch
+                    ? 'This role requires branch assignment'
+                    : 'Outlet users are automatically assigned to your outlet'}
                 </p>
               )}
             </div>
