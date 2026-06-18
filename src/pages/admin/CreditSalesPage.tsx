@@ -16,11 +16,13 @@ import apiClient from '../../lib/api-client';
 type CreditPaymentStatus = 'unpaid' | 'partial' | 'paid' | 'overdue';
 
 interface SalePayment {
+  paymentReceiptNumber?: string;
   amount: number;
   paymentMethod: string;
   paymentReference?: string;
   receivedAt: string;
   notes?: string;
+  balanceAfterPayment?: number;
 }
 
 interface CreditSale {
@@ -114,6 +116,7 @@ export function CreditSalesPage() {
       setPaymentReference('');
       setPaymentNotes('');
       queryClient.invalidateQueries({ queryKey: queryKeys.sales.all(), exact: false });
+      queryClient.invalidateQueries({ queryKey: queryKeys.finance.all(), exact: false });
     },
     onError: (error) => {
       showError(getErrorMessage(error, 'Failed to record payment'));
@@ -121,6 +124,13 @@ export function CreditSalesPage() {
   });
 
   const sales = data || [];
+  const parsedPaymentAmount = Number(paymentAmount);
+  const paymentWouldOverpay = selectedSale
+    ? Number.isFinite(parsedPaymentAmount) && parsedPaymentAmount > selectedSale.balanceDue
+    : false;
+  const remainingAfterPayment = selectedSale && Number.isFinite(parsedPaymentAmount)
+    ? Math.max(0, selectedSale.balanceDue - parsedPaymentAmount)
+    : selectedSale?.balanceDue ?? 0;
   const outstandingBalance = sales
     .filter((sale) => sale.paymentStatus !== 'paid')
     .reduce((sum, sale) => sum + (sale.balanceDue || 0), 0);
@@ -307,9 +317,13 @@ export function CreditSalesPage() {
                   onChange={(event) => setPaymentAmount(event.target.value)}
                   type="number"
                   min="0"
+                  max={selectedSale.balanceDue}
                   step="0.01"
                   className="w-full rounded-xl border border-white/10 bg-primary-darker px-4 py-3 text-white outline-none focus:border-accent-green"
                 />
+                {paymentWouldOverpay ? (
+                  <p className="text-xs text-rose-300">Payment cannot exceed the outstanding balance.</p>
+                ) : null}
               </label>
 
               <label className="space-y-2">
@@ -348,6 +362,34 @@ export function CreditSalesPage() {
               </label>
             </div>
 
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-400">Remaining after payment</span>
+                <span className="font-semibold text-white">{format(remainingAfterPayment)}</span>
+              </div>
+            </div>
+
+            {selectedSale.payments?.length ? (
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold text-white">Payment history</h4>
+                <div className="max-h-44 space-y-2 overflow-y-auto pr-1">
+                  {selectedSale.payments.map((payment, index) => (
+                    <div key={`${payment.receivedAt}-${index}`} className="rounded-xl border border-white/10 bg-white/5 p-3 text-sm">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="font-medium text-white">{format(payment.amount)}</span>
+                        <span className="text-xs text-gray-400">{new Date(payment.receivedAt).toLocaleString()}</span>
+                      </div>
+                      <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-400">
+                        <span className="capitalize">{payment.paymentMethod.replace(/_/g, ' ')}</span>
+                        {payment.paymentReceiptNumber ? <span>{payment.paymentReceiptNumber}</span> : null}
+                        {payment.balanceAfterPayment !== undefined ? <span>Balance: {format(payment.balanceAfterPayment)}</span> : null}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
             <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
               <Button type="button" variant="secondary" onClick={() => setSelectedSale(null)}>
                 Cancel
@@ -356,6 +398,11 @@ export function CreditSalesPage() {
                 type="button"
                 onClick={() => recordPaymentMutation.mutate()}
                 isLoading={recordPaymentMutation.isPending}
+                disabled={
+                  !Number.isFinite(parsedPaymentAmount) ||
+                  parsedPaymentAmount <= 0 ||
+                  paymentWouldOverpay
+                }
               >
                 <span className="inline-flex items-center gap-2">
                   <CreditCard className="h-4 w-4" />
