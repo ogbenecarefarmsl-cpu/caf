@@ -117,7 +117,7 @@ export const QuickKeysGrid = ({
                     e.stopPropagation();
                     removeKey(key.productId, key.packSizeCode);
                   }}
-                  className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-red-500 text-white text-xs font-bold flex items-center justify-center shadow-md hover:bg-red-600"
+                  className="absolute -top-2 -right-2 w-10 h-10 min-h-10 rounded-full bg-red-500 text-white text-xs font-bold flex items-center justify-center shadow-md hover:bg-red-600"
                   title="Remove quick key"
                 >
                   x

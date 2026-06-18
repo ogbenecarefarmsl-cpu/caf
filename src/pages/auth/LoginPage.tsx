@@ -126,7 +126,7 @@ export const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-primary-darker">
+    <div className="min-h-screen flex items-center justify-center bg-primary-darker pt-safe-top">
       <div className="max-w-md w-full p-8 bg-primary-dark rounded-lg shadow-xl">
         <h1 className="text-3xl font-bold text-white mb-2 text-center">
           CAREFARM POS

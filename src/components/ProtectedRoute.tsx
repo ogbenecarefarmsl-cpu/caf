@@ -15,7 +15,7 @@ export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) 
   // Show loading while checking authentication
   if (!hasHydrated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-primary-darker">
+      <div className="min-h-screen flex items-center justify-center bg-primary-darker pt-safe-top">
         <Loading />
       </div>
     );

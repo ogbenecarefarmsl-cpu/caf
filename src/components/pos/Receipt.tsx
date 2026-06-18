@@ -1,5 +1,5 @@
 import { forwardRef } from 'react';
-import { CURRENCY } from '../../lib/currency';
+import { useCurrency } from '../../hooks/useCurrency';
 
 interface ReceiptItem {
   productName: string;
@@ -28,6 +28,7 @@ interface ReceiptProps {
 
 export const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(
   ({ saleData }, ref) => {
+    const { format } = useCurrency();
     const formatDate = (dateString: string) => {
       const date = new Date(dateString);
       return date.toLocaleString('en-NG', {
@@ -101,10 +102,10 @@ export const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(
                     </td>
                     <td className="text-center py-2">{item.quantity}</td>
                     <td className="text-right py-2">
-                      {CURRENCY.format(item.unitPrice)}
+                      {format(item.unitPrice)}
                     </td>
                     <td className="text-right py-2">
-                      {CURRENCY.format(item.subtotal)}
+                      {format(item.subtotal)}
                     </td>
                   </tr>
                 );
@@ -117,17 +118,17 @@ export const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(
         <div className="mb-6 text-sm">
           <div className="flex justify-between mb-2">
             <span>Subtotal:</span>
-            <span>{CURRENCY.format(saleData.subtotal)}</span>
+            <span>{format(saleData.subtotal)}</span>
           </div>
           {saleData.discount > 0 && (
             <div className="flex justify-between mb-2">
               <span>Discount:</span>
-              <span>-{CURRENCY.format(saleData.discount)}</span>
+              <span>-{format(saleData.discount)}</span>
             </div>
           )}
           <div className="flex justify-between text-xl font-bold border-t-2 border-black pt-2">
             <span>TOTAL:</span>
-            <span>{CURRENCY.format(saleData.total)}</span>
+            <span>{format(saleData.total)}</span>
           </div>
         </div>
 

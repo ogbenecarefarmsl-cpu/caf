@@ -1031,7 +1031,7 @@ export const POSPage = () => {
                     <div className="flex items-center space-x-2 bg-primary-dark rounded-lg p-1">
                       <button
                         onClick={() => handleQuantityDecrement(item.productId, item.packSize, item.quantity)}
-                        className="w-10 h-10 flex items-center justify-center hover:bg-gray-700 rounded transition-colors text-gray-300"
+                        className="w-11 h-11 min-h-11 flex items-center justify-center hover:bg-gray-700 rounded transition-colors text-gray-300"
                       >
                         -
                       </button>
@@ -1039,11 +1039,11 @@ export const POSPage = () => {
                         type="text"
                         value={item.quantity}
                         onChange={(e) => handleQuantityChange(item.productId, item.packSize, e.target.value)}
-                        className="w-12 h-10 bg-transparent text-center text-white font-semibold text-base focus:outline-none"
+                        className="w-12 h-11 bg-transparent text-center text-white font-semibold text-base focus:outline-none"
                       />
                       <button
                         onClick={() => handleQuantityIncrement(item.productId, item.packSize, item.quantity)}
-                        className="w-10 h-10 flex items-center justify-center hover:bg-gray-700 rounded transition-colors text-gray-300"
+                        className="w-11 h-11 min-h-11 flex items-center justify-center hover:bg-gray-700 rounded transition-colors text-gray-300"
                       >
                         +
                       </button>
@@ -1208,7 +1208,7 @@ export const POSPage = () => {
               </div>
             </div>
 
-            <div className="px-4 pb-6 space-y-3">
+            <div className="px-4 pb-6 pb-safe-bottom space-y-3">
               <button
                 onClick={() => {
                   setShowMobileCart(false);
@@ -1256,7 +1256,7 @@ export const POSPage = () => {
       {showShiftModal && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
           <div className="absolute inset-0 bg-black/75" onClick={() => setShowShiftModal(false)} />
-          <div className="relative bg-primary-dark rounded-t-2xl sm:rounded-2xl p-6 w-full max-w-md mx-0 sm:mx-4 border border-gray-700 max-h-[85vh] overflow-y-auto">
+          <div className="relative bg-primary-dark rounded-t-2xl sm:rounded-2xl p-6 pb-safe-bottom w-full max-w-md mx-0 sm:mx-4 border border-gray-700 max-h-[85vh] overflow-y-auto">
             <h2 className="text-xl font-bold text-white mb-4">Open Shift</h2>
             <p className="text-gray-400 mb-4">Enter the opening cash amount to start your shift.</p>
             
@@ -1297,7 +1297,7 @@ export const POSPage = () => {
       {showCloseShiftModal && currentShift && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
           <div className="absolute inset-0 bg-black/75" onClick={() => setShowCloseShiftModal(false)} />
-          <div className="relative bg-primary-dark rounded-t-2xl sm:rounded-2xl p-6 w-full max-w-md mx-0 sm:mx-4 border border-gray-700 max-h-[85vh] overflow-y-auto">
+          <div className="relative bg-primary-dark rounded-t-2xl sm:rounded-2xl p-6 pb-safe-bottom w-full max-w-md mx-0 sm:mx-4 border border-gray-700 max-h-[85vh] overflow-y-auto">
             <h2 className="text-xl font-bold text-white mb-4">Close Shift</h2>
             <p className="text-gray-400 mb-4">Count the cash in the register and confirm shift closure.</p>
 
@@ -1368,7 +1368,7 @@ export const POSPage = () => {
       {showExpenseModal && currentShift && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
           <div className="absolute inset-0 bg-black/75" onClick={() => setShowExpenseModal(false)} />
-          <div className="relative bg-primary-dark rounded-t-2xl sm:rounded-2xl p-6 w-full max-w-md mx-0 sm:mx-4 border border-gray-700 max-h-[85vh] overflow-y-auto">
+          <div className="relative bg-primary-dark rounded-t-2xl sm:rounded-2xl p-6 pb-safe-bottom w-full max-w-md mx-0 sm:mx-4 border border-gray-700 max-h-[85vh] overflow-y-auto">
             <h2 className="text-xl font-bold text-white mb-4">Log Expense</h2>
             <p className="text-gray-400 mb-4">Record a cash expense for this active shift.</p>
 
@@ -1433,7 +1433,7 @@ export const POSPage = () => {
       {showPackSizeModal && selectedProductForPack && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
           <div className="absolute inset-0 bg-black/75" onClick={() => setShowPackSizeModal(false)} />
-          <div className="relative bg-primary-dark rounded-t-2xl sm:rounded-2xl p-6 w-full max-w-md mx-0 sm:mx-4 border border-gray-700 max-h-[85vh] overflow-y-auto">
+          <div className="relative bg-primary-dark rounded-t-2xl sm:rounded-2xl p-6 pb-safe-bottom w-full max-w-md mx-0 sm:mx-4 border border-gray-700 max-h-[85vh] overflow-y-auto">
             <h2 className="text-xl font-bold text-white mb-1">Select Pack Size</h2>
             <p className="text-gray-400 text-sm mb-4">{selectedProductForPack.name}</p>
 

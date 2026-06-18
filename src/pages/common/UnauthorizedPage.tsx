@@ -5,7 +5,7 @@ export const UnauthorizedPage = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-primary-darker">
+    <div className="min-h-screen flex items-center justify-center bg-primary-darker pt-safe-top">
       <div className="max-w-md w-full p-8 text-center">
         <div className="rounded-full bg-red-500 bg-opacity-20 p-4 inline-block mb-4">
           <svg

@@ -151,8 +151,8 @@ export const TransactionHistoryPage = () => {
   return (
     <div className="min-h-screen bg-primary-darker flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-4 border-b border-gray-800">
-        <button onClick={() => navigate(-1)} className="text-white">
+      <div className="flex items-center justify-between px-4 py-4 border-b border-gray-800 pt-safe-top">
+        <button onClick={() => navigate(-1)} className="text-white min-w-11 min-h-11 flex items-center justify-center -ml-2 rounded-lg hover:bg-white/5">
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
@@ -223,7 +223,7 @@ export const TransactionHistoryPage = () => {
       {/* Filter Modal */}
       {showFilters && (
         <div className="fixed inset-0 bg-black/75 flex items-end z-50" onClick={() => setShowFilters(false)}>
-          <div className="bg-primary-dark w-full rounded-t-3xl p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-primary-dark w-full rounded-t-3xl p-6 pb-safe-bottom space-y-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-white">Filter Transactions</h2>
               <button onClick={() => setShowFilters(false)} className="text-gray-400">
