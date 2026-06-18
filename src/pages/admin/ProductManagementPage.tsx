@@ -455,8 +455,6 @@ export const ProductManagementPage = () => {
       'unit',
       'basePrice',
       'costPrice',
-      'suggestedRetailPrice',
-      'markupPercentage',
     ];
     const valid = await trigger(fieldsToValidate);
     if (valid) setWizardStep(2);
@@ -592,12 +590,6 @@ export const ProductManagementPage = () => {
       key: 'costPrice', 
       header: 'Cost Price',
       render: (product: Product) => format(product.costPrice || 0)
-    },
-    { 
-      key: 'markupPercentage', 
-      header: 'Markup',
-      render: (product: Product) => 
-        product.markupPercentage ? `${product.markupPercentage}%` : '-'
     },
     { key: 'unit', header: 'Unit' },
     {
@@ -853,28 +845,6 @@ export const ProductManagementPage = () => {
                       min: { value: 0, message: 'Must be 0 or greater' },
                     })}
                     error={errors.costPrice?.message}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Input
-                    label="Retail Price Override"
-                    type="number"
-                    step="0.01"
-                    {...register('suggestedRetailPrice', {
-                      min: { value: 0, message: 'Must be 0 or greater' },
-                    })}
-                    error={errors.suggestedRetailPrice?.message}
-                  />
-
-                  <Input
-                    label="Markup %"
-                    type="number"
-                    step="0.1"
-                    {...register('markupPercentage', {
-                      min: { value: 0, message: 'Must be 0 or greater' },
-                    })}
-                    error={errors.markupPercentage?.message}
                   />
                 </div>
 

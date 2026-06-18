@@ -30,6 +30,16 @@ interface Product {
   branchId?: string;
   quantityAvailable?: number;
   stock?: number;
+  basePrice?: number;
+  suggestedRetailPrice?: number;
+  sellingPrice?: number;
+  price?: number;
+}
+
+interface AssignmentItemDraft {
+  productId: string;
+  assignedQuantity: string;
+  assignedUnitPrice: string;
 }
 
 interface Assignment {
@@ -91,9 +101,9 @@ export const MarketerAssignmentsPage = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [marketerId, setMarketerId] = useState('');
-  const [productId, setProductId] = useState('');
-  const [assignedQuantity, setAssignedQuantity] = useState('');
-  const [assignedUnitPrice, setAssignedUnitPrice] = useState('');
+  const [assignmentItems, setAssignmentItems] = useState<AssignmentItemDraft[]>([
+    { productId: '', assignedQuantity: '', assignedUnitPrice: '' },
+  ]);
   const [notes, setNotes] = useState('');
 
   const branchId = selectedBranch?._id || user?.branchId || '';
@@ -120,10 +130,10 @@ export const MarketerAssignmentsPage = () => {
   const { data: products } = useQuery<Product[]>({
     queryKey: queryKeys.products.list({ branchId }),
     queryFn: async () => {
-      // Load ALL products (not filtered by branch) so marketers can be assigned any product
-      const response = await apiClient.get('/products', { params: { limit: 500 } });
+      const response = await apiClient.get('/products', { params: { branchId, limit: 500 } });
       return asArray<Product>(response.data);
     },
+    enabled: !!branchId,
   });
 
   const createMutation = useMutation({
@@ -131,9 +141,11 @@ export const MarketerAssignmentsPage = () => {
       return apiClient.post('/marketer/assignments', {
         branchId,
         marketerId,
-        productId,
-        assignedQuantity: Number(assignedQuantity),
-        assignedUnitPrice: Number(assignedUnitPrice),
+        items: assignmentItems.map((item) => ({
+          productId: item.productId,
+          assignedQuantity: Number(item.assignedQuantity),
+          assignedUnitPrice: Number(item.assignedUnitPrice),
+        })),
         notes: notes || undefined,
       });
     },
@@ -141,12 +153,42 @@ export const MarketerAssignmentsPage = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.marketer.all(), exact: false });
       setIsModalOpen(false);
       setMarketerId('');
-      setProductId('');
-      setAssignedQuantity('');
-      setAssignedUnitPrice('');
+      setAssignmentItems([{ productId: '', assignedQuantity: '', assignedUnitPrice: '' }]);
       setNotes('');
     },
   });
+
+  const updateAssignmentItem = (index: number, patch: Partial<AssignmentItemDraft>) => {
+    setAssignmentItems((current) =>
+      current.map((item, itemIndex) =>
+        itemIndex === index ? { ...item, ...patch } : item,
+      ),
+    );
+  };
+
+  const getProductPrice = (productId: string) => {
+    const product = (products || []).find((item) => (item.id || item._id) === productId);
+    return product?.sellingPrice ?? product?.price ?? product?.suggestedRetailPrice ?? product?.basePrice ?? 0;
+  };
+
+  const resetAssignmentForm = () => {
+    setIsModalOpen(false);
+    setMarketerId('');
+    setAssignmentItems([{ productId: '', assignedQuantity: '', assignedUnitPrice: '' }]);
+    setNotes('');
+  };
+
+  const canSubmitAssignment =
+    !!branchId &&
+    !!marketerId &&
+    assignmentItems.length > 0 &&
+    assignmentItems.every(
+      (item) =>
+        item.productId &&
+        Number(item.assignedQuantity) > 0 &&
+        item.assignedUnitPrice !== '' &&
+        Number(item.assignedUnitPrice) >= 0,
+    );
 
   const columns = [
     {
@@ -213,7 +255,7 @@ export const MarketerAssignmentsPage = () => {
         />
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Assign Product" size="md">
+      <Modal isOpen={isModalOpen} onClose={resetAssignmentForm} title="Assign Products" size="xl">
         <div className="space-y-4">
           <Select
             label="Marketer"
@@ -228,46 +270,86 @@ export const MarketerAssignmentsPage = () => {
             ]}
           />
 
-          <Select
-            label="Product"
-            value={productId}
-            onChange={(e) => setProductId(e.target.value)}
-            options={[
-              { value: '', label: 'Select product' },
-              ...(products || []).map((p) => ({
-                value: p.id || p._id || '',
-                label: `${p.name} (${p.sku}) - Stock: ${p.quantityAvailable ?? p.stock ?? 'N/A'}`,
-              })),
-            ]}
-          />
+          <div className="space-y-3">
+            {assignmentItems.map((item, index) => (
+              <div key={index} className="grid grid-cols-1 gap-3 rounded-lg border border-white/10 bg-white/5 p-3 md:grid-cols-[minmax(0,1.4fr)_minmax(120px,0.45fr)_minmax(140px,0.55fr)_auto]">
+                <Select
+                  label={index === 0 ? 'Product' : undefined}
+                  value={item.productId}
+                  onChange={(e) => {
+                    const productId = e.target.value;
+                    updateAssignmentItem(index, {
+                      productId,
+                      assignedUnitPrice: productId ? String(getProductPrice(productId)) : '',
+                    });
+                  }}
+                  options={[
+                    { value: '', label: 'Select product' },
+                    ...(products || []).map((p) => ({
+                      value: p.id || p._id || '',
+                      label: `${p.name} (${p.sku}) - Stock: ${p.quantityAvailable ?? p.stock ?? 'N/A'}`,
+                    })),
+                  ]}
+                />
 
-          <Input
-            label="Assigned Quantity"
-            type="number"
-            value={assignedQuantity}
-            onChange={(e) => setAssignedQuantity(e.target.value)}
-            min={1}
-          />
+                <Input
+                  label={index === 0 ? 'Qty' : undefined}
+                  type="number"
+                  value={item.assignedQuantity}
+                  onChange={(e) => updateAssignmentItem(index, { assignedQuantity: e.target.value })}
+                  min={1}
+                />
 
-          <Input
-            label="Assigned Unit Price"
-            type="number"
-            value={assignedUnitPrice}
-            onChange={(e) => setAssignedUnitPrice(e.target.value)}
-            min={0}
-            step="0.01"
-          />
+                <Input
+                  label={index === 0 ? 'Unit Price' : undefined}
+                  type="number"
+                  value={item.assignedUnitPrice}
+                  onChange={(e) => updateAssignmentItem(index, { assignedUnitPrice: e.target.value })}
+                  min={0}
+                  step="0.01"
+                />
+
+                <div className={index === 0 ? 'md:pt-7' : ''}>
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    onClick={() =>
+                      setAssignmentItems((current) =>
+                        current.length === 1
+                          ? [{ productId: '', assignedQuantity: '', assignedUnitPrice: '' }]
+                          : current.filter((_, itemIndex) => itemIndex !== index),
+                      )
+                    }
+                  >
+                    Remove
+                  </Button>
+                </div>
+              </div>
+            ))}
+
+            <Button
+              variant="secondary"
+              onClick={() =>
+                setAssignmentItems((current) => [
+                  ...current,
+                  { productId: '', assignedQuantity: '', assignedUnitPrice: '' },
+                ])
+              }
+            >
+              Add Another Product
+            </Button>
+          </div>
 
           <Input label="Notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
 
           <div className="flex justify-end gap-2">
-            <Button variant="secondary" onClick={() => setIsModalOpen(false)}>Cancel</Button>
+            <Button variant="secondary" onClick={resetAssignmentForm}>Cancel</Button>
             <Button
               onClick={() => createMutation.mutate()}
               isLoading={createMutation.isPending}
-              disabled={!marketerId || !productId || !assignedQuantity || !assignedUnitPrice}
+              disabled={!canSubmitAssignment}
             >
-              Assign Product
+              Assign Products
             </Button>
           </div>
         </div>
