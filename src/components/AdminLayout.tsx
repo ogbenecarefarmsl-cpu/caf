@@ -469,8 +469,8 @@ export const AdminLayout = ({ children, title = 'Admin' }: AdminLayoutProps) => 
         variant="danger"
       />
 
-      <div className="flex h-dvh min-w-0 flex-col bg-primary-darker lg:ml-64 pt-safe-top">
-        <header className="bg-primary-dark/50 backdrop-blur-xl border-b border-white/5 px-4 py-4 sm:px-6 lg:px-8 lg:py-6 sticky top-0 z-30">
+      <div className="flex h-dvh min-w-0 flex-col bg-primary-darker lg:ml-64">
+        <header className="bg-primary-dark/50 backdrop-blur-xl border-b border-white/5 px-4 py-4 sm:px-6 lg:px-8 lg:py-6 sticky top-0 z-30 pt-safe-top">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
               <button
@@ -496,7 +496,7 @@ export const AdminLayout = ({ children, title = 'Admin' }: AdminLayoutProps) => 
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:p-6 lg:p-8">
+        <main className="flex-1 overflow-y-auto p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] sm:p-6 lg:p-8">
           <div className="max-w-7xl mx-auto space-y-4">
             <PasskeySetupBanner />
             {children}

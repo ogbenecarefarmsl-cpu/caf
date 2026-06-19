@@ -8,30 +8,39 @@
   --color-secondary-dark: #0a0f0d;
 }
 
+@layer base {
+  :root {
+    --app-safe-top: env(safe-area-inset-top, 0px);
+    --app-safe-bottom: env(safe-area-inset-bottom, 0px);
+    --app-safe-left: env(safe-area-inset-left, 0px);
+    --app-safe-right: env(safe-area-inset-right, 0px);
+  }
+}
+
 /* Safe-area utilities for edge-to-edge PWA layouts on notch devices */
 @utility pt-safe-top {
-  padding-top: env(safe-area-inset-top);
+  padding-top: var(--app-safe-top);
 }
 @utility pb-safe-bottom {
-  padding-bottom: env(safe-area-inset-bottom);
+  padding-bottom: var(--app-safe-bottom);
 }
 @utility pl-safe-left {
-  padding-left: env(safe-area-inset-left);
+  padding-left: var(--app-safe-left);
 }
 @utility pr-safe-right {
-  padding-right: env(safe-area-inset-right);
+  padding-right: var(--app-safe-right);
 }
 @utility mt-safe-top {
-  margin-top: env(safe-area-inset-top);
+  margin-top: var(--app-safe-top);
 }
 @utility mb-safe-bottom {
-  margin-bottom: env(safe-area-inset-bottom);
+  margin-bottom: var(--app-safe-bottom);
 }
 @utility top-safe {
-  top: env(safe-area-inset-top);
+  top: var(--app-safe-top);
 }
 @utility bottom-safe {
-  bottom: env(safe-area-inset-bottom);
+  bottom: var(--app-safe-bottom);
 }
 
 @layer base {
