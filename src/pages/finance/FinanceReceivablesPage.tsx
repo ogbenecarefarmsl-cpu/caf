@@ -258,7 +258,7 @@ export function FinanceReceivablesPage() {
                       <p className="mt-1 text-sm text-gray-400">{sale.receiptNumber}</p>
                       {sale.customerPhone ? <p className="mt-1 text-sm text-gray-500">{sale.customerPhone}</p> : null}
                     </div>
-                    <div className="grid grid-cols-2 gap-3 text-sm sm:min-w-[260px]">
+                    <div className="grid grid-cols-2 gap-3 text-sm w-full sm:max-w-[260px]">
                       <div className="rounded-xl bg-white/5 p-3">
                         <p className="text-gray-400">Total</p>
                         <p className="mt-1 font-semibold text-white">{format(sale.total)}</p>

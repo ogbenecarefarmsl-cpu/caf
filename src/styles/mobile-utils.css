@@ -1,0 +1,299 @@
+/**
+ * Mobile Responsiveness Utilities
+ * Additional utilities for better mobile experience
+ */
+
+/* Touch-friendly interactive elements */
+@utility touch-target {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* Better text wrapping on mobile */
+@utility text-wrap-balance {
+  text-wrap: balance;
+}
+
+/* Prevent text overflow */
+@utility text-safe {
+  overflow-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+/* Mobile-first containers */
+@utility container-mobile {
+  width: 100%;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  @utility container-mobile {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  @utility container-mobile {
+    max-width: 1280px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+/* Scrollable tables on mobile */
+@utility table-mobile {
+  width: 100%;
+  margin-left: -1rem;
+  margin-right: -1rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (min-width: 640px) {
+  @utility table-mobile {
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+
+/* Stack on mobile, row on desktop */
+@utility stack-mobile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  @utility stack-mobile {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+/* Hide on mobile, show on desktop */
+@utility hide-mobile {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  @utility hide-mobile {
+    display: block;
+  }
+}
+
+/* Show on mobile, hide on desktop */
+@utility show-mobile {
+  display: block;
+}
+
+@media (min-width: 640px) {
+  @utility show-mobile {
+    display: none;
+  }
+}
+
+/* Better button sizes for mobile */
+@utility btn-mobile {
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  min-height: 44px;
+}
+
+@media (min-width: 640px) {
+  @utility btn-mobile {
+    padding: 0.625rem 1.25rem;
+    font-size: 1rem;
+  }
+}
+
+/* Card spacing on mobile */
+@utility card-mobile {
+  padding: 1rem;
+  border-radius: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  @utility card-mobile {
+    padding: 1.5rem;
+    border-radius: 1rem;
+  }
+}
+
+/* Input sizes for mobile */
+@utility input-mobile {
+  padding: 0.75rem 1rem;
+  font-size: 1rem; /* Prevents iOS zoom */
+  line-height: 1.5rem;
+  min-height: 44px;
+}
+
+/* Grid that stacks on mobile */
+@utility grid-mobile-stack {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  @utility grid-mobile-stack {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  @utility grid-mobile-stack {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Prevent horizontal scroll */
+@utility no-scroll-x {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* Better modal on mobile */
+@utility modal-mobile {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+}
+
+@media (min-width: 640px) {
+  @utility modal-mobile {
+    align-items: center;
+    padding: 1rem;
+  }
+}
+
+/* Mobile-first spacing */
+@utility space-mobile {
+  padding: 1rem;
+}
+
+@media (min-width: 640px) {
+  @utility space-mobile {
+    padding: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  @utility space-mobile {
+    padding: 2rem;
+  }
+}
+
+/* Text size scaling */
+@utility text-responsive-sm {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+@media (min-width: 640px) {
+  @utility text-responsive-sm {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+}
+
+@utility text-responsive-base {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+@media (min-width: 640px) {
+  @utility text-responsive-base {
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
+}
+
+@utility text-responsive-lg {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+}
+
+@media (min-width: 640px) {
+  @utility text-responsive-lg {
+    font-size: 1.25rem;
+    line-height: 1.75rem;
+  }
+}
+
+@utility text-responsive-xl {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+}
+
+@media (min-width: 640px) {
+  @utility text-responsive-xl {
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+}
+
+@utility text-responsive-2xl {
+  font-size: 1.5rem;
+  line-height: 2rem;
+}
+
+@media (min-width: 640px) {
+  @utility text-responsive-2xl {
+    font-size: 1.875rem;
+    line-height: 2.25rem;
+  }
+}
+
+@utility text-responsive-3xl {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+}
+
+@media (min-width: 640px) {
+  @utility text-responsive-3xl {
+    font-size: 2.25rem;
+    line-height: 2.5rem;
+  }
+}
+
+/* Better table cells on mobile */
+@utility td-mobile {
+  padding: 0.75rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+@media (min-width: 640px) {
+  @utility td-mobile {
+    padding: 1rem;
+    font-size: 1rem;
+  }
+}
+
+/* Fix for horizontal scroll issues */
+body {
+  overflow-x: hidden;
+}
+
+#root {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* Better scrollbar on mobile */
+@media (max-width: 639px) {
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+}

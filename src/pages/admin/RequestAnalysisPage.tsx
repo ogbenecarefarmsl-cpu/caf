@@ -166,7 +166,7 @@ export function RequestAnalysisPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:w-[430px]">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 w-full lg:max-w-[430px]">
             <div className="rounded-2xl border border-white/10 bg-primary-dark/70 p-4">
               <p className="text-xs uppercase tracking-wide text-gray-400">Lines extracted</p>
               <p className="mt-2 text-2xl font-bold text-white">{summary.total}</p>

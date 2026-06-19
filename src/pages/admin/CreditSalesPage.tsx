@@ -161,7 +161,7 @@ export function CreditSalesPage() {
             )}
           </div>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:w-[520px]">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 w-full lg:max-w-[520px]">
             <div className="rounded-2xl border border-white/10 bg-primary-dark/70 p-4">
               <p className="text-xs uppercase tracking-wide text-gray-400">Open credit sales</p>
               <p className="mt-2 text-2xl font-bold text-white">
@@ -242,7 +242,7 @@ export function CreditSalesPage() {
                         ) : null}
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3 text-sm sm:min-w-[260px]">
+                      <div className="grid grid-cols-2 gap-3 text-sm w-full sm:max-w-[260px]">
                         <div className="rounded-xl bg-white/5 p-3">
                           <p className="text-gray-400">Total</p>
                           <p className="mt-1 font-semibold text-white">{format(sale.total)}</p>

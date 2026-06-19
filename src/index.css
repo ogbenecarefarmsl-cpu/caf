@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./mobile-utils.css";
 
 @theme {
   --color-primary-dark: #1a3a2e;
