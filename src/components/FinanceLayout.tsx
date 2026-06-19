@@ -22,6 +22,7 @@ interface NavItem {
   path: string;
   icon: ReactNode;
   section: string;
+  roles?: string[];
 }
 
 const ICONS = {
@@ -108,21 +109,26 @@ export const FinanceLayout = ({ children, title = 'Finance Hub' }: FinanceLayout
   };
 
   const navItems: NavItem[] = [
-    { name: 'Hub', path: '/finance', icon: ICONS.dashboard, section: 'Overview' },
-    { name: 'Cash Book', path: '/finance/cash-book', icon: ICONS.cash, section: 'Money' },
-    { name: 'Receivables', path: '/finance/receivables', icon: ICONS.receivables, section: 'Money' },
-    { name: 'Payables', path: '/finance/payables', icon: ICONS.payables, section: 'Money' },
-    { name: 'Salaries', path: '/finance/salaries', icon: ICONS.salaries, section: 'People' },
-    { name: 'Staff Advances', path: '/finance/advances', icon: ICONS.advances, section: 'People' },
-    { name: 'Final Settlement', path: '/finance/settlement', icon: ICONS.settlement, section: 'People' },
-    { name: 'Loans', path: '/finance/loans', icon: ICONS.loans, section: 'Capital' },
-    { name: 'Recurring Invoices', path: '/finance/recurring-invoices', icon: ICONS.payables, section: 'Capital' },
-    { name: 'Reconciliations', path: '/finance/reconciliations', icon: ICONS.reconciliation, section: 'Controls' },
-    { name: 'Reports', path: '/finance/reports', icon: ICONS.reports, section: 'Controls' },
-    { name: 'My Security', path: '/settings/security', icon: ICONS.security, section: 'Account' },
+    { name: 'Hub', path: '/finance', icon: ICONS.dashboard, section: 'Overview', roles: ['super_admin', 'branch_manager', 'finance_manager'] },
+    { name: 'Cash Book', path: '/finance/cash-book', icon: ICONS.cash, section: 'Money', roles: ['super_admin', 'branch_manager', 'finance_manager'] },
+    { name: 'Receivables', path: '/finance/receivables', icon: ICONS.receivables, section: 'Money', roles: ['super_admin', 'branch_manager', 'finance_manager'] },
+    { name: 'Payables', path: '/finance/payables', icon: ICONS.payables, section: 'Money', roles: ['super_admin', 'branch_manager', 'finance_manager'] },
+    { name: 'Salaries', path: '/finance/salaries', icon: ICONS.salaries, section: 'People', roles: ['super_admin', 'branch_manager', 'finance_manager'] },
+    { name: 'Staff Advances', path: '/finance/advances', icon: ICONS.advances, section: 'People', roles: ['super_admin', 'branch_manager', 'finance_manager'] },
+    { name: 'Final Settlement', path: '/finance/settlement', icon: ICONS.settlement, section: 'People', roles: ['super_admin', 'branch_manager', 'finance_manager'] },
+    { name: 'Loans', path: '/finance/loans', icon: ICONS.loans, section: 'Capital', roles: ['super_admin', 'branch_manager', 'finance_manager'] },
+    { name: 'Recurring Invoices', path: '/finance/recurring-invoices', icon: ICONS.payables, section: 'Capital', roles: ['super_admin', 'branch_manager', 'finance_manager'] },
+    { name: 'Reconciliations', path: '/finance/reconciliations', icon: ICONS.reconciliation, section: 'Controls', roles: ['super_admin', 'branch_manager', 'finance_manager'] },
+    { name: 'Reports', path: '/finance/reports', icon: ICONS.reports, section: 'Controls', roles: ['super_admin', 'branch_manager', 'finance_manager'] },
+    { name: 'My Security', path: '/settings/security', icon: ICONS.security, section: 'Account', roles: ['super_admin', 'branch_manager', 'cashier', 'auditor', 'marketer', 'finance_manager'] },
   ];
 
-  const navSections = navItems.reduce<Array<{ name: string; items: NavItem[] }>>((sections, item) => {
+  const filteredNavItems = navItems.filter((item) => {
+    if (!item.roles) return true;
+    return item.roles.includes(user?.role || '');
+  });
+
+  const navSections = filteredNavItems.reduce<Array<{ name: string; items: NavItem[] }>>((sections, item) => {
     const existingSection = sections.find((section) => section.name === item.section);
     if (existingSection) {
       existingSection.items.push(item);
