@@ -73,6 +73,10 @@ interface SalesReportResponse {
     totalReturnsFormatted: string;
     netAmountFormatted: string;
     averageTransactionFormatted: string;
+    totalCollected: number;
+    totalCollectedFormatted: string;
+    totalOutstanding: number;
+    totalOutstandingFormatted: string;
   };
   paymentMethodBreakdown: PaymentMethodBreakdown[];
   breakdown?: unknown[];
@@ -93,6 +97,9 @@ export default function SalesReportsPage() {
   
   const [filters, setFilters] = useState<SalesReportFilters>(defaultFilters);
   const effectiveBranchId = filters.branchId ?? (isSuperAdmin ? undefined : selectedBranchId);
+  const isCashier = user?.role === 'cashier';
+  // Cashiers always see only their own sales
+  const effectiveCashierId = isCashier ? user?.id : filters.cashierId;
 
   const { data: branches } = useQuery({
     queryKey: queryKeys.branches.list(),
@@ -136,7 +143,7 @@ export default function SalesReportsPage() {
       const response = await apiClient.get(
         buildApiUrl('/reports/sales', {
           branchId: effectiveBranchId,
-          cashierId: filters.cashierId,
+          cashierId: effectiveCashierId,
           productId: filters.productId,
           startDate: filters.startDate,
           endDate: filters.endDate,
@@ -152,7 +159,7 @@ export default function SalesReportsPage() {
     try {
       const response = await apiClient.get(buildApiUrl('/reports/sales', {
         branchId: effectiveBranchId,
-        cashierId: filters.cashierId,
+        cashierId: effectiveCashierId,
         productId: filters.productId,
         startDate: filters.startDate,
         endDate: filters.endDate,
@@ -361,6 +368,14 @@ export default function SalesReportsPage() {
                 <div className="bg-green-500/10 p-4 rounded-xl border border-green-500/20">
                   <p className="text-sm text-green-200">Total Revenue</p>
                   <p className="text-2xl font-bold text-green-400">{format(data.summary.totalAmount)}</p>
+                </div>
+                <div className="bg-teal-500/10 p-4 rounded-xl border border-teal-500/20">
+                  <p className="text-sm text-teal-200">Collected</p>
+                  <p className="text-2xl font-bold text-teal-400">{format(data.summary.totalCollected ?? 0)}</p>
+                </div>
+                <div className="bg-red-500/10 p-4 rounded-xl border border-red-500/20">
+                  <p className="text-sm text-red-200">Outstanding</p>
+                  <p className="text-2xl font-bold text-red-400">{format(data.summary.totalOutstanding ?? 0)}</p>
                 </div>
                 <div className="bg-orange-500/10 p-4 rounded-xl border border-orange-500/20">
                   <p className="text-sm text-orange-200">Total Discount</p>

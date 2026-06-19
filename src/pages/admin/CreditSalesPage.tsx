@@ -7,6 +7,7 @@ import { Button } from '../../components/ui/Button';
 import { Loading } from '../../components/ui/Loading';
 import { Error as ErrorDisplay } from '../../components/ui/Error';
 import { useBranchStore, getBranchId } from '../../stores/branch-store';
+import { useAuthStore } from '../../stores/auth-store';
 import { useCurrency } from '../../hooks/useCurrency';
 import { useToast } from '../../hooks/useToast';
 import { queryKeys } from '../../lib/query-keys';
@@ -54,6 +55,7 @@ export function CreditSalesPage() {
   const { showSuccess, showError } = useToast();
   const selectedBranch = useBranchStore((state) => state.selectedBranch);
   const branchId = getBranchId(selectedBranch);
+  const user = useAuthStore((state) => state.user);
   const [statusFilter, setStatusFilter] = useState<'open' | 'paid' | 'all'>('open');
   const [selectedSale, setSelectedSale] = useState<CreditSale | null>(null);
   const [paymentAmount, setPaymentAmount] = useState('');
@@ -72,8 +74,12 @@ export function CreditSalesPage() {
       base.paymentStatus = 'paid';
     }
 
+    if (user?.role === 'cashier' && user?.id) {
+      base.cashierId = user.id;
+    }
+
     return base;
-  }, [branchId, statusFilter]);
+  }, [branchId, statusFilter, user?.role, user?.id]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: queryKeys.sales.credit(params),

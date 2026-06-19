@@ -22,7 +22,7 @@ export function ReportsPage() {
       path: '/admin/reports/sales',
       color: 'bg-green-500',
       stats: 'Revenue & Profit',
-      roles: ['super_admin', 'branch_manager', 'auditor']
+      roles: ['super_admin', 'branch_manager', 'auditor', 'cashier']
     },
     {
       title: 'Inventory Reports',
@@ -49,7 +49,7 @@ export function ReportsPage() {
       path: '/admin/reports/customers',
       color: 'bg-purple-500',
       stats: 'Customer Insights',
-      roles: ['super_admin', 'branch_manager', 'auditor']
+      roles: ['super_admin', 'branch_manager', 'auditor', 'cashier']
     },
     {
       title: 'Purchase Reports',
