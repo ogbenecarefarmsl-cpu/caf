@@ -64,7 +64,11 @@ export const ShiftLogsPage = () => {
   });
 
   const { data: shiftHistory, isLoading: loadingHistory } = useQuery({
-    queryKey: queryKeys.shifts.history({ branchId: getBranchId(selectedBranch), limit: 10 }),
+    queryKey: queryKeys.shifts.history({ 
+      branchId: getBranchId(selectedBranch), 
+      cashierId: user?.role === 'cashier' ? user.id : undefined,
+      limit: 10 
+    }),
     queryFn: async () => {
       const branchId = getBranchId(selectedBranch);
       
@@ -72,9 +76,13 @@ export const ShiftLogsPage = () => {
         throw new Error('Branch ID is required');
       }
       
-      const response = await apiClient.get('/shifts', {
-        params: { branchId, limit: '10' },
-      });
+      const params: Record<string, string> = { branchId, limit: '10' };
+      // Add cashier filtering for cashier role
+      if (user?.role === 'cashier' && user?.id) {
+        params.cashierId = user.id;
+      }
+      
+      const response = await apiClient.get('/shifts', { params });
       return (response.data?.data ?? response.data) as Shift[];
     },
     enabled: !!getBranchId(selectedBranch),

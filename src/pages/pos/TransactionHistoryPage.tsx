@@ -69,6 +69,7 @@ export const TransactionHistoryPage = () => {
   const { data: sales, isLoading, error, refetch } = useQuery({
     queryKey: queryKeys.sales.history({
       branchId: effectiveBranchId,
+      cashierId: user?.role === 'cashier' ? user.id : undefined,
       search: searchQuery,
       startDate: dateFrom,
       endDate: dateTo,
@@ -79,6 +80,10 @@ export const TransactionHistoryPage = () => {
     queryFn: async () => {
       const params: Record<string, string | number> = { limit: 50 };
       if (effectiveBranchId) params.branchId = effectiveBranchId;
+      // Add cashier filtering for cashier role
+      if (user?.role === 'cashier' && user?.id) {
+        params.cashierId = user.id;
+      }
       if (searchQuery) params.search = searchQuery;
       if (dateFrom) params.startDate = dateFrom;
       if (dateTo) params.endDate = dateTo;
@@ -171,6 +176,25 @@ export const TransactionHistoryPage = () => {
       </div>
 
       <div className="flex-1 p-4 space-y-4">
+        {/* Cashier Notice */}
+        {user?.role === 'cashier' && (
+          <div className="rounded-xl border border-blue-500/30 bg-blue-500/10 p-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center shrink-0">
+                <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-blue-300">Your Transactions Only</p>
+                <p className="text-sm text-blue-200/80 mt-1">
+                  You're viewing transactions you personally processed. Managers can see all branch transactions.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Search Bar */}
         <div className="relative">
           <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
