@@ -212,14 +212,30 @@ jobs:
           retention-days: 7
 
       # ── Capgo live update (optional) ──────────────────────────────────────
-      - name: Publish web bundle to Capgo
+      - name: Validate Capgo deploy configuration
         if: github.event.inputs.upload_to_capgo == 'true'
         run: |
           if [ -z "$CAPGO_API_KEY" ]; then
-            echo "CAPGO_API_KEY secret not set, skipping Capgo publish."
-            exit 0
+            echo "CAPGO_API_KEY secret is missing."
+            exit 1
           fi
-          echo "Uploading Capgo bundle for app $CAPGO_APP_ID on channel $CAPGO_CHANNEL"
+          if [ -z "$CAPGO_APP_ID" ]; then
+            echo "CAPGO_APP_ID is missing."
+            exit 1
+          fi
+          if [ -z "$CAPGO_CHANNEL" ]; then
+            echo "CAPGO_CHANNEL is missing."
+            exit 1
+          fi
+          echo "Capgo deploy target: app=$CAPGO_APP_ID channel=$CAPGO_CHANNEL"
+        env:
+          CAPGO_API_KEY: ${{ secrets.CAPGO_API_KEY }}
+          CAPGO_APP_ID: ${{ secrets.CAPGO_APP_ID || vars.CAPGO_APP_ID || 'com.caf.pharmacy' }}
+          CAPGO_CHANNEL: ${{ secrets.VITE_LIVE_UPDATE_CHANNEL || vars.VITE_LIVE_UPDATE_CHANNEL || 'production' }}
+
+      - name: Publish web bundle to Capgo
+        if: github.event.inputs.upload_to_capgo == 'true'
+        run: |
           npx @capgo/cli@latest bundle upload "$CAPGO_APP_ID" \
             --channel "$CAPGO_CHANNEL" \
             --path dist \
