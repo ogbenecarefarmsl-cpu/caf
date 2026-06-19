@@ -16,12 +16,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const isNetworkError = (error: unknown) => axios.isAxiosError(error) && !error.response;
 
-const isUnauthorizedError = (error: unknown) =>
-  axios.isAxiosError(error) && error.response?.status === 401;
-
-const isCredentialError = (error: unknown) =>
-  axios.isAxiosError(error) && [400, 401, 403].includes(error.response?.status ?? 0);
-
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -43,21 +37,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     accessToken,
     refreshToken,
     sessionExpiresAt,
-    refreshExpiresAt,
     hasHydrated,
   } = useAuthStore();
 
-  const expireSession = useCallback(() => {
-    clearAuth();
-    if (window.location.pathname !== '/login') {
-      window.location.href = '/login';
-    }
-  }, [clearAuth]);
-
   const refreshAccessToken = useCallback(async () => {
     try {
-      if (!refreshToken || (refreshExpiresAt && refreshExpiresAt <= Date.now())) {
-        expireSession();
+      if (!refreshToken) {
         return;
       }
 
@@ -84,12 +69,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         console.warn('Token refresh postponed because the network is unavailable.');
         return;
       }
-
-      if (isCredentialError(error)) {
-        expireSession();
-      }
+      // Don't logout on refresh failure — stay logged in and retry later
     }
-  }, [expireSession, refreshExpiresAt, refreshToken, setAuth, user]);
+  }, [refreshToken, setAuth, user]);
 
   const logout = async () => {
     try {
@@ -97,10 +79,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      expireSession();
+      clearAuth();
     }
   };
 
+  // Proactive refresh: fire 60s before access token expires
   useEffect(() => {
     if (!hasHydrated || !isAuthenticated || !accessToken || !sessionExpiresAt) {
       return;
@@ -116,6 +99,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     return () => window.clearTimeout(expiryTimeout);
   }, [accessToken, hasHydrated, isAuthenticated, refreshAccessToken, sessionExpiresAt]);
 
+  // Validate token on mount — refresh if needed, never force logout
   useEffect(() => {
     const validateToken = async () => {
       if (!hasHydrated) {
@@ -134,18 +118,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           if (isNetworkError(error)) {
             return;
           }
-
+          // If /auth/me fails, try refreshing — never force logout
           if (refreshToken) {
             await refreshAccessToken();
-          } else if (isUnauthorizedError(error)) {
-            expireSession();
           }
         }
       }
     };
 
     void validateToken();
-  }, [accessToken, expireSession, hasHydrated, isAuthenticated, refreshAccessToken, refreshToken]);
+  }, [accessToken, hasHydrated, isAuthenticated, refreshAccessToken, refreshToken]);
 
   const value: AuthContextType = {
     isAuthenticated,

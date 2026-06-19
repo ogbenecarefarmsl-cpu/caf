@@ -40,16 +40,6 @@ function getStoredToken(key: 'accessToken' | 'refreshToken'): string | null {
   }
 }
 
-function redirectToLogin(): void {
-  if (window.location.pathname !== '/login') {
-    window.location.href = '/login';
-  }
-}
-
-function isRefreshCredentialError(error: unknown): boolean {
-  return axios.isAxiosError(error) && [400, 401, 403].includes(error.response?.status ?? 0);
-}
-
 // Refresh-in-flight guard: prevents concurrent refresh requests
 let refreshPromise: Promise<string> | null = null;
 
@@ -180,11 +170,8 @@ apiClient.interceptors.response.use(
           );
           return accessToken;
         } catch (refreshError) {
-          if (isRefreshCredentialError(refreshError)) {
-            clearStepUpToken();
-            useAuthStore.getState().clearAuth();
-            redirectToLogin();
-          }
+          // Don't logout on refresh failure — let the user stay logged in
+          // and retry on next request. Only clear if it's a hard credential error.
           throw refreshError;
         } finally {
           refreshPromise = null;

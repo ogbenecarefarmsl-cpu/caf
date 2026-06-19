@@ -2,11 +2,9 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { secureSession } from '../lib/secure-session';
 
-/** 14h sliding-window session policy:
+/** Session policy:
  *  - access token: 15 minutes (auto-refreshed by the api-client)
- *  - refresh token: 14 hours; every successful refresh resets the 14h clock
- *    (sliding). Once 14h of inactivity elapses, the user must log in again
- *    with password or biometric.
+ *  - refresh token: refreshed continuously so the user stays logged in forever
  */
 const ACCESS_TOKEN_TTL_SECONDS = 15 * 60;
 const REFRESH_TOKEN_TTL_SECONDS = 14 * 60 * 60;
@@ -51,24 +49,6 @@ interface AuthState {
   ) => void;
 }
 
-let expiryTimer: ReturnType<typeof setTimeout> | null = null;
-
-function scheduleAbsoluteLogout(expiresAt: number): void {
-  if (expiryTimer) clearTimeout(expiryTimer);
-  const delay = expiresAt - Date.now() - 60_000; // 1min grace
-  if (delay <= 0) return;
-  expiryTimer = setTimeout(() => {
-    const state = useAuthStore.getState();
-    if (state.isAuthenticated && state.refreshExpiresAt && Date.now() >= state.refreshExpiresAt) {
-      useAuthStore.getState().clearAuth();
-      secureSession.clear().catch(() => undefined);
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login';
-      }
-    }
-  }, delay);
-}
-
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
@@ -111,8 +91,6 @@ export const useAuthStore = create<AuthState>()(
           .catch((err) => {
             console.warn('Failed to persist secure session:', err);
           });
-
-        scheduleAbsoluteLogout(refreshExp);
       },
 
       refreshSession: (
@@ -145,15 +123,9 @@ export const useAuthStore = create<AuthState>()(
               console.warn('Failed to update secure session:', err);
             });
         }
-
-        scheduleAbsoluteLogout(refreshExp);
       },
 
       clearAuth: () => {
-        if (expiryTimer) {
-          clearTimeout(expiryTimer);
-          expiryTimer = null;
-        }
         set({
           user: null,
           accessToken: null,
@@ -178,9 +150,6 @@ export const useAuthStore = create<AuthState>()(
       name: 'auth-storage',
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true);
-        if (state?.refreshExpiresAt && state.refreshExpiresAt > Date.now()) {
-          scheduleAbsoluteLogout(state.refreshExpiresAt);
-        }
       },
       partialize: (state) => ({
         user: state.user,

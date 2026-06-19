@@ -4,6 +4,7 @@ import { POSSidebar } from './POSSidebar';
 import { useBranchStore } from '../../stores/branch-store';
 import apiClient from '../../lib/api-client';
 import { queryKeys } from '../../lib/query-keys';
+import { PWAUpdatePrompt } from '../ui/PWAUpdatePrompt';
 
 interface POSLayoutProps {
   children: ReactNode;
@@ -48,6 +49,7 @@ export const POSLayout = ({ children }: POSLayoutProps) => {
 
   return (
     <div className="h-dvh overflow-hidden bg-primary-darker">
+      <PWAUpdatePrompt />
       <POSSidebar />
       <main className="h-dvh overflow-auto lg:ml-64 pt-safe-top">
         {children}

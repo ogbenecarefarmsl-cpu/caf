@@ -4,6 +4,7 @@ import apiClient from '../lib/api-client';
 import { useAuthStore } from '../stores/auth-store';
 import { useBranchStore } from '../stores/branch-store';
 import { PasskeySetupBanner } from './account';
+import { PWAUpdatePrompt } from './ui/PWAUpdatePrompt';
 
 interface MarketerLayoutProps {
   children: ReactNode;
@@ -48,6 +49,7 @@ export const MarketerLayout = ({ children, title = 'Marketer Dashboard' }: Marke
 
   return (
     <div className="min-h-dvh bg-primary-darker">
+      <PWAUpdatePrompt />
       <header className="bg-primary-dark border-b border-gray-800 sticky top-0 z-20 pt-safe-top">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex items-center justify-between">
           <div className="min-w-0">
