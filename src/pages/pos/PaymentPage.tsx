@@ -43,6 +43,13 @@ interface RecentSale {
   items?: Array<unknown>;
 }
 
+interface PaymentMethodDef {
+  id: string;
+  label: string;
+  shortLabel: string;
+  icon: React.ReactNode;
+}
+
 export const PaymentPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -55,6 +62,9 @@ export const PaymentPage = () => {
   const { alertInfo } = useAlertReplacement();
   const { showSuccess, showError } = useToast();
   const { format, symbol } = useCurrency();
+
+  const currencyCode = selectedBranch?.currencyCode ?? 'SLE';
+  const isUSD = currencyCode === 'USD';
 
   const terminalId = 'TERMINAL-01';
   
@@ -309,134 +319,231 @@ export const PaymentPage = () => {
     },
   });
 
-  const paymentMethods = [
-    { id: 'cash', label: 'Cash', icon: (
-      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+  const allPaymentMethods: PaymentMethodDef[] = [
+    { id: 'cash', label: 'Cash', shortLabel: 'Cash', icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
     )},
-    { id: 'card', label: 'Card', icon: (
-      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+    { id: 'bank_transfer', label: 'Bank Transfer', shortLabel: 'Transfer', icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" />
       </svg>
     )},
-    { id: 'orange_money', label: 'Orange Money', icon: (
-      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-      </svg>
-    )},
-    { id: 'africell_money', label: 'Africell Money', icon: (
-      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-      </svg>
-    )},
-    { id: 'qmoney', label: 'QMoney', icon: (
-      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-2.21 0-4 1.343-4 3s1.79 3 4 3 4 1.343 4 3-1.79 3-4 3m0-12v12m0-12c1.657 0 3 .895 3 2m-6 8c0 1.105 1.343 2 3 2" />
-      </svg>
-    )},
-    { id: 'bank_transfer', label: 'Bank Transfer', icon: (
-      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-      </svg>
-    )},
-    { id: 'insurance', label: 'Insurance', icon: (
-      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5-2.5V12c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V7.5L12 4l8 3.5z" />
-      </svg>
-    )},
-    { id: 'credit', label: 'Credit Sale', icon: (
-      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h4m6 0h.01M5 6h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" />
+    { id: 'credit', label: 'Credit Sale', shortLabel: 'Credit', icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
       </svg>
     )},
   ];
 
+  const slePaymentMethods: PaymentMethodDef[] = [
+    ...allPaymentMethods,
+    { id: 'card', label: 'Debit Card', shortLabel: 'Card', icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
+      </svg>
+    )},
+    { id: 'orange_money', label: 'Orange Money', shortLabel: 'Orange', icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
+      </svg>
+    )},
+    { id: 'africell_money', label: 'Africell Money', shortLabel: 'Africell', icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
+      </svg>
+    )},
+    { id: 'qmoney', label: 'QMoney', shortLabel: 'QMoney', icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    )},
+    { id: 'insurance', label: 'Insurance', shortLabel: 'Insurance', icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+      </svg>
+    )},
+  ];
+
+  const paymentMethods = isUSD ? allPaymentMethods : slePaymentMethods;
+
+  const quickAmounts = isUSD
+    ? [5, 10, 20, 50, 100]
+    : [10000, 20000, 50000, 100000, 200000];
+
+  const creditInitialMethods = isUSD
+    ? ([
+        { value: 'cash', label: 'Cash' },
+        { value: 'bank_transfer', label: 'Bank Transfer' },
+      ] as const)
+    : ([
+        { value: 'cash', label: 'Cash' },
+        { value: 'card', label: 'Card' },
+        { value: 'orange_money', label: 'Orange Money' },
+        { value: 'africell_money', label: 'Africell Money' },
+        { value: 'qmoney', label: 'QMoney' },
+        { value: 'bank_transfer', label: 'Bank Transfer' },
+      ] as const);
+
   return (
     <div className="min-h-screen bg-primary-darker flex flex-col">
       {/* Header */}
-      <div className="flex items-center px-4 py-4 border-b border-gray-800 pt-safe-top">
-        <button onClick={() => navigate(-1)} className="text-white mr-4 min-w-11 min-h-11 flex items-center justify-center rounded-lg hover:bg-white/5 -ml-2">
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+      <div className="flex items-center px-4 py-3 border-b border-gray-800/80 pt-safe-top bg-primary-dark/50 backdrop-blur-md">
+        <button onClick={() => navigate(-1)} className="text-gray-400 hover:text-white mr-3 min-w-11 min-h-11 flex items-center justify-center rounded-xl hover:bg-white/5 -ml-2 transition-colors">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
           </svg>
         </button>
-        <h1 className="text-xl font-bold text-white">Payment</h1>
+        <h1 className="text-lg font-bold text-white">Checkout</h1>
       </div>
 
-      <div className="flex-1 p-4 space-y-6">
-        {/* Total Amount */}
-        <div className="text-center py-4">
-          <p className="text-gray-400 text-sm">Total Amount Due</p>
-          <p className="text-4xl sm:text-5xl font-bold text-white mt-2 break-words leading-tight">{format(total)}</p>
+      <div className="flex-1 overflow-y-auto">
+        {/* Total Amount Card */}
+        <div className="mx-4 mt-4 rounded-2xl bg-gradient-to-br from-accent-green/20 via-accent-green/10 to-transparent border border-accent-green/20 p-6 text-center">
+          <p className="text-accent-green/80 text-sm font-medium uppercase tracking-wider">Amount Due</p>
+          <p className="text-4xl sm:text-5xl font-bold text-white mt-2 tracking-tight">{format(total)}</p>
+          {discount > 0 && (
+            <p className="text-sm text-gray-400 mt-2">
+              Subtotal {format(subtotal)} <span className="text-red-400">-{format(discount)}</span>
+            </p>
+          )}
         </div>
 
         {/* Payment Methods */}
-        <div>
-          <h2 className="text-white font-semibold mb-3">Select Payment Method</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
-            {paymentMethods.map((method) => (
-              <button
-                key={method.id}
-                onClick={() => setPaymentMethod(method.id as PaymentMethod)}
-                className={`p-3 sm:p-5 rounded-xl border-2 transition-all flex flex-col items-center justify-center min-h-[88px] sm:min-h-[110px] ${
-                  paymentMethod === method.id
-                    ? 'border-accent-green bg-accent-green text-primary-dark'
-                    : 'border-gray-700 bg-primary-dark text-white hover:border-gray-600'
-                }`}
-              >
-                <div className={paymentMethod === method.id ? 'text-primary-dark' : 'text-accent-green'}>
-                  {method.icon}
-                </div>
-                <span className="mt-1.5 sm:mt-2 font-medium text-sm sm:text-base text-center">{method.label}</span>
-              </button>
-            ))}
+        <div className="px-4 mt-6">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Payment Method</p>
+          <div className={`grid gap-2 ${paymentMethods.length <= 3 ? 'grid-cols-3' : 'grid-cols-3 sm:grid-cols-4'}`}>
+            {paymentMethods.map((method) => {
+              const active = paymentMethod === method.id;
+              return (
+                <button
+                  key={method.id}
+                  type="button"
+                  onClick={() => {
+                    setPaymentMethod(method.id as PaymentMethod);
+                    if (method.id !== 'orange_money' && method.id !== 'africell_money' && method.id !== 'qmoney') {
+                      setPaymentReference('');
+                    }
+                  }}
+                  className={`relative flex flex-col items-center gap-2 p-3 sm:p-4 rounded-xl border transition-all min-h-[80px] ${
+                    active
+                      ? 'border-accent-green bg-accent-green/10 shadow-lg shadow-accent-green/10'
+                      : 'border-gray-800 bg-primary-dark hover:border-gray-700'
+                  }`}
+                >
+                  {active && (
+                    <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-accent-green" />
+                  )}
+                  <div className={`transition-colors ${active ? 'text-accent-green' : 'text-gray-400'}`}>
+                    {method.icon}
+                  </div>
+                  <span className={`text-xs font-semibold text-center leading-tight ${
+                    active ? 'text-accent-green' : 'text-gray-300'
+                  }`}>
+                    {method.shortLabel}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {/* Amount Received (for cash) */}
+        {/* Cash Input */}
         {paymentMethod === 'cash' && (
-          <div>
-            <h2 className="text-white font-semibold mb-3">Amount Received</h2>
+          <div className="px-4 mt-6 space-y-3">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Amount Received</p>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-accent-green text-xl font-bold">{symbol}</span>
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-accent-green text-lg font-bold">{symbol}</span>
               <input
                 type="number"
                 value={amountReceived}
                 onChange={(e) => setAmountReceived(e.target.value)}
-                className="w-full pl-14 pr-4 py-4 bg-primary-dark border border-gray-700 rounded-xl text-white text-xl font-medium focus:outline-none focus:border-accent-green"
+                className="w-full pl-12 pr-4 py-4 bg-primary-dark border border-gray-800 rounded-xl text-white text-2xl font-bold focus:outline-none focus:border-accent-green focus:ring-1 focus:ring-accent-green/30 transition-all"
               />
             </div>
-            <div className="flex justify-end mt-2">
-              <span className="text-gray-400">Change Due: </span>
-              <span className="text-accent-green font-bold ml-2">{format(changeDue)}</span>
+            {/* Quick Amount Buttons */}
+            <div className="flex gap-2">
+              {quickAmounts.map((amt) => (
+                <button
+                  key={amt}
+                  type="button"
+                  onClick={() => setAmountReceived(amt.toString())}
+                  className="flex-1 py-2.5 rounded-lg bg-primary-dark border border-gray-800 text-sm font-semibold text-gray-300 hover:border-accent-green/50 hover:text-accent-green transition-all"
+                >
+                  {symbol}{amt.toLocaleString()}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setAmountReceived(total.toFixed(2))}
+                className="flex-1 py-2.5 rounded-lg bg-accent-green/10 border border-accent-green/30 text-sm font-semibold text-accent-green hover:bg-accent-green/20 transition-all"
+              >
+                Exact
+              </button>
             </div>
+            {/* Change Due */}
+            {changeDue > 0 && (
+              <div className="flex items-center justify-between py-3 px-4 rounded-xl bg-green-500/10 border border-green-500/20">
+                <span className="text-sm text-green-400 font-medium">Change Due</span>
+                <span className="text-lg font-bold text-green-400">{format(changeDue)}</span>
+              </div>
+            )}
+            {parseFloat(amountReceived || '0') < total && (
+              <div className="flex items-center justify-between py-3 px-4 rounded-xl bg-red-500/10 border border-red-500/20">
+                <span className="text-sm text-red-400 font-medium">Insufficient Amount</span>
+                <span className="text-sm font-bold text-red-400">{format(total - parseFloat(amountReceived || '0'))} short</span>
+              </div>
+            )}
           </div>
         )}
 
+        {/* Mobile Money Reference */}
         {['orange_money', 'africell_money', 'qmoney'].includes(paymentMethod) && (
-          <div>
-            <h2 className="text-white font-semibold mb-3">Payment Reference (Optional)</h2>
+          <div className="px-4 mt-6 space-y-3">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Transaction Reference</p>
             <input
               type="text"
               value={paymentReference}
               onChange={(e) => setPaymentReference(e.target.value)}
-              placeholder="Enter transaction ID or reference number"
-              className="w-full px-4 py-4 bg-primary-dark border border-gray-700 rounded-xl text-white focus:outline-none focus:border-accent-green"
+              placeholder="Enter transaction ID or reference"
+              className="w-full px-4 py-3.5 bg-primary-dark border border-gray-800 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-accent-green focus:ring-1 focus:ring-accent-green/30 transition-all"
             />
-            <p className="text-gray-500 text-xs mt-1">Optional: Enter the mobile money transaction reference for record keeping</p>
+            <p className="text-gray-500 text-xs">Optional: for record keeping</p>
           </div>
         )}
 
+        {/* Bank Transfer Reference */}
+        {paymentMethod === 'bank_transfer' && (
+          <div className="px-4 mt-6 space-y-3">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Transfer Reference</p>
+            <input
+              type="text"
+              value={paymentReference}
+              onChange={(e) => setPaymentReference(e.target.value)}
+              placeholder="Enter bank reference or confirmation number"
+              className="w-full px-4 py-3.5 bg-primary-dark border border-gray-800 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-accent-green focus:ring-1 focus:ring-accent-green/30 transition-all"
+            />
+            <p className="text-gray-500 text-xs">Optional: for reconciliation</p>
+          </div>
+        )}
+
+        {/* Credit Sale Form */}
         {paymentMethod === 'credit' && (
-          <div className="space-y-4">
-            <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4">
-              <p className="text-sm font-medium text-amber-200">
-                Stock will be released now and the balance will stay open until the customer pays.
-              </p>
+          <div className="px-4 mt-6 space-y-4">
+            {/* Credit Notice */}
+            <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
+              <div className="flex items-start gap-3">
+                <svg className="w-5 h-5 text-amber-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                </svg>
+                <p className="text-sm text-amber-200/80">
+                  Stock will be released now. The balance stays open until the customer pays.
+                </p>
+              </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2">
               <CustomerTypeahead
                 label="Customer Name"
                 value={creditCustomerName}
@@ -453,32 +560,34 @@ export const PaymentPage = () => {
                   setLinkedCustomer(null);
                 }}
                 selectedCustomerId={creditCustomerId}
-                placeholder="Search customer or type walk-in name..."
-                helperText="Optional. Select an existing customer to track their balance, or type a name for a walk-in."
+                placeholder="Search or type walk-in name..."
+                helperText="Optional: track balance for existing customers"
               />
               <div>
-                <h2 className="text-white font-semibold mb-3">Customer Phone</h2>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Phone</label>
                 <input
                   type="text"
                   value={creditCustomerPhone}
                   onChange={(e) => setCreditCustomerPhone(e.target.value)}
-                  className="w-full px-4 py-4 bg-primary-dark border border-gray-700 rounded-xl text-white focus:outline-none focus:border-accent-green"
+                  className="w-full px-4 py-3.5 bg-primary-dark border border-gray-800 rounded-xl text-white focus:outline-none focus:border-accent-green transition-all"
                   placeholder="Optional"
                 />
               </div>
               <div>
-                <h2 className="text-white font-semibold mb-3">Due Date <span className="text-red-500">*</span></h2>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                  Due Date <span className="text-red-400">*</span>
+                </label>
                 <input
                   type="date"
                   value={creditDueDate}
                   onChange={(e) => setCreditDueDate(e.target.value)}
-                  className="w-full px-4 py-4 bg-primary-dark border border-gray-700 rounded-xl text-white focus:outline-none focus:border-accent-green"
+                  className="w-full px-4 py-3.5 bg-primary-dark border border-gray-800 rounded-xl text-white focus:outline-none focus:border-accent-green transition-all"
                 />
               </div>
               <div>
-                <h2 className="text-white font-semibold mb-3">Upfront Payment</h2>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Upfront Payment</label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-accent-green text-xl font-bold">{symbol}</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-accent-green font-bold">{symbol}</span>
                   <input
                     type="number"
                     min="0"
@@ -486,7 +595,7 @@ export const PaymentPage = () => {
                     step="0.01"
                     value={creditAmountPaid}
                     onChange={(e) => setCreditAmountPaid(e.target.value)}
-                    className="w-full pl-14 pr-4 py-4 bg-primary-dark border border-gray-700 rounded-xl text-white focus:outline-none focus:border-accent-green"
+                    className="w-full pl-10 pr-4 py-3.5 bg-primary-dark border border-gray-800 rounded-xl text-white font-semibold focus:outline-none focus:border-accent-green transition-all"
                   />
                 </div>
               </div>
@@ -494,45 +603,35 @@ export const PaymentPage = () => {
 
             {parsedCreditAmount > 0 && (
               <div>
-                <h2 className="text-white font-semibold mb-3">Initial Payment Method</h2>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Initial Payment Via</label>
                 <select
                   value={creditInitialMethod}
                   onChange={(e) => setCreditInitialMethod(e.target.value as CreditCollectionMethod)}
-                  className="w-full px-4 py-4 bg-primary-dark border border-gray-700 rounded-xl text-white focus:outline-none focus:border-accent-green"
+                  className="w-full px-4 py-3.5 bg-primary-dark border border-gray-800 rounded-xl text-white focus:outline-none focus:border-accent-green transition-all"
                 >
-                  <option value="cash">Cash</option>
-                  <option value="card">Card</option>
-                  <option value="orange_money">Orange Money</option>
-                  <option value="africell_money">Africell Money</option>
-                  <option value="qmoney">QMoney</option>
-                  <option value="bank_transfer">Bank Transfer</option>
+                  {creditInitialMethods.map((m) => (
+                    <option key={m.value} value={m.value}>{m.label}</option>
+                  ))}
                 </select>
               </div>
             )}
 
-            <div className="flex justify-end">
-              <span className="text-gray-400">Balance Due: </span>
-              <span className="text-amber-300 font-bold ml-2">
+            {/* Balance Due */}
+            <div className="flex items-center justify-between py-3 px-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
+              <span className="text-sm text-amber-300 font-medium">Balance Due</span>
+              <span className="text-lg font-bold text-amber-300">
                 {format(Math.max(0, total - (Number.isFinite(parsedCreditAmount) ? parsedCreditAmount : 0)))}
               </span>
             </div>
           </div>
         )}
+
+        {/* Spacer for bottom actions */}
+        <div className="h-4" />
       </div>
 
       {/* Bottom Actions */}
-      <div className="p-4 pb-safe-bottom space-y-3 border-t border-gray-800 bg-primary-darker">
-        <button
-          onClick={handleHoldSale}
-          disabled={items.length === 0}
-          className="w-full py-3 bg-primary-dark text-accent-green border border-accent-green/30 font-semibold rounded-xl hover:bg-accent-green/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          title="Park this sale to recall later"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
-          </svg>
-          Hold Sale{heldSales.length > 0 ? ` (${heldSales.length} parked)` : ''}
-        </button>
+      <div className="border-t border-gray-800/80 bg-primary-dark/80 backdrop-blur-md px-4 py-3 pb-safe-bottom space-y-2">
         <button
           onClick={() => checkoutMutation.mutate()}
           disabled={
@@ -545,27 +644,35 @@ export const PaymentPage = () => {
             !currentShift ||
             currentShift.status !== 'open'
           }
-          className="w-full py-4 bg-accent-green text-primary-dark font-semibold rounded-xl hover:bg-accent-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full py-4 bg-accent-green text-primary-dark font-bold rounded-xl hover:bg-accent-light active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 text-base"
         >
-          {checkoutMutation.isPending
-            ? 'Processing...'
-            : paymentMethod === 'credit'
-              ? 'Create Credit Sale'
-              : 'Confirm Payment'}
+          {checkoutMutation.isPending ? (
+            <span className="flex items-center justify-center gap-2">
+              <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+              Processing...
+            </span>
+          ) : paymentMethod === 'credit' ? 'Create Credit Sale' : 'Complete Sale'}
         </button>
-
-        <div className="flex justify-center space-x-6 sm:space-x-8">
-          <button onClick={() => window.print()} className="flex items-center text-accent-green text-sm sm:text-base py-2 px-3 rounded-lg hover:bg-white/5">
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+        <div className="flex gap-2">
+          <button
+            onClick={handleHoldSale}
+            disabled={items.length === 0}
+            className="flex-1 py-3 bg-primary-dark text-gray-300 border border-gray-800 font-semibold rounded-xl hover:border-gray-700 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
             </svg>
-            Print Receipt
+            Hold{heldSales.length > 0 ? ` (${heldSales.length})` : ''}
           </button>
-          <button onClick={() => lastSaleId && setShowEmailModal(true)} disabled={!lastSaleId} className="flex items-center text-accent-green disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base py-2 px-3 rounded-lg hover:bg-white/5">
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          <button
+            onClick={() => lastSaleId && setShowEmailModal(true)}
+            disabled={!lastSaleId}
+            className="flex-1 py-3 bg-primary-dark text-gray-300 border border-gray-800 font-semibold rounded-xl hover:border-gray-700 hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
             </svg>
-            Email Receipt
+            Email
           </button>
         </div>
       </div>
@@ -575,29 +682,29 @@ export const PaymentPage = () => {
         <div className="fixed inset-0 bg-black/75 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4" onClick={() => setShowEmailModal(false)}>
           <div className="bg-primary-dark rounded-t-2xl sm:rounded-2xl p-6 pb-safe-bottom w-full max-w-md border border-white/10" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-white">Email Receipt</h2>
-              <button onClick={() => setShowEmailModal(false)} className="text-gray-400">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <h2 className="text-lg font-bold text-white">Email Receipt</h2>
+              <button onClick={() => setShowEmailModal(false)} className="text-gray-400 hover:text-white p-2 -mr-2 rounded-lg hover:bg-white/5">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-gray-400 text-sm mb-2">Email Address</label>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Email Address</label>
                 <input
                   type="email"
                   value={emailAddress}
                   onChange={(e) => setEmailAddress(e.target.value)}
                   placeholder="customer@example.com"
-                  className="w-full px-4 py-3 bg-primary-darker border border-gray-600 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-accent-green"
+                  className="w-full px-4 py-3.5 bg-primary-darker border border-gray-800 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-accent-green transition-all"
                   autoFocus
                 />
               </div>
               <button
                 onClick={handleEmailReceipt}
                 disabled={emailReceiptMutation.isPending}
-                className="w-full py-3 bg-accent-green text-primary-dark font-semibold rounded-xl hover:bg-accent-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-3 bg-accent-green text-primary-dark font-bold rounded-xl hover:bg-accent-light transition-colors disabled:opacity-50"
               >
                 {emailReceiptMutation.isPending ? 'Sending...' : 'Send Receipt'}
               </button>
