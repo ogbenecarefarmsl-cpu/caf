@@ -91,7 +91,7 @@ function App() {
         return;
       }
 
-      await applyLiveUpdate(availableUpdate.update.id);
+      await applyLiveUpdate(availableUpdate.update.id, availableUpdate.update.version);
     } catch (error) {
       console.warn('Failed to apply update:', error);
       setIsApplyingUpdate(false);

@@ -77,8 +77,8 @@ git push origin main
 # Check for updates manually
 npx @capgo/cli bundle:list
 
-# Upload manually (without GitHub Actions)
-npx @capgo/cli bundle upload com.caf.pharmacy --path dist --channel production --apikey "$CAPGO_API_KEY"
+# Package manually without Capgo Cloud
+npx @capgo/cli bundle zip com.caf.pharmacy --path dist --bundle 1.0.0 --name caf-live-update-1.0.0.zip
 
 # Check app update status
 npx @capgo/cli app:info

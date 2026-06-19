@@ -1,4 +1,4 @@
-name: Deploy Live Update to Capgo
+name: Deploy Live Update
 
 on:
   push:
@@ -11,6 +11,12 @@ on:
       - 'vite.config.ts'
       - 'capacitor.config.ts'
       - '.github/workflows/live-update.yml'
+
+permissions:
+  contents: write
+
+env:
+  LIVE_UPDATE_TAG: live-update
 
 jobs:
   deploy-live-update:
@@ -42,20 +48,17 @@ jobs:
           VITE_WS_URL: ${{ secrets.VITE_WS_URL }}
         run: |
           if [ -z "$VITE_API_URL" ]; then
-            echo "VITE_API_URL secret is missing. Set it to your production backend API URL, for example https://carefam-00c1641bcdf9.herokuapp.com/api"
+            echo "VITE_API_URL secret is missing. Set it to your production backend API URL."
             exit 1
           fi
-
           if echo "$VITE_API_URL" | grep -Eiq 'localhost|127\.0\.0\.1|10\.0\.2\.2'; then
             echo "VITE_API_URL points to a local address. Mobile bundles must use a public backend URL."
             exit 1
           fi
-
           if [ -z "$VITE_WS_URL" ]; then
-            echo "VITE_WS_URL secret is missing. Set it to your production websocket URL, for example wss://carefam-00c1641bcdf9.herokuapp.com/inventory"
+            echo "VITE_WS_URL secret is missing. Set it to your production websocket URL."
             exit 1
           fi
-
           if echo "$VITE_WS_URL" | grep -Eiq 'localhost|127\.0\.0\.1|10\.0\.2\.2'; then
             echo "VITE_WS_URL points to a local address. Mobile bundles must use a public websocket URL."
             exit 1
@@ -69,38 +72,39 @@ jobs:
           VITE_ENABLE_OFFLINE: ${{ secrets.VITE_ENABLE_OFFLINE || 'true' }}
           VITE_ENABLE_LIVE_UPDATES: ${{ secrets.VITE_ENABLE_LIVE_UPDATES || 'true' }}
           VITE_LIVE_UPDATE_CHANNEL: ${{ secrets.VITE_LIVE_UPDATE_CHANNEL || 'production' }}
+          VITE_LIVE_UPDATE_MANIFEST_URL: ${{ secrets.VITE_LIVE_UPDATE_MANIFEST_URL || format('https://github.com/{0}/releases/download/live-update/latest.json', github.repository) }}
 
-      - name: Validate Capgo deploy configuration
-        run: |
-          if [ -z "$CAPGO_API_KEY" ]; then
-            echo "CAPGO_API_KEY secret is missing."
-            exit 1
-          fi
-          if [ -z "$CAPGO_APP_ID" ]; then
-            echo "CAPGO_APP_ID is missing."
-            exit 1
-          fi
-          if [ -z "$CAPGO_CHANNEL" ]; then
-            echo "CAPGO_CHANNEL is missing."
-            exit 1
-          fi
-          echo "Capgo deploy target: app=$CAPGO_APP_ID channel=$CAPGO_CHANNEL"
+      - name: Package live update bundle
         env:
-          CAPGO_API_KEY: ${{ secrets.CAPGO_API_KEY }}
-          CAPGO_APP_ID: ${{ secrets.CAPGO_APP_ID || vars.CAPGO_APP_ID || 'com.caf.pharmacy' }}
-          CAPGO_CHANNEL: ${{ secrets.VITE_LIVE_UPDATE_CHANNEL || vars.VITE_LIVE_UPDATE_CHANNEL || 'production' }}
-
-      - name: Upload bundle to Capgo
+          LIVE_UPDATE_VERSION: ${{ github.run_number }}.${{ github.run_attempt }}.0
         run: |
-          npx @capgo/cli@latest bundle upload "$CAPGO_APP_ID" \
+          npx @capgo/cli@latest bundle zip com.caf.pharmacy \
             --path dist \
-            --channel "$CAPGO_CHANNEL" \
-            --bundle "${{ github.run_number }}.${{ github.run_attempt }}.0" \
-            --apikey "$CAPGO_API_KEY" \
-            --no-key \
-            --version-exists-ok \
-            --verbose
+            --bundle "$LIVE_UPDATE_VERSION" \
+            --name "caf-live-update-$LIVE_UPDATE_VERSION.zip" \
+            --no-code-check
+
+          mkdir -p live-update-release
+          mv "caf-live-update-$LIVE_UPDATE_VERSION.zip" live-update-release/
+
+          cat > live-update-release/latest.json << EOF
+          {
+            "version": "$LIVE_UPDATE_VERSION",
+            "url": "https://github.com/${{ github.repository }}/releases/download/$LIVE_UPDATE_TAG/caf-live-update-$LIVE_UPDATE_VERSION.zip",
+            "releaseNotes": "Live web update from ${{ github.sha }}",
+            "mandatory": false
+          }
+          EOF
+
+      - name: Publish live update release
         env:
-          CAPGO_API_KEY: ${{ secrets.CAPGO_API_KEY }}
-          CAPGO_APP_ID: ${{ secrets.CAPGO_APP_ID || vars.CAPGO_APP_ID || 'com.caf.pharmacy' }}
-          CAPGO_CHANNEL: ${{ secrets.VITE_LIVE_UPDATE_CHANNEL || vars.VITE_LIVE_UPDATE_CHANNEL || 'production' }}
+          GH_TOKEN: ${{ secrets.GH_RELEASE_TOKEN || github.token }}
+        run: |
+          gh release delete "$LIVE_UPDATE_TAG" --yes --cleanup-tag || true
+          gh release create "$LIVE_UPDATE_TAG" \
+            live-update-release/latest.json \
+            live-update-release/*.zip \
+            --target "$GITHUB_SHA" \
+            --title "CAREFARM POS live update ${{ github.run_number }}.${{ github.run_attempt }}.0" \
+            --notes "Live web bundle for $GITHUB_SHA." \
+            --latest=false
