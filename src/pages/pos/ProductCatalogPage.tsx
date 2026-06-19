@@ -159,8 +159,8 @@ export const ProductCatalogPage = () => {
   const cartItemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
-    <div className="min-h-screen bg-primary-darker flex flex-col">
-      <div className="px-4 py-4 border-b border-gray-800 pt-safe-top">
+    <div className="min-h-screen bg-primary-darker flex flex-col pt-safe-top">
+      <div className="px-4 py-4 border-b border-gray-800">
         <div className="flex items-center justify-between mb-4">
           <button onClick={() => navigate('/pos')} className="text-white min-w-11 min-h-11 flex items-center justify-center -ml-2 rounded-lg hover:bg-white/5">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

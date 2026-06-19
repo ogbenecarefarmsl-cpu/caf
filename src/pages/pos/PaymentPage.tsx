@@ -387,9 +387,9 @@ export const PaymentPage = () => {
       ] as const);
 
   return (
-    <div className="min-h-screen bg-primary-darker flex flex-col">
+    <div className="min-h-screen bg-primary-darker flex flex-col pt-safe-top">
       {/* Header */}
-      <div className="flex items-center px-4 py-3 border-b border-gray-800/80 pt-safe-top bg-primary-dark/50 backdrop-blur-md">
+      <div className="flex items-center px-4 py-3 border-b border-gray-800/80 bg-primary-dark/50 backdrop-blur-md">
         <button onClick={() => navigate(-1)} className="text-gray-400 hover:text-white mr-3 min-w-11 min-h-11 flex items-center justify-center rounded-xl hover:bg-white/5 -ml-2 transition-colors">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
