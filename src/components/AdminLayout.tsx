@@ -291,7 +291,13 @@ export const AdminLayout = ({ children, title = 'Admin' }: AdminLayoutProps) => 
     },
   ];
 
+  const cashierNavItems = new Set(['Credit Sales', 'Reports']);
+
   const filteredNavItems = navItems.filter((item) => {
+    if (user?.role === 'cashier') {
+      return cashierNavItems.has(item.name);
+    }
+
     if (!item.roles) {
       return true;
     }

@@ -102,14 +102,24 @@ export const POSSidebar = () => {
       path: '/pos/customers',
     },
     {
-      id: 'sales-hub',
-      label: 'Sales Hub',
+      id: 'credit-sales',
+      label: 'Credit Sales',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
         </svg>
       ),
-      path: '/admin/sales',
+      path: '/admin/sales/credit',
+    },
+    {
+      id: 'reports',
+      label: 'Reports',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+      ),
+      path: '/admin/reports',
     },
     {
       id: 'catalog',
@@ -135,7 +145,13 @@ export const POSSidebar = () => {
 
   const isActive = (path: string) => location.pathname === path;
 
+  const cashierMenuItems = new Set(['credit-sales', 'reports']);
+
   const hasAccess = (item: typeof menuItems[0]) => {
+    if (user?.role === 'cashier') {
+      return cashierMenuItems.has(item.id);
+    }
+
     if (!item.roles) return true;
     return item.roles.includes(user?.role || '');
   };
@@ -250,13 +266,15 @@ export const POSSidebar = () => {
           </div>
 
           {/* Quick Actions */}
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            <button
-              onClick={() => navigate(dashboardPath)}
-              className="px-3 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-xs text-gray-300 hover:text-white transition-colors"
-            >
-              Dashboard
-            </button>
+          <div className={`mt-3 grid gap-2 ${user?.role === 'cashier' ? 'grid-cols-1' : 'grid-cols-2'}`}>
+            {user?.role !== 'cashier' && (
+              <button
+                onClick={() => navigate(dashboardPath)}
+                className="px-3 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-xs text-gray-300 hover:text-white transition-colors"
+              >
+                Dashboard
+              </button>
+            )}
             <button
               onClick={() => setShowLogoutConfirm(true)}
               className="px-3 py-2 bg-gray-800 hover:bg-red-600 rounded-lg text-xs text-gray-300 hover:text-white transition-colors"
