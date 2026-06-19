@@ -56,7 +56,7 @@ interface PaymentMethodBreakdown {
   label: string;
   count: number;
   totalAmount: number;
-  totalAmountFormatted: string;
+  totalAmountFormatted?: string;
 }
 
 interface SalesReportResponse {
@@ -94,7 +94,6 @@ export default function SalesReportsPage() {
   const [filters, setFilters] = useState<SalesReportFilters>(defaultFilters);
   const effectiveBranchId = filters.branchId ?? (isSuperAdmin ? undefined : selectedBranchId);
 
-  // Fetch branches
   const { data: branches } = useQuery({
     queryKey: queryKeys.branches.list(),
     queryFn: async () => {
@@ -102,26 +101,32 @@ export default function SalesReportsPage() {
       const payload = response.data?.data ?? response.data;
       return (Array.isArray(payload) ? payload : []) as Branch[];
     },
+    enabled: isSuperAdmin,
   });
 
-  // Fetch cashiers
   const { data: cashiers } = useQuery({
-    queryKey: queryKeys.users.list({ role: 'cashier' }),
+    queryKey: queryKeys.users.list({ role: 'cashier', branchId: effectiveBranchId }),
     queryFn: async () => {
-      const response = await apiClient.get(buildApiUrl('/users', { role: 'cashier' }));
+      const response = await apiClient.get(buildApiUrl('/users', {
+        role: 'cashier',
+        branchId: effectiveBranchId,
+      }));
       const payload = response.data?.data ?? response.data;
       return (Array.isArray(payload) ? payload : []) as User[];
     },
+    enabled: isSuperAdmin || !!selectedBranchId,
   });
 
-  // Fetch products
   const { data: products } = useQuery({
-    queryKey: queryKeys.products.list(),
+    queryKey: queryKeys.products.list({ branchId: effectiveBranchId }),
     queryFn: async () => {
-      const response = await apiClient.get('/products');
+      const response = await apiClient.get(buildApiUrl('/products', {
+        branchId: effectiveBranchId,
+      }));
       const payload = response.data?.data ?? response.data;
       return (Array.isArray(payload) ? payload : []) as Product[];
     },
+    enabled: isSuperAdmin || !!selectedBranchId,
   });
 
   // Fetch report data
@@ -211,7 +216,7 @@ export default function SalesReportsPage() {
       header: 'Total Amount',
       render: (row: PaymentMethodBreakdown) => (
         <span className={row.count > 0 ? 'text-white font-semibold' : 'text-gray-500'}>
-          {row.totalAmountFormatted}
+          {format(row.totalAmount)}
         </span>
       )
     },
@@ -241,20 +246,20 @@ export default function SalesReportsPage() {
         <div className="bg-primary-dark/50 backdrop-blur-sm rounded-2xl shadow-xl border border-white/5 p-6">
           <h2 className="text-lg font-semibold text-white mb-4">Report Filters</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <Select
-              label="Branch"
-              value={filters.branchId ?? ''}
-              onChange={(e) => setFilters(prev => ({ ...prev, branchId: e.target.value || undefined }))}
-            >
-              <option value="" className="bg-primary-dark text-white">
-                {isSuperAdmin ? 'All Branches' : 'Current Branch'}
-              </option>
-              {branches?.map(branch => (
-                <option key={branch._id} value={branch._id} className="bg-primary-dark text-white">
-                  {branch.name}
-                </option>
-              ))}
-            </Select>
+            {isSuperAdmin && (
+              <Select
+                label="Branch"
+                value={filters.branchId ?? ''}
+                onChange={(e) => setFilters(prev => ({ ...prev, branchId: e.target.value || undefined }))}
+              >
+                <option value="" className="bg-primary-dark text-white">All Branches</option>
+                {branches?.map(branch => (
+                  <option key={branch._id} value={branch._id} className="bg-primary-dark text-white">
+                    {branch.name}
+                  </option>
+                ))}
+              </Select>
+            )}
 
             <Select
               label="Cashier"
@@ -353,15 +358,15 @@ export default function SalesReportsPage() {
                 </div>
                 <div className="bg-green-500/10 p-4 rounded-xl border border-green-500/20">
                   <p className="text-sm text-green-200">Total Revenue</p>
-                  <p className="text-2xl font-bold text-green-400">{data.summary.totalAmountFormatted}</p>
+                  <p className="text-2xl font-bold text-green-400">{format(data.summary.totalAmount)}</p>
                 </div>
                 <div className="bg-orange-500/10 p-4 rounded-xl border border-orange-500/20">
                   <p className="text-sm text-orange-200">Total Discount</p>
-                  <p className="text-2xl font-bold text-orange-400">{data.summary.totalDiscountFormatted}</p>
+                  <p className="text-2xl font-bold text-orange-400">{format(data.summary.totalDiscount)}</p>
                 </div>
                 <div className="bg-purple-500/10 p-4 rounded-xl border border-purple-500/20">
                   <p className="text-sm text-purple-200">Avg Transaction</p>
-                  <p className="text-2xl font-bold text-purple-400">{data.summary.averageTransactionFormatted}</p>
+                  <p className="text-2xl font-bold text-purple-400">{format(data.summary.averageTransaction)}</p>
                 </div>
               </div>
             </div>

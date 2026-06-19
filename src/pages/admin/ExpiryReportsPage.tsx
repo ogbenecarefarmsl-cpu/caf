@@ -9,6 +9,8 @@ import { Select } from '../../components/ui/Select';
 import { Loading } from '../../components/ui/Loading';
 import { Error } from '../../components/ui/Error';
 import { useCurrency } from '../../hooks/useCurrency';
+import { useBranchStore, getBranchId } from '../../stores/branch-store';
+import { useAuthStore } from '../../stores/auth-store';
 import { queryKeys } from '../../lib/query-keys';
 import { buildApiUrl } from '../../lib/api-utils';
 
@@ -39,21 +41,27 @@ const QUICK_FILTERS = [
 
 export const ExpiryReportsPage = () => {
   const { format } = useCurrency();
-  const [branchId, setBranchId] = useState('');
+  const selectedBranch = useBranchStore((state) => state.selectedBranch);
+  const user = useAuthStore((state) => state.user);
+  const isSuperAdmin = user?.role === 'super_admin';
+  const selectedBranchId = getBranchId(selectedBranch);
+  const [filterBranchId, setFilterBranchId] = useState('');
+  const effectiveBranchId = isSuperAdmin ? filterBranchId : selectedBranchId;
   const [daysUntilExpiry, setDaysUntilExpiry] = useState(30);
 
   // Auto-fetch on mount and when filters change
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: queryKeys.reports.expiry({ branchId, daysUntilExpiry }),
+    queryKey: queryKeys.reports.expiry({ branchId: effectiveBranchId, daysUntilExpiry }),
     queryFn: async () => {
       const response = await apiClient.get(
         buildApiUrl('/reports/expiry', {
-          branchId: branchId || undefined,
+          branchId: effectiveBranchId || undefined,
           daysUntilExpiry,
         }),
       );
       return (response.data?.expiringBatches || []) as ExpiryReportItem[];
     },
+    enabled: isSuperAdmin || !!selectedBranchId,
   });
 
   // Fetch branches
@@ -63,12 +71,13 @@ export const ExpiryReportsPage = () => {
       const response = await apiClient.get('/branches');
       return unwrapArray<Branch>(response.data);
     },
+    enabled: isSuperAdmin,
   });
 
   const handleExport = async (format: 'pdf' | 'excel') => {
     try {
       const response = await apiClient.get(buildApiUrl('/reports/expiry', {
-        branchId: branchId || undefined,
+        branchId: effectiveBranchId || undefined,
         daysUntilExpiry,
         export: format,
       }), {
@@ -156,18 +165,20 @@ export const ExpiryReportsPage = () => {
         {/* Filters */}
         <div className="bg-primary-dark/50 backdrop-blur-sm rounded-2xl shadow-xl border border-white/5 p-6">
           <div className="flex flex-col md:flex-row md:items-end gap-4">
-            <div className="flex-1">
-              <Select
-                label="Branch"
-                value={branchId}
-                onChange={(e) => setBranchId(e.target.value)}
-              >
-                <option value="">All Branches</option>
-                {branches?.map(branch => (
-                  <option key={branch._id} value={branch._id}>{branch.name}</option>
-                ))}
-              </Select>
-            </div>
+            {isSuperAdmin && (
+              <div className="flex-1">
+                <Select
+                  label="Branch"
+                  value={filterBranchId}
+                  onChange={(e) => setFilterBranchId(e.target.value)}
+                >
+                  <option value="">All Branches</option>
+                  {branches?.map(branch => (
+                    <option key={branch._id} value={branch._id}>{branch.name}</option>
+                  ))}
+                </Select>
+              </div>
+            )}
           </div>
 
           {/* Quick Filter Buttons */}

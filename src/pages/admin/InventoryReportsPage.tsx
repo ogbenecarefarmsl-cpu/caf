@@ -9,6 +9,8 @@ import { Select } from '../../components/ui/Select';
 import { Loading } from '../../components/ui/Loading';
 import { Error } from '../../components/ui/Error';
 import { useCurrency } from '../../hooks/useCurrency';
+import { useBranchStore, getBranchId } from '../../stores/branch-store';
+import { useAuthStore } from '../../stores/auth-store';
 import { queryKeys } from '../../lib/query-keys';
 import { buildApiUrl } from '../../lib/api-utils';
 
@@ -30,7 +32,12 @@ interface InventoryReportItem {
 
 export const InventoryReportsPage = () => {
   const { format } = useCurrency();
-  const [branchId, setBranchId] = useState('');
+  const selectedBranch = useBranchStore((state) => state.selectedBranch);
+  const user = useAuthStore((state) => state.user);
+  const isSuperAdmin = user?.role === 'super_admin';
+  const selectedBranchId = getBranchId(selectedBranch);
+  const [filterBranchId, setFilterBranchId] = useState('');
+  const effectiveBranchId = isSuperAdmin ? filterBranchId : selectedBranchId;
   const [includeExpired, setIncludeExpired] = useState(false);
   const [lowStockOnly, setLowStockOnly] = useState(false);
   const [valuationMethod, setValuationMethod] = useState<'fifo' | 'moving_average'>('fifo');
@@ -42,15 +49,16 @@ export const InventoryReportsPage = () => {
       const response = await apiClient.get('/branches');
       return unwrapArray<Branch>(response.data);
     },
+    enabled: isSuperAdmin,
   });
 
   // Auto-fetch on mount and when filters change
   const { data, isLoading, error } = useQuery({
-    queryKey: queryKeys.reports.inventory({ branchId, includeExpired, lowStockOnly, valuationMethod }),
+    queryKey: queryKeys.reports.inventory({ branchId: effectiveBranchId, includeExpired, lowStockOnly, valuationMethod }),
     queryFn: async () => {
       const response = await apiClient.get(
         buildApiUrl('/reports/inventory', {
-          branchId: branchId || undefined,
+          branchId: effectiveBranchId || undefined,
           includeExpired,
           lowStockOnly,
           valuationMethod,
@@ -58,12 +66,13 @@ export const InventoryReportsPage = () => {
       );
       return response.data?.items || [] as InventoryReportItem[];
     },
+    enabled: isSuperAdmin || !!selectedBranchId,
   });
 
   const handleExport = async (format: 'pdf' | 'excel') => {
     try {
       const response = await apiClient.get(buildApiUrl('/reports/inventory', {
-        branchId: branchId || undefined,
+        branchId: effectiveBranchId || undefined,
         includeExpired,
         lowStockOnly,
         valuationMethod,
@@ -140,18 +149,20 @@ export const InventoryReportsPage = () => {
         <div className="bg-primary-dark/50 backdrop-blur-sm rounded-2xl shadow-xl border border-white/5 p-6">
           <h2 className="text-lg font-semibold text-white mb-4">Report Filters</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Select
-              label="Branch"
-              value={branchId}
-              onChange={(e) => setBranchId(e.target.value)}
-            >
-              <option value="">All Branches</option>
-              {branches?.map(branch => (
-                <option key={branch._id} value={branch._id}>
-                  {branch.name}
-                </option>
-              ))}
-            </Select>
+            {isSuperAdmin && (
+              <Select
+                label="Branch"
+                value={filterBranchId}
+                onChange={(e) => setFilterBranchId(e.target.value)}
+              >
+                <option value="">All Branches</option>
+                {branches?.map(branch => (
+                  <option key={branch._id} value={branch._id}>
+                    {branch.name}
+                  </option>
+                ))}
+              </Select>
+            )}
 
             <Select
               label="Valuation Method"

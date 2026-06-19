@@ -83,14 +83,11 @@ export const BranchSelector = () => {
 
   // If user has only one branch, show it as read-only
   if (availableBranches.length === 1 && user?.role !== 'super_admin') {
+    const branch = availableBranches[0];
     return (
-      <div className="w-full sm:w-64">
-        <Select
-          label="Branch"
-          options={[{ value: availableBranches[0]._id, label: availableBranches[0].name }]}
-          value={availableBranches[0]._id}
-          disabled
-        />
+      <div className="w-full sm:w-64 rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+        <p className="text-[11px] font-medium uppercase tracking-wide text-gray-500">Outlet</p>
+        <p className="truncate text-sm font-semibold text-white">{branch.name}</p>
       </div>
     );
   }

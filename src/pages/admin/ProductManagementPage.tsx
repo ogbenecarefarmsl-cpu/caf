@@ -16,6 +16,7 @@ import { Error as ErrorDisplay } from '../../components/ui/Error';
 import { useWebSocket } from '../../hooks/useWebSocket';
 import { useCurrency } from '../../hooks/useCurrency';
 import { useBranchStore, getBranchId } from '../../stores/branch-store';
+import { useAuthStore } from '../../stores/auth-store';
 import { queryKeys } from '../../lib/query-keys';
 import { buildApiUrl } from '../../lib/api-utils';
 import { useSearchWithDebounce } from '../../hooks/useSearchWithDebounce';
@@ -142,7 +143,9 @@ export const ProductManagementPage = () => {
   const { format } = useCurrency();
   const { showSuccess, showError } = useToast();
   const selectedBranch = useBranchStore((state) => state.selectedBranch);
+  const currentUser = useAuthStore((state) => state.user);
   const branchId = getBranchId(selectedBranch);
+  const canChooseBranch = currentUser?.role === 'super_admin' || !!selectedBranch?.isHeadquarters;
 
   const { createMutation, updateMutation } = useBranchAwareCRUDMutations<Product>(
     'products',
@@ -249,6 +252,7 @@ export const ProductManagementPage = () => {
       const response = await apiClient.get<BranchesResponse>(buildApiUrl('branches', undefined));
       return unwrapArray<Branch>(response.data);
     },
+    enabled: canChooseBranch,
   });
 
   const { data: suppliers } = useQuery({
@@ -752,19 +756,29 @@ export const ProductManagementPage = () => {
 
             {wizardStep === 1 ? (
               <>
-                <Select
-                  label="Branch"
-                  error={errors.branchId?.message}
-                  {...register('branchId', { required: 'Branch is required' })}
-                  disabled={!!editingProduct}
-                >
-                  <option value="" className="bg-primary-dark text-white">Choose a branch...</option>
-                  {branches?.map((branch) => (
-                    <option key={branch._id} value={branch._id} className="bg-primary-dark text-white">
-                      {branch.name}
-                    </option>
-                  ))}
-                </Select>
+                {canChooseBranch ? (
+                  <Select
+                    label="Branch"
+                    error={errors.branchId?.message}
+                    {...register('branchId', { required: 'Branch is required' })}
+                    disabled={!!editingProduct}
+                  >
+                    <option value="" className="bg-primary-dark text-white">Choose a branch...</option>
+                    {branches?.map((branch) => (
+                      <option key={branch._id} value={branch._id} className="bg-primary-dark text-white">
+                        {branch.name}
+                      </option>
+                    ))}
+                  </Select>
+                ) : (
+                  <>
+                    <input type="hidden" {...register('branchId', { required: 'Branch is required' })} />
+                    <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                      <p className="text-[11px] font-medium uppercase tracking-wide text-gray-500">Outlet</p>
+                      <p className="truncate text-sm font-semibold text-white">{selectedBranch?.name}</p>
+                    </div>
+                  </>
+                )}
 
                 <Input
                   label="Product Name"
