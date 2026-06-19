@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCartStore } from '../../stores/cart-store';
@@ -57,33 +57,14 @@ export const PaymentPage = () => {
   const holdSale = useHeldSalesStore((s) => s.holdSale);
   const heldSales = useHeldSalesStore((s) => s.heldSales);
   const selectedBranch = useBranchStore((state) => state.selectedBranch);
-  const setSelectedBranch = useBranchStore((state) => state.setSelectedBranch);
   const branchId = getBranchId(selectedBranch);
   const user = useAuthStore((state) => state.user);
   const { alertInfo } = useAlertReplacement();
   const { showSuccess, showError } = useToast();
   const { format, symbol } = useCurrency();
 
-  // Re-fetch branch from API to ensure currencyCode is up-to-date
-  // (handles stale localStorage from before currencyCode was added)
-  const { data: freshBranch } = useQuery({
-    queryKey: ['branch-detail', branchId],
-    queryFn: async () => {
-      if (!branchId) return null;
-      const res = await apiClient.get(`/branches/${branchId}`);
-      return res.data?.data ?? res.data;
-    },
-    enabled: !!branchId && !!selectedBranch,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  useEffect(() => {
-    if (freshBranch && freshBranch.currencyCode && freshBranch.currencyCode !== selectedBranch?.currencyCode) {
-      setSelectedBranch({ ...selectedBranch, ...freshBranch });
-    }
-  }, [freshBranch, selectedBranch, setSelectedBranch]);
-
-  const currencyCode = (freshBranch?.currencyCode ?? selectedBranch?.currencyCode) ?? 'SLE';
+  // currencyCode is refreshed centrally by POSLayout
+  const currencyCode = selectedBranch?.currencyCode ?? 'SLE';
   const isUSD = currencyCode === 'USD';
 
   const terminalId = 'TERMINAL-01';
