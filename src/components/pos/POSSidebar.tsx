@@ -145,7 +145,16 @@ export const POSSidebar = () => {
 
   const isActive = (path: string) => location.pathname === path;
 
-  const cashierMenuItems = new Set(['credit-sales', 'reports']);
+  const cashierMenuItems = new Set([
+    'pos',
+    'shifts',
+    'transactions',
+    'customers',
+    'credit-sales',
+    'reports',
+    'catalog',
+    'settings',
+  ]);
 
   const hasAccess = (item: typeof menuItems[0]) => {
     if (user?.role === 'cashier') {
@@ -266,15 +275,13 @@ export const POSSidebar = () => {
           </div>
 
           {/* Quick Actions */}
-          <div className={`mt-3 grid gap-2 ${user?.role === 'cashier' ? 'grid-cols-1' : 'grid-cols-2'}`}>
-            {user?.role !== 'cashier' && (
-              <button
-                onClick={() => navigate(dashboardPath)}
-                className="px-3 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-xs text-gray-300 hover:text-white transition-colors"
-              >
-                Dashboard
-              </button>
-            )}
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <button
+              onClick={() => navigate(dashboardPath)}
+              className="px-3 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-xs text-gray-300 hover:text-white transition-colors"
+            >
+              Dashboard
+            </button>
             <button
               onClick={() => setShowLogoutConfirm(true)}
               className="px-3 py-2 bg-gray-800 hover:bg-red-600 rounded-lg text-xs text-gray-300 hover:text-white transition-colors"
