@@ -77,10 +77,14 @@ jobs:
             exit 1
           fi
 
-          npx @capgo/cli@latest bundle upload com.caf.pharmacy \
+          echo "Uploading Capgo bundle for app $CAPGO_APP_ID on channel $CAPGO_CHANNEL"
+
+          npx @capgo/cli@latest bundle upload "$CAPGO_APP_ID" \
             --path dist \
-            --channel production \
+            --channel "$CAPGO_CHANNEL" \
             --bundle "${{ github.run_number }}.${{ github.run_attempt }}.0" \
             --apikey "$CAPGO_API_KEY"
         env:
           CAPGO_API_KEY: ${{ secrets.CAPGO_API_KEY }}
+          CAPGO_APP_ID: ${{ secrets.CAPGO_APP_ID || vars.CAPGO_APP_ID || '991fafc4-dcd2-4149-b6c4-5e044d4151b0' }}
+          CAPGO_CHANNEL: ${{ secrets.VITE_LIVE_UPDATE_CHANNEL || vars.VITE_LIVE_UPDATE_CHANNEL || 'production' }}
