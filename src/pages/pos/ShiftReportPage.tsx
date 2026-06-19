@@ -30,6 +30,17 @@ interface ShiftReport {
   salesCount: number;
   voidsCount: number;
   refundsCount: number;
+  shift?: {
+    _id: string;
+    openedAt?: string;
+    closedAt?: string;
+    openingCash?: number;
+    closingCash?: number;
+    expectedCash?: number;
+    variance?: number;
+    cashierId?: string | { firstName?: string; lastName?: string; username?: string };
+    branchId?: string | { name?: string };
+  };
 }
 
 export const ShiftReportPage = () => {
@@ -42,13 +53,49 @@ export const ShiftReportPage = () => {
     queryKey: queryKeys.shifts.report(shiftId),
     queryFn: async () => {
       const response = await apiClient.get(`/shifts/${shiftId}/report`);
-      return (response.data?.data ?? response.data) as ShiftReport;
+      const raw = response.data?.data ?? response.data;
+      const shift = raw.shift ?? {};
+      const cashier = shift.cashierId;
+      const branch = shift.branchId;
+      const cashierName =
+        raw.cashierName ||
+        (typeof cashier === 'object'
+          ? [cashier.firstName, cashier.lastName].filter(Boolean).join(' ') || cashier.username
+          : undefined) ||
+        'Cashier';
+      const branchName =
+        raw.branchName ||
+        (typeof branch === 'object' ? branch.name : undefined) ||
+        'Outlet';
+
+      return {
+        ...raw,
+        _id: raw._id || shift._id || shiftId,
+        cashierName,
+        branchName,
+        openedAt: raw.openedAt || shift.openedAt,
+        closedAt: raw.closedAt || shift.closedAt,
+        netSales: raw.netSales ?? raw.totalSales ?? 0,
+        totalCashSales: raw.totalCashSales ?? 0,
+        totalCardSales: raw.totalCardSales ?? 0,
+        totalMobileSales: raw.totalMobileSales ?? 0,
+        openingCash: raw.openingCash ?? shift.openingCash ?? 0,
+        expectedCash: raw.expectedCash ?? shift.expectedCash ?? 0,
+        closingCash: raw.closingCash ?? shift.closingCash ?? 0,
+        variance: raw.variance ?? shift.variance ?? 0,
+        salesCount: raw.salesCount ?? 0,
+        voidsCount: raw.voidsCount ?? 0,
+        refundsCount: raw.refundsCount ?? 0,
+      } as ShiftReport;
     },
     enabled: !!shiftId,
   });
 
-  const formatDateTime = (dateStr: string) => {
+  const formatDateTime = (dateStr?: string) => {
+    if (!dateStr) return 'N/A';
     const date = new Date(dateStr);
+    if (Number.isNaN(date.getTime())) return 'N/A';
+
     return date.toLocaleDateString('en-US', {
       month: '2-digit',
       day: '2-digit',
