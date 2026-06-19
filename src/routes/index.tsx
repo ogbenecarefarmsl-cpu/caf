@@ -378,7 +378,7 @@ export const router = createBrowserRouter([
   {
     path: '/admin/sales/credit',
     element: (
-      <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'auditor']}>
+      <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'auditor', 'cashier']}>
         <ErrorBoundary>
           <CreditSalesPage />
         </ErrorBoundary>
@@ -442,7 +442,7 @@ export const router = createBrowserRouter([
   {
     path: '/admin/reports/sales',
     element: (
-      <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'auditor', 'finance_manager']}>
+      <ProtectedRoute allowedRoles={['super_admin', 'branch_manager', 'auditor', 'finance_manager', 'cashier']}>
         <ErrorBoundary>
           <SalesReportsPage />
         </ErrorBoundary>

@@ -31,7 +31,7 @@ export function SalesPage() {
       icon: TrendingUp,
       path: '/admin/reports/sales',
       color: 'bg-blue-500',
-      roles: ['super_admin', 'branch_manager', 'auditor']
+      roles: ['super_admin', 'branch_manager', 'auditor', 'cashier']
     },
     {
       title: 'Transactions',
@@ -47,7 +47,7 @@ export function SalesPage() {
       icon: WalletCards,
       path: '/admin/sales/credit',
       color: 'bg-amber-500',
-      roles: ['super_admin', 'branch_manager', 'auditor']
+      roles: ['super_admin', 'branch_manager', 'auditor', 'cashier']
     },
     {
       title: 'Request Uploads',
@@ -63,7 +63,7 @@ export function SalesPage() {
       icon: Users,
       path: '/admin/reports/customers',
       color: 'bg-orange-500',
-      roles: ['super_admin', 'branch_manager', 'auditor']
+      roles: ['super_admin', 'branch_manager', 'auditor', 'cashier']
     },
     {
       title: 'Promotions',
