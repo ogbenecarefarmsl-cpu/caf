@@ -86,5 +86,5 @@ jobs:
             --apikey "$CAPGO_API_KEY"
         env:
           CAPGO_API_KEY: ${{ secrets.CAPGO_API_KEY }}
-          CAPGO_APP_ID: ${{ secrets.CAPGO_APP_ID || vars.CAPGO_APP_ID || '991fafc4-dcd2-4149-b6c4-5e044d4151b0' }}
+          CAPGO_APP_ID: ${{ secrets.CAPGO_APP_ID || vars.CAPGO_APP_ID || 'com.caf.pharmacy' }}
           CAPGO_CHANNEL: ${{ secrets.VITE_LIVE_UPDATE_CHANNEL || vars.VITE_LIVE_UPDATE_CHANNEL || 'production' }}
