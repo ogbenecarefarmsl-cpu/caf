@@ -7,8 +7,8 @@ import { useAlertReplacement } from '../../hooks/useAlertReplacement';
 import { useToast } from '../../hooks/useToast';
 import { queryKeys } from '../../lib/query-keys';
 interface SaleItem {
-  productId: string;
-  productName: string;
+  productId: string | { _id?: string; name?: string; sku?: string };
+  productName?: string;
   quantity: number;
   unitPrice: number;
   subtotal: number;
@@ -121,6 +121,18 @@ export const ReceiptPage = () => {
     );
   }
 
+  const getItemName = (item: SaleItem) => {
+    if (item.productName?.trim()) {
+      return item.productName;
+    }
+
+    if (typeof item.productId === 'object' && item.productId?.name?.trim()) {
+      return item.productId.name;
+    }
+
+    return 'Unknown Product';
+  };
+
   return (
     <div className="min-h-screen bg-primary-darker flex flex-col pt-safe-top">
       {/* Header */}
@@ -163,7 +175,7 @@ export const ReceiptPage = () => {
             {sale.items.map((item: SaleItem, index: number) => (
               <div key={index} className="flex items-start justify-between gap-3 py-2">
                 <div className="flex-1 min-w-0">
-                  <p className="text-white leading-snug whitespace-normal break-words">{item.productName || item.productId}</p>
+                  <p className="text-white leading-snug whitespace-normal break-words">{getItemName(item)}</p>
                   <p className="text-gray-400 text-sm">{item.quantity} x {format(item.unitPrice)}</p>
                 </div>
                 <p className="text-white font-medium shrink-0">{format(item.subtotal)}</p>
