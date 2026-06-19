@@ -261,18 +261,20 @@ export default function SalesReportsPage() {
               </Select>
             )}
 
-            <Select
-              label="Cashier"
-              value={filters.cashierId ?? ''}
-              onChange={(e) => setFilters(prev => ({ ...prev, cashierId: e.target.value || undefined }))}
-            >
-              <option value="" className="bg-primary-dark text-white">All Cashiers</option>
-              {cashiers?.map(cashier => (
-                <option key={cashier._id} value={cashier._id} className="bg-primary-dark text-white">
-                  {cashier.firstName} {cashier.lastName}
-                </option>
-              ))}
-            </Select>
+            {user?.role !== 'cashier' && (
+              <Select
+                label="Cashier"
+                value={filters.cashierId ?? ''}
+                onChange={(e) => setFilters(prev => ({ ...prev, cashierId: e.target.value || undefined }))}
+              >
+                <option value="" className="bg-primary-dark text-white">All Cashiers</option>
+                {cashiers?.map(cashier => (
+                  <option key={cashier._id} value={cashier._id} className="bg-primary-dark text-white">
+                    {cashier.firstName} {cashier.lastName}
+                  </option>
+                ))}
+              </Select>
+            )}
 
             <Select
               label="Product"

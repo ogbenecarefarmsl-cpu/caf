@@ -116,6 +116,7 @@ export function CreditSalesPage() {
       setPaymentReference('');
       setPaymentNotes('');
       queryClient.invalidateQueries({ queryKey: queryKeys.sales.all(), exact: false });
+      queryClient.invalidateQueries({ queryKey: queryKeys.reports.all(), exact: false });
       queryClient.invalidateQueries({ queryKey: queryKeys.finance.all(), exact: false });
     },
     onError: (error) => {
