@@ -158,7 +158,7 @@ export const queryKeys = {
     detail: (id: string) => [...queryKeys.shifts.details(), id] as const,
     current: (filters?: { branchId?: string; cashierId?: string; terminalId?: string }) =>
       [...queryKeys.shifts.all(), 'current', filters] as const,
-    history: (filters?: { branchId?: string; limit?: number }) => [...queryKeys.shifts.all(), 'history', filters] as const,
+    history: (filters?: { branchId?: string; cashierId?: string; limit?: number }) => [...queryKeys.shifts.all(), 'history', filters] as const,
     report: (shiftId?: string) => [...queryKeys.shifts.all(), 'report', shiftId] as const,
   },
 

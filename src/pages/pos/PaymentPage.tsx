@@ -130,36 +130,6 @@ export const PaymentPage = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
-      // Skip if typing in input
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-        return;
-      }
-
-      // Enter to pay (if valid)
-      if (e.key === 'Enter' && !showConfirmModal && !checkoutMutation.isPending) {
-        const canPay = 
-          (paymentMethod === 'cash' && parseFloat(amountReceived) >= total) ||
-          (paymentMethod === 'credit' && creditDueDate) ||
-          (paymentMethod !== 'cash' && paymentMethod !== 'credit');
-        
-        if (canPay && currentShift?.status === 'open') {
-          setShowConfirmModal(true);
-        }
-      }
-
-      // H to hold sale
-      if (e.key.toLowerCase() === 'h' && items.length > 0) {
-        handleHoldSale();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyPress);
-    return () => document.removeEventListener('keydown', handleKeyPress);
-  }, [paymentMethod, amountReceived, total, creditDueDate, items.length, currentShift, showConfirmModal, checkoutMutation.isPending]);
-
   // Scroll to payment method section when it changes
   useEffect(() => {
     if (paymentSectionRef.current) {
@@ -405,6 +375,33 @@ export const PaymentPage = () => {
       showError(getErrorMessage(error, 'Failed to process checkout'));
     },
   });
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      if (e.key === 'Enter' && !showConfirmModal && !checkoutMutation.isPending) {
+        const canPay = 
+          (paymentMethod === 'cash' && parseFloat(amountReceived) >= total) ||
+          (paymentMethod === 'credit' && creditDueDate) ||
+          (paymentMethod !== 'cash' && paymentMethod !== 'credit');
+        
+        if (canPay && currentShift?.status === 'open') {
+          setShowConfirmModal(true);
+        }
+      }
+
+      if (e.key.toLowerCase() === 'h' && items.length > 0) {
+        handleHoldSale();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyPress);
+    return () => document.removeEventListener('keydown', handleKeyPress);
+  }, [paymentMethod, amountReceived, total, creditDueDate, items.length, currentShift, showConfirmModal, checkoutMutation.isPending]);
 
   const allPaymentMethods: PaymentMethodDef[] = [
     { id: 'cash', label: 'Cash', shortLabel: 'Cash', icon: (
