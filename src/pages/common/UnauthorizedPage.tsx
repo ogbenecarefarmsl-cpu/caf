@@ -7,7 +7,7 @@ export const UnauthorizedPage = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-primary-darker pt-safe-top">
       <div className="max-w-md w-full p-8 text-center">
-        <div className="rounded-full bg-red-500 bg-opacity-20 p-4 inline-block mb-4">
+        <div className="rounded-full bg-red-500/20 p-4 inline-block mb-4">
           <svg
             className="w-12 h-12 text-red-500"
             fill="none"

@@ -336,7 +336,7 @@ export const UserManagementPage = () => {
         </div>
 
         {/* Table */}
-        <div className="bg-[--color-primary-dark] rounded-lg shadow-lg overflow-hidden">
+        <div className="bg-primary-dark rounded-lg shadow-lg overflow-hidden">
           <Table
             data={users || []}
             columns={columns}

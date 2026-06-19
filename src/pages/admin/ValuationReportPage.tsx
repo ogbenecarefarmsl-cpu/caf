@@ -93,12 +93,12 @@ export function ValuationReportPage() {
                   type="checkbox"
                   checked={showAllBranches}
                   onChange={(e) => setShowAllBranches(e.target.checked)}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="rounded border-gray-600 text-accent-green focus:ring-accent-green/50"
                 />
                 Company-wide
               </label>
             )}
-            <div className="flex border border-gray-300 rounded-md overflow-hidden">
+            <div className="flex border border-gray-700 rounded-md overflow-hidden">
               {METHODS.map((m) => (
                 <button
                   key={m}

@@ -35,7 +35,7 @@ export const OfflineIndicator = () => {
           </div>
         </div>
       ) : queuedCount > 0 ? (
-        <div className="bg-[--color-primary-dark] border border-[--color-accent-green] text-white px-4 py-3 rounded-lg shadow-lg">
+        <div className="bg-primary-dark border border-accent-green text-white px-4 py-3 rounded-lg shadow-lg">
           <div className="flex items-center justify-between space-x-4">
             <div className="flex items-center space-x-3">
               <svg

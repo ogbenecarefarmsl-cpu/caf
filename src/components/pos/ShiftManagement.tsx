@@ -126,7 +126,7 @@ export const ShiftManagement = ({
 
   if (isLoading) {
     return (
-      <div className="bg-[--color-primary-dark] rounded-lg p-4 border border-gray-700">
+      <div className="bg-primary-dark rounded-lg p-4 border border-gray-700">
         <p className="text-gray-400 text-center">Loading shift information...</p>
       </div>
     );
@@ -135,12 +135,12 @@ export const ShiftManagement = ({
   return (
     <>
       {/* Shift Status Display */}
-      <div className="bg-[--color-primary-dark] rounded-lg p-4 border border-gray-700">
+      <div className="bg-primary-dark rounded-lg p-4 border border-gray-700">
         {currentShift && currentShift.status === 'open' ? (
           <div>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-[--color-accent-green] rounded-full animate-pulse" />
+                <div className="w-3 h-3 bg-accent-green rounded-full animate-pulse" />
                 <h3 className="text-lg font-semibold text-white">Shift Open</h3>
               </div>
               <Button
@@ -217,7 +217,7 @@ export const ShiftManagement = ({
             required
           />
 
-          <div className="bg-[--color-primary-darker] rounded-lg p-3 text-sm">
+          <div className="bg-primary-darker rounded-lg p-3 text-sm">
             <p className="text-gray-400 mb-1">Terminal: <span className="text-white">{terminalId}</span></p>
             <p className="text-gray-400">Cashier: <span className="text-white">{user?.firstName} {user?.lastName}</span></p>
           </div>
@@ -259,7 +259,7 @@ export const ShiftManagement = ({
           </p>
 
           {currentShift && (
-            <div className="bg-[--color-primary-darker] rounded-lg p-4 space-y-2 text-sm">
+            <div className="bg-primary-darker rounded-lg p-4 space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-gray-400">Opening Cash:</span>
                 <span className="text-white">{format(currentShift.openingCash)}</span>
@@ -285,13 +285,13 @@ export const ShiftManagement = ({
           />
 
           {closingCash && currentShift && (
-            <div className="bg-[--color-primary-darker] rounded-lg p-4">
+            <div className="bg-primary-darker rounded-lg p-4">
               <div className="flex justify-between items-center">
                 <span className="text-gray-400">Variance:</span>
                 <span
                   className={`text-lg font-bold ${
                     parseFloat(closingCash) - (currentShift.expectedCash || currentShift.openingCash) === 0
-                      ? 'text-[--color-accent-green]'
+                      ? 'text-accent-green'
                       : parseFloat(closingCash) - (currentShift.expectedCash || currentShift.openingCash) > 0
                       ? 'text-yellow-500'
                       : 'text-red-500'

@@ -111,7 +111,7 @@ export function ReportsPage() {
                 to={module.path}
                 className="block group"
               >
-                <div className="bg-[--color-primary-dark] rounded-lg shadow-md border border-gray-700 p-6 hover:shadow-xl hover:border-accent-green transition-all">
+                <div className="bg-primary-dark rounded-lg shadow-md border border-gray-700 p-6 hover:shadow-xl hover:border-accent-green transition-all">
                   <div className="flex flex-col space-y-4">
                     <div className="flex items-start justify-between">
                       <div className={`${module.color} rounded-lg p-3 text-white group-hover:scale-110 transition-transform`}>

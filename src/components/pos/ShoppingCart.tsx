@@ -65,7 +65,7 @@ export const ShoppingCart = ({ onCheckout }: ShoppingCartProps) => {
             {items.map((item) => (
               <div
                 key={itemKey(item.productId, item.packSize)}
-                className="bg-[--color-primary-darker] rounded-lg p-3 border border-gray-700"
+                className="bg-primary-darker rounded-lg p-3 border border-gray-700"
               >
                 {/* Item Header */}
                 <div className="flex items-start justify-between mb-2">
@@ -112,7 +112,7 @@ export const ShoppingCart = ({ onCheckout }: ShoppingCartProps) => {
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={() => handleQuantityDecrement(item.productId, item.packSize, item.quantity)}
-                      className="w-12 h-12 flex items-center justify-center bg-[--color-primary-dark] text-white rounded-lg hover:bg-gray-700 transition-colors"
+                      className="w-12 h-12 flex items-center justify-center bg-primary-dark text-white rounded-lg hover:bg-gray-700 transition-colors"
                       disabled={item.quantity <= 1}
                     >
                       <svg
@@ -135,12 +135,12 @@ export const ShoppingCart = ({ onCheckout }: ShoppingCartProps) => {
                       min="1"
                       value={item.quantity}
                       onChange={(e) => handleQuantityChange(item.productId, item.packSize, e.target.value)}
-                      className="w-16 px-2 py-2 text-center bg-[--color-primary-dark] text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[--color-accent-green]"
+                      className="w-16 px-2 py-2 text-center bg-primary-dark text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[--color-accent-green]"
                     />
 
                     <button
                       onClick={() => handleQuantityIncrement(item.productId, item.packSize, item.quantity)}
-                      className="w-12 h-12 flex items-center justify-center bg-[--color-primary-dark] text-white rounded-lg hover:bg-gray-700 transition-colors"
+                      className="w-12 h-12 flex items-center justify-center bg-primary-dark text-white rounded-lg hover:bg-gray-700 transition-colors"
                     >
                       <svg
                         className="w-4 h-4"
@@ -163,7 +163,7 @@ export const ShoppingCart = ({ onCheckout }: ShoppingCartProps) => {
                     <p className="text-xs text-gray-400">
                       {format(item.unitPrice)} each
                     </p>
-                    <p className="text-lg font-bold text-[--color-accent-green]">
+                    <p className="text-lg font-bold text-accent-green">
                       {format(item.subtotal)}
                     </p>
                   </div>
@@ -176,7 +176,7 @@ export const ShoppingCart = ({ onCheckout }: ShoppingCartProps) => {
 
       {/* Cart Summary */}
       {hasItems && (
-        <div className="border-t border-gray-700 px-4 py-4 bg-[--color-primary-darker]">
+        <div className="border-t border-gray-700 px-4 py-4 bg-primary-darker">
 
           {/* Totals */}
           <div className="space-y-2 mb-4">
@@ -192,7 +192,7 @@ export const ShoppingCart = ({ onCheckout }: ShoppingCartProps) => {
             )}
             <div className="flex justify-between text-lg font-bold pt-2 border-t border-gray-700">
               <span className="text-white">Total:</span>
-              <span className="text-[--color-accent-green]">{format(total)}</span>
+              <span className="text-accent-green">{format(total)}</span>
             </div>
           </div>
 

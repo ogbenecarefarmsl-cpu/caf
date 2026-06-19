@@ -145,16 +145,16 @@ export const JobsMonitoringPage = () => {
     <AdminLayout>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Jobs Monitoring</h1>
+          <h1 className="text-2xl font-bold text-white">Jobs Monitoring</h1>
           <div className="flex items-center space-x-4">
             <label className="flex items-center">
               <input
                 type="checkbox"
                 checked={autoRefresh}
                 onChange={(e) => setAutoRefresh(e.target.checked)}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                className="h-4 w-4 text-accent-green focus:ring-accent-green/50 border-gray-600 rounded"
               />
-              <span className="ml-2 text-sm text-gray-700">Auto-refresh (5s)</span>
+              <span className="ml-2 text-sm text-gray-300">Auto-refresh (5s)</span>
             </label>
             <Button onClick={() => refetch()}>
               Refresh
@@ -167,11 +167,11 @@ export const JobsMonitoringPage = () => {
           <div className="grid grid-cols-5 gap-4">
             <div className="bg-primary-dark/50 p-4 rounded-lg shadow border border-white/10">
               <p className="text-sm text-gray-500">Waiting</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.waiting}</p>
+              <p className="text-2xl font-bold text-white">{stats.waiting}</p>
             </div>
             <div className="bg-primary-dark/50 p-4 rounded-lg shadow border border-white/10">
               <p className="text-sm text-gray-500">Active</p>
-              <p className="text-2xl font-bold text-blue-600">{stats.active}</p>
+              <p className="text-2xl font-bold text-accent-green">{stats.active}</p>
             </div>
             <div className="bg-primary-dark/50 p-4 rounded-lg shadow border border-white/10">
               <p className="text-sm text-gray-500">Completed</p>

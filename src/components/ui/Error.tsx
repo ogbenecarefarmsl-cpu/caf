@@ -9,7 +9,7 @@ interface ErrorProps {
 export const Error = ({ message, onRetry, fullScreen = false }: ErrorProps) => {
   const content = (
     <div className="flex flex-col items-center justify-center gap-4 p-6" role="alert" aria-live="assertive">
-      <div className="rounded-full bg-red-500 bg-opacity-20 p-3">
+      <div className="rounded-full bg-red-500/20 p-3">
         <svg
           className="w-8 h-8 text-red-500"
           fill="none"

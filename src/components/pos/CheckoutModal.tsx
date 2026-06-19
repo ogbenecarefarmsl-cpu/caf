@@ -122,7 +122,7 @@ export const CheckoutModal = ({
         {/* Order Summary */}
         <div>
           <h3 className="text-lg font-semibold text-white mb-3">Order Summary</h3>
-          <div className="bg-[--color-primary-darker] rounded-lg p-4 space-y-2">
+          <div className="bg-primary-darker rounded-lg p-4 space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-gray-400">Items ({items.length}):</span>
               <span className="text-white">{format(subtotal)}</span>
@@ -133,7 +133,7 @@ export const CheckoutModal = ({
             </div>
             <div className="flex justify-between text-lg font-bold pt-2 border-t border-gray-700">
               <span className="text-white">Total:</span>
-              <span className="text-[--color-accent-green]">{format(total)}</span>
+              <span className="text-accent-green">{format(total)}</span>
             </div>
           </div>
         </div>
@@ -171,8 +171,8 @@ export const CheckoutModal = ({
                 }}
                 className={`p-3 sm:p-4 rounded-lg border-2 transition-all min-h-[76px] sm:min-h-[88px] ${
                   paymentMethod === method.id
-                    ? 'border-[--color-accent-green] bg-[--color-accent-green] bg-opacity-20'
-                    : 'border-gray-600 bg-[--color-primary-darker] hover:border-gray-500'
+                    ? 'border-accent-green bg-accent-green/20'
+                    : 'border-gray-600 bg-primary-darker hover:border-gray-500'
                 }`}
                 title={method.description}
               >

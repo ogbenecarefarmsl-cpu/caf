@@ -179,7 +179,7 @@ export const InventoryReportsPage = () => {
                 id="includeExpired"
                 checked={includeExpired}
                 onChange={(e) => setIncludeExpired(e.target.checked)}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                className="h-4 w-4 text-accent-green focus:ring-accent-green/50 border-gray-600 rounded"
               />
               <label htmlFor="includeExpired" className="ml-2 block text-sm text-white">
                 Include Expired

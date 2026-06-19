@@ -169,11 +169,11 @@ export const PaymentMethodsPage = () => {
       header: 'Status',
       render: (method: PaymentMethod) => (
         method.isActive ? (
-          <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+          <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-500/20 text-green-400 border border-green-500/30">
             Active
           </span>
         ) : (
-          <span className="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+          <span className="px-2 py-1 text-xs font-semibold rounded-full bg-red-500/20 text-red-400 border border-red-500/30">
             Inactive
           </span>
         )
@@ -274,13 +274,13 @@ export const PaymentMethodsPage = () => {
             />
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
                 Account Details (Optional)
               </label>
               <textarea
                 {...register('accountDetails')}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-700 rounded-md bg-primary-darker text-white shadow-sm focus:outline-none focus:ring-accent-green/50 focus:border-accent-green"
                 placeholder="e.g., Account number, merchant ID, etc."
               />
             </div>

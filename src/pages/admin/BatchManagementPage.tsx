@@ -406,7 +406,7 @@ export const BatchManagementPage = () => {
         </div>
 
         {/* Table */}
-        <div className="bg-[--color-primary-dark] rounded-lg shadow-lg overflow-hidden">
+        <div className="bg-primary-dark rounded-lg shadow-lg overflow-hidden">
           <Table
             data={batches || []}
             columns={columns}

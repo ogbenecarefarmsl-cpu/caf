@@ -187,7 +187,7 @@ export default function SupplierManagementPage() {
     <AdminLayout>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Supplier Management</h1>
+          <h1 className="text-2xl font-bold text-white">Supplier Management</h1>
           <Button onClick={() => handleOpenModal()}>
             Add Supplier
           </Button>
@@ -246,7 +246,7 @@ export default function SupplierManagementPage() {
               </label>
               <textarea
                 {...register('address', { required: 'Address is required' })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-700 rounded-md bg-primary-darker text-white focus:outline-none focus:ring-2 focus:ring-accent-green/50 focus:border-accent-green"
                 rows={3}
               />
               {errors.address && (
