@@ -97,7 +97,7 @@ jobs:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
           VITE_WS_URL: ${{ secrets.VITE_WS_URL }}
           VITE_ENABLE_OFFLINE: ${{ secrets.VITE_ENABLE_OFFLINE || 'true' }}
-          VITE_ENABLE_LIVE_UPDATES: ${{ secrets.VITE_ENABLE_LIVE_UPDATES || 'false' }}
+          VITE_ENABLE_LIVE_UPDATES: ${{ secrets.VITE_ENABLE_LIVE_UPDATES || 'true' }}
           VITE_LIVE_UPDATE_CHANNEL: ${{ secrets.VITE_LIVE_UPDATE_CHANNEL || 'production' }}
           VITE_ANDROID_VERSION_CODE: ${{ env.ANDROID_VERSION_CODE }}
           VITE_ANDROID_VERSION_NAME: ${{ env.ANDROID_VERSION_NAME }}
