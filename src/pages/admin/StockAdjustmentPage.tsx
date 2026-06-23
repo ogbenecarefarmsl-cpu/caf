@@ -42,7 +42,6 @@ interface AdjustmentFormData {
   productId: string;
   quantityChange: number;
   reason: string;
-  approvedBy?: string;
 }
 
 const formatDate = (value?: string) => value ? new Date(value).toLocaleDateString() : '-';
@@ -199,7 +198,6 @@ export default function StockAdjustmentPage() {
                 <textarea {...register('reason', { required: 'Reason is required' })} className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-white placeholder-gray-500 focus:border-accent-green/50 focus:outline-none focus:ring-2 focus:ring-accent-green/20 resize-none" rows={3} placeholder="Why this adjustment?" />
                 {errors.reason && <p className="mt-1 text-sm text-red-500">{errors.reason.message}</p>}
               </div>
-              <Input label="Approved By (Optional)" type="text" placeholder="Supervisor name" {...register('approvedBy')} />
               <div className="flex justify-end space-x-3 pt-4">
                 <Button type="button" variant="secondary" onClick={handleCloseModal}>Cancel</Button>
                 <Button type="submit" disabled={adjustmentMutation.isPending}>{adjustmentMutation.isPending ? 'Adjusting...' : 'Adjust Stock'}</Button>
