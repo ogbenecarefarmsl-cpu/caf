@@ -8,6 +8,7 @@ import { useBranchStore, getBranchId } from '../../stores/branch-store';
 import { Error } from '../../components/ui/Error';
 import { queryKeys } from '../../lib/query-keys';
 import { useCurrency } from '../../hooks/useCurrency';
+import { useDebounce } from '../../hooks/useDebounce';
 
 interface Promotion {
   _id: string;
@@ -20,19 +21,24 @@ interface Promotion {
   isActive: boolean;
 }
 
-type DiscountScope = 'entire';
-
 export const DiscountsPage = () => {
   const navigate = useNavigate();
   const selectedBranch = useBranchStore((state) => state.selectedBranch);
-  const { subtotal, setDiscount } = useCartStore();
-  const { format, symbol } = useCurrency();
+  const { items, subtotal, manualDiscount: storedManualDiscount, promotionId, setPromotion } = useCartStore();
+  const { format } = useCurrency();
   
-  const [discountScope] = useState<DiscountScope>('entire');
+  const [selectedPromotion, setSelectedPromotion] = useState<string | undefined>(promotionId);
   const [percentageDiscount, setPercentageDiscount] = useState('');
-  const [fixedDiscount, setFixedDiscount] = useState('');
-  const [selectedPromotions, setSelectedPromotions] = useState<string[]>([]);
+  const [fixedDiscount, setFixedDiscount] = useState(
+    storedManualDiscount > 0 ? String(storedManualDiscount) : '',
+  );
   const [searchQuery, setSearchQuery] = useState('');
+  const requestedManualDiscount = Math.min(
+    subtotal,
+    Math.max(0, Number(fixedDiscount) || 0) +
+      subtotal * Math.min(100, Math.max(0, Number(percentageDiscount) || 0)) / 100,
+  );
+  const debouncedManualDiscount = useDebounce(requestedManualDiscount, 250);
 
   const { data: promotions, isLoading, error, refetch } = useQuery({
     queryKey: queryKeys.promotions.list({ isActive: true, branchId: getBranchId(selectedBranch) }),
@@ -45,48 +51,45 @@ export const DiscountsPage = () => {
     enabled: !!getBranchId(selectedBranch),
   });
 
-  const calculateTotalDiscount = () => {
-    let discount = 0;
+  const { data: quote, isFetching: isCalculating } = useQuery({
+    queryKey: ['checkout-quote', getBranchId(selectedBranch), selectedPromotion, debouncedManualDiscount, items],
+    queryFn: async () => {
+      const response = await apiClient.post('/sales/quote', {
+        branchId: getBranchId(selectedBranch),
+        promotionId: selectedPromotion,
+        discount: debouncedManualDiscount,
+        items: items.map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          packSize: item.packSize,
+          quantityInBaseUnits: item.quantityInBaseUnits,
+        })),
+      });
+      return response.data as {
+        subtotal: number;
+        discount: number;
+        manualDiscount: number;
+        taxAmount: number;
+        total: number;
+      };
+    },
+    enabled: Boolean(
+      getBranchId(selectedBranch) &&
+      items.length &&
+      (selectedPromotion || debouncedManualDiscount > 0),
+    ),
+  });
 
-    // Custom percentage discount (clamped to 0-100%)
-    if (percentageDiscount) {
-      const pct = Math.min(100, Math.max(0, parseFloat(percentageDiscount) || 0));
-      discount += (subtotal * pct) / 100;
-    }
-
-    // Custom fixed discount
-    if (fixedDiscount) {
-      discount += parseFloat(fixedDiscount) || 0;
-    }
-
-    // Selected promotions
-    selectedPromotions.forEach((promoId) => {
-      const promo = promotions?.find((p) => p._id === promoId);
-      if (promo) {
-        if (promo.type === 'percentage') {
-          discount += (subtotal * promo.value) / 100;
-        } else if (promo.type === 'fixed_amount') {
-          discount += promo.value;
-        }
-      }
-    });
-
-    return Math.min(discount, subtotal);
-  };
-
-  const totalDiscount = calculateTotalDiscount();
-  const newTotal = subtotal - totalDiscount;
+  const totalDiscount = quote?.discount ?? 0;
+  const newTotal = quote?.total ?? subtotal;
 
   const togglePromotion = (promoId: string) => {
-    setSelectedPromotions((prev) =>
-      prev.includes(promoId)
-        ? prev.filter((id) => id !== promoId)
-        : [...prev, promoId]
-    );
+    setSelectedPromotion((current) => current === promoId ? undefined : promoId);
   };
 
   const handleApplyDiscount = () => {
-    setDiscount(totalDiscount);
+    setPromotion(selectedPromotion, totalDiscount, quote?.manualDiscount ?? 0);
     navigate('/pos');
   };
 
@@ -110,36 +113,35 @@ export const DiscountsPage = () => {
       </div>
 
       <div className="flex-1 p-4 space-y-6 overflow-y-auto">
-        {/* Custom Discount */}
         <div>
-          <h2 className="text-white font-semibold mb-3">Apply Custom Discount</h2>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-gray-400 text-sm mb-2">Percentage</label>
+          <h2 className="text-white font-semibold mb-3">Staff Discount</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <label className="space-y-2">
+              <span className="block text-sm text-gray-400">Percentage</span>
               <div className="relative">
                 <input
                   type="number"
+                  min="0"
+                  max="100"
                   value={percentageDiscount}
-                  onChange={(e) => setPercentageDiscount(e.target.value)}
-                  placeholder="Enter percentage (e.g., 10)"
-                  className="w-full px-4 py-3 bg-primary-dark border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-accent-green"
+                  onChange={(event) => setPercentageDiscount(event.target.value)}
+                  placeholder="0"
+                  className="w-full rounded-xl border border-gray-700 bg-primary-dark px-4 py-3 pr-10 text-white focus:border-accent-green focus:outline-none"
                 />
                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">%</span>
               </div>
-            </div>
-            <div>
-              <label className="block text-gray-400 text-sm mb-2">Fixed Amount</label>
-              <div className="relative">
-                <input
-                  type="number"
-                  value={fixedDiscount}
-                  onChange={(e) => setFixedDiscount(e.target.value)}
-                  placeholder={`${symbol} 0.00`}
-                  className="w-full px-4 py-3 bg-primary-dark border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-accent-green"
-                />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">{symbol}</span>
-              </div>
-            </div>
+            </label>
+            <label className="space-y-2">
+              <span className="block text-sm text-gray-400">Fixed amount</span>
+              <input
+                type="number"
+                min="0"
+                value={fixedDiscount}
+                onChange={(event) => setFixedDiscount(event.target.value)}
+                placeholder="0.00"
+                className="w-full rounded-xl border border-gray-700 bg-primary-dark px-4 py-3 text-white focus:border-accent-green focus:outline-none"
+              />
+            </label>
           </div>
         </div>
 
@@ -173,7 +175,7 @@ export const DiscountsPage = () => {
                   key={promo._id}
                   onClick={() => togglePromotion(promo._id)}
                   className={`w-full flex items-center justify-between p-4 rounded-xl border transition-colors ${
-                    selectedPromotions.includes(promo._id)
+                    selectedPromotion === promo._id
                       ? 'bg-blue-500/10 border-blue-500'
                       : 'bg-primary-dark border-gray-700 hover:border-gray-600'
                   }`}
@@ -184,12 +186,12 @@ export const DiscountsPage = () => {
                   </div>
                   <div
                     className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                      selectedPromotions.includes(promo._id)
+                      selectedPromotion === promo._id
                         ? 'border-blue-500 bg-blue-500'
                         : 'border-gray-500'
                     }`}
                   >
-                    {selectedPromotions.includes(promo._id) && (
+                    {selectedPromotion === promo._id && (
                       <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                       </svg>
@@ -213,8 +215,14 @@ export const DiscountsPage = () => {
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-gray-400">Total Discount</span>
-            <span className="text-red-400">-{format(totalDiscount)}</span>
+            <span className="text-red-400">{isCalculating ? 'Calculating…' : `-${format(totalDiscount)}`}</span>
           </div>
+          {(quote?.taxAmount ?? 0) > 0 && (
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-400">Tax</span>
+              <span className="text-white">{format(quote?.taxAmount ?? 0)}</span>
+            </div>
+          )}
           <div className="flex justify-between text-lg font-bold pt-2 border-t border-gray-700">
             <span className="text-white">New Total</span>
             <span className="text-white">{format(newTotal)}</span>
@@ -223,9 +231,10 @@ export const DiscountsPage = () => {
 
         <button
           onClick={handleApplyDiscount}
+          disabled={isCalculating || Boolean((selectedPromotion || debouncedManualDiscount > 0) && !quote)}
           className="w-full py-4 bg-blue-500 text-white font-semibold rounded-xl hover:bg-blue-600 transition-colors"
         >
-          Apply Discount
+          {selectedPromotion || debouncedManualDiscount > 0 ? 'Apply Discount' : 'Clear Discount'}
         </button>
       </div>
     </div>

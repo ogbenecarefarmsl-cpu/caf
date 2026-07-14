@@ -14,6 +14,7 @@ import {
   type RecurringItem,
 } from '../../lib/recurring-invoices-api';
 import { useCurrency } from '../../hooks/useCurrency';
+import { useConfirm } from '../../hooks/useConfirm';
 
 const CADENCE_LABELS: Record<RecurringCadence, string> = {
   weekly: 'Weekly',
@@ -70,6 +71,7 @@ export function RecurringInvoicesPage() {
   const { showSuccess, showError } = useToast();
   const queryClient = useQueryClient();
   const { format: fmtMoney } = useCurrency();
+  const requestConfirmation = useConfirm();
   const [editing, setEditing] = useState<RecurringInvoice | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [showForm, setShowForm] = useState(false);
@@ -357,10 +359,14 @@ export function RecurringInvoicesPage() {
                           {t.active ? 'Pause' : 'Resume'}
                         </button>
                         <button
-                          onClick={() => {
-                            if (window.confirm(`Delete "${t.description}"?`)) {
-                              removeMutation.mutate(t._id);
-                            }
+                          onClick={async () => {
+                            const confirmed = await requestConfirmation({
+                              title: 'Delete recurring invoice?',
+                              message: `"${t.description}" and its future schedule will be permanently removed.`,
+                              confirmLabel: 'Delete invoice',
+                              variant: 'danger',
+                            });
+                            if (confirmed) removeMutation.mutate(t._id);
                           }}
                           className="px-2 py-1 text-xs bg-red-500/20 text-red-400 rounded hover:bg-red-500/30"
                         >

@@ -12,6 +12,9 @@ import { Loading } from '../../components/ui/Loading';
 import { Error } from '../../components/ui/Error';
 import { queryKeys } from '../../lib/query-keys';
 import { unwrapArray } from '../../lib/unwrap-response';
+import { useConfirm } from '../../hooks/useConfirm';
+import { useToast } from '../../hooks/useToast';
+import { getErrorMessage } from '../../lib/error-utils';
 
 interface TaxConfig {
   _id: string;
@@ -34,6 +37,8 @@ export const TaxConfigurationPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTax, setEditingTax] = useState<TaxConfig | null>(null);
   const queryClient = useQueryClient();
+  const requestConfirmation = useConfirm();
+  const { showSuccess, showError } = useToast();
 
   const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<TaxFormData>();
   const taxType = watch('type');
@@ -56,7 +61,9 @@ export const TaxConfigurationPage = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.taxConfigs.all(), exact: false });
       setIsModalOpen(false);
       reset();
+      showSuccess('Tax configuration created');
     },
+    onError: (err: unknown) => showError('Could not create tax', getErrorMessage(err, 'Please try again.')),
   });
 
   // Update tax mutation
@@ -70,7 +77,9 @@ export const TaxConfigurationPage = () => {
       setIsModalOpen(false);
       setEditingTax(null);
       reset();
+      showSuccess('Tax configuration updated');
     },
+    onError: (err: unknown) => showError('Could not update tax', getErrorMessage(err, 'Please try again.')),
   });
 
   // Toggle tax status mutation
@@ -80,7 +89,9 @@ export const TaxConfigurationPage = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.taxConfigs.all(), exact: false });
+      showSuccess('Tax status updated');
     },
+    onError: (err: unknown) => showError('Could not update status', getErrorMessage(err, 'Please try again.')),
   });
 
   // Delete tax mutation
@@ -90,7 +101,9 @@ export const TaxConfigurationPage = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.taxConfigs.all(), exact: false });
+      showSuccess('Tax configuration deleted');
     },
+    onError: (err: unknown) => showError('Could not delete tax', getErrorMessage(err, 'Please try again.')),
   });
 
   const handleOpenModal = (tax?: TaxConfig) => {
@@ -186,10 +199,14 @@ export const TaxConfigurationPage = () => {
           <Button
             variant="danger"
             size="sm"
-            onClick={() => {
-              if (confirm('Are you sure you want to delete this tax configuration?')) {
-                deleteMutation.mutate(tax._id);
-              }
+            onClick={async () => {
+              const confirmed = await requestConfirmation({
+                title: 'Delete tax configuration?',
+                message: `"${tax.name}" will be permanently removed. Existing records are not changed.`,
+                confirmLabel: 'Delete tax',
+                variant: 'danger',
+              });
+              if (confirmed) deleteMutation.mutate(tax._id);
             }}
           >
             Delete

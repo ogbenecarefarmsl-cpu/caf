@@ -20,6 +20,7 @@ interface ReceiptProps {
     items: ReceiptItem[];
     subtotal: number;
     discount: number;
+    taxAmount?: number;
     total: number;
     paymentMethod: string;
     createdAt: string;
@@ -124,6 +125,12 @@ export const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(
             <div className="flex justify-between mb-2">
               <span>Discount:</span>
               <span>-{format(saleData.discount)}</span>
+            </div>
+          )}
+          {(saleData.taxAmount ?? 0) > 0 && (
+            <div className="flex justify-between">
+              <span>Tax:</span>
+              <span>{format(saleData.taxAmount ?? 0)}</span>
             </div>
           )}
           <div className="flex justify-between text-xl font-bold border-t-2 border-black pt-2">

@@ -7,6 +7,9 @@ import { Button } from '../../components/ui/Button';
 import { PrinterSettingsModal } from '../../components/admin/PrinterSettingsModal';
 import { useToast } from '../../hooks/useToast';
 import { getBranchId, useBranchStore } from '../../stores/branch-store';
+import { Loading } from '../../components/ui/Loading';
+import { EmptyState } from '../../components/ui/EmptyState';
+import { useConfirm } from '../../hooks/useConfirm';
 
 interface PrinterConfig {
   _id: string;
@@ -34,8 +37,10 @@ export const PrintersPage: React.FC = () => {
   const [printers, setPrinters] = useState<PrinterConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [testing, setTesting] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const { showSuccess, showError } = useToast();
+  const requestConfirmation = useConfirm();
   const selectedBranch = useBranchStore((state) => state.selectedBranch);
   const branchId = getBranchId(selectedBranch);
   const terminalId = 'TERMINAL-01';
@@ -70,17 +75,24 @@ export const PrintersPage: React.FC = () => {
     }
   };
 
-  const deletePrinter = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this printer?')) {
-      return;
-    }
+  const deletePrinter = async (printer: PrinterConfig) => {
+    const confirmed = await requestConfirmation({
+      title: 'Delete printer?',
+      message: `"${printer.name}" will be removed from this terminal. Receipts will no longer print to it.`,
+      confirmLabel: 'Delete printer',
+      variant: 'danger',
+    });
+    if (!confirmed) return;
 
+    setDeleting(printer._id);
     try {
-      await apiClient.delete(`/printers/${id}`);
+      await apiClient.delete(`/printers/${printer._id}`);
       showSuccess('Printer deleted');
       await loadPrinters();
     } catch {
       showError('Failed to delete printer');
+    } finally {
+      setDeleting(null);
     }
   };
 
@@ -102,9 +114,7 @@ export const PrintersPage: React.FC = () => {
   if (loading) {
     return (
       <AdminLayout title="Thermal Printers">
-        <div className="flex h-64 items-center justify-center">
-          <div className="text-gray-400">Loading printers...</div>
-        </div>
+        <Loading variant="centered" text="Loading printers…" />
       </AdminLayout>
     );
   }
@@ -138,10 +148,13 @@ export const PrintersPage: React.FC = () => {
         </div>
 
         {printers.length === 0 ? (
-          <div className="rounded-xl border border-white/10 bg-primary-dark py-12 text-center">
-            <Printer className="mx-auto mb-4 h-16 w-16 text-gray-600" />
-            <p className="mb-4 text-gray-400">No printers configured yet.</p>
-            <Button onClick={() => setIsSettingsOpen(true)}>Add Your First Printer</Button>
+          <div className="rounded-xl border border-white/10 bg-primary-dark">
+            <EmptyState
+              icon={<Printer className="h-12 w-12" />}
+              title="No printers configured"
+              message="Add a printer to start printing receipts from this terminal."
+              action={{ label: 'Add your first printer', onClick: () => setIsSettingsOpen(true) }}
+            />
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -223,9 +236,12 @@ export const PrintersPage: React.FC = () => {
                     </span>
                   </Button>
                   <Button
-                    onClick={() => deletePrinter(printer._id)}
+                    onClick={() => deletePrinter(printer)}
                     variant="danger"
+                    isLoading={deleting === printer._id}
+                    loadingLabel="Deleting"
                     className="px-3"
+                    aria-label={`Delete ${printer.name}`}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>

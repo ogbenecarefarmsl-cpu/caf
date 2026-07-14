@@ -16,6 +16,7 @@ import { queryKeys } from '../../lib/query-keys';
 import { buildApiUrl } from '../../lib/api-utils';
 import { useSearchWithDebounce } from '../../hooks/useSearchWithDebounce';
 import { unwrapArray } from '../../lib/unwrap-response';
+import { useConfirm } from '../../hooks/useConfirm';
 
 interface Promotion {
   _id: string;
@@ -58,6 +59,7 @@ export const PromotionsManagementPage = () => {
   const queryClient = useQueryClient();
   const { format } = useCurrency();
   const { showSuccess, showError } = useToast();
+  const requestConfirmation = useConfirm();
 
   const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<PromotionFormData>();
 
@@ -259,10 +261,14 @@ export const PromotionsManagementPage = () => {
           <Button
             variant="danger"
             size="sm"
-            onClick={() => {
-              if (confirm('Are you sure you want to delete this promotion?')) {
-                deleteMutation.mutate(promotion._id);
-              }
+            onClick={async () => {
+              const confirmed = await requestConfirmation({
+                title: 'Delete promotion?',
+                message: `"${promotion.name}" will be permanently removed and can no longer be applied.`,
+                confirmLabel: 'Delete promotion',
+                variant: 'danger',
+              });
+              if (confirmed) deleteMutation.mutate(promotion._id);
             }}
           >
             Delete

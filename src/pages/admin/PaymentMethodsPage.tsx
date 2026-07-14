@@ -12,6 +12,9 @@ import { Loading } from '../../components/ui/Loading';
 import { Error } from '../../components/ui/Error';
 import { queryKeys } from '../../lib/query-keys';
 import { unwrapArray } from '../../lib/unwrap-response';
+import { useConfirm } from '../../hooks/useConfirm';
+import { useToast } from '../../hooks/useToast';
+import { getErrorMessage } from '../../lib/error-utils';
 
 interface PaymentMethod {
   _id: string;
@@ -34,6 +37,8 @@ export const PaymentMethodsPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMethod, setEditingMethod] = useState<PaymentMethod | null>(null);
   const queryClient = useQueryClient();
+  const requestConfirmation = useConfirm();
+  const { showSuccess, showError } = useToast();
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<PaymentMethodFormData>();
 
@@ -55,7 +60,9 @@ export const PaymentMethodsPage = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.paymentMethods.all(), exact: false });
       setIsModalOpen(false);
       reset();
+      showSuccess('Payment method created');
     },
+    onError: (err: unknown) => showError('Could not create payment method', getErrorMessage(err, 'Please try again.')),
   });
 
   // Update payment method mutation
@@ -69,7 +76,9 @@ export const PaymentMethodsPage = () => {
       setIsModalOpen(false);
       setEditingMethod(null);
       reset();
+      showSuccess('Payment method updated');
     },
+    onError: (err: unknown) => showError('Could not update payment method', getErrorMessage(err, 'Please try again.')),
   });
 
   // Toggle payment method status mutation
@@ -79,7 +88,9 @@ export const PaymentMethodsPage = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.paymentMethods.all(), exact: false });
+      showSuccess('Payment method status updated');
     },
+    onError: (err: unknown) => showError('Could not update status', getErrorMessage(err, 'Please try again.')),
   });
 
   // Delete payment method mutation
@@ -89,7 +100,9 @@ export const PaymentMethodsPage = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.paymentMethods.all(), exact: false });
+      showSuccess('Payment method deleted');
     },
+    onError: (err: unknown) => showError('Could not delete payment method', getErrorMessage(err, 'Please try again.')),
   });
 
   const handleOpenModal = (method?: PaymentMethod) => {
@@ -202,10 +215,14 @@ export const PaymentMethodsPage = () => {
             <Button
               variant="danger"
               size="sm"
-              onClick={() => {
-                if (confirm('Are you sure you want to delete this payment method?')) {
-                  deleteMutation.mutate(method._id);
-                }
+              onClick={async () => {
+                const confirmed = await requestConfirmation({
+                  title: 'Delete payment method?',
+                  message: `"${method.name}" will be permanently removed from future payments.`,
+                  confirmLabel: 'Delete method',
+                  variant: 'danger',
+                });
+                if (confirmed) deleteMutation.mutate(method._id);
               }}
             >
               Delete

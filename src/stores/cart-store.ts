@@ -30,6 +30,8 @@ export interface CartItem {
 interface CartState {
   items: CartItem[];
   discount: number;
+  manualDiscount: number;
+  promotionId?: string;
   prescriptionUrl?: string;
 
   // Computed values
@@ -42,9 +44,10 @@ interface CartState {
   updateQuantity: (productId: string, quantity: number, packSize?: PackSize | string) => void;
   updateItemPrice: (productId: string, unitPrice: number, packSize?: PackSize | string) => void;
   setDiscount: (discount: number) => void;
+  setPromotion: (promotionId: string | undefined, discount: number, manualDiscount?: number) => void;
   setPrescription: (url: string) => void;
   clearCart: () => void;
-  restoreCart: (snapshot: { items: CartItem[]; discount: number; prescriptionUrl?: string }) => void;
+  restoreCart: (snapshot: { items: CartItem[]; discount: number; manualDiscount?: number; promotionId?: string; prescriptionUrl?: string }) => void;
   calculateTotals: () => void;
 }
 
@@ -72,6 +75,8 @@ export const useCartStore = create<CartState>()(
     (set, get) => ({
       items: [],
       discount: 0,
+      manualDiscount: 0,
+      promotionId: undefined,
       prescriptionUrl: undefined,
       subtotal: 0,
       total: 0,
@@ -165,7 +170,12 @@ export const useCartStore = create<CartState>()(
   },
 
   setDiscount: (discount) => {
-    set({ discount: Math.max(0, discount) });
+    set({ discount: Math.max(0, discount), manualDiscount: Math.max(0, discount), promotionId: undefined });
+    get().calculateTotals();
+  },
+
+  setPromotion: (promotionId, discount, manualDiscount = 0) => {
+    set({ promotionId, discount: Math.max(0, discount), manualDiscount: Math.max(0, manualDiscount) });
     get().calculateTotals();
   },
 
@@ -177,6 +187,8 @@ export const useCartStore = create<CartState>()(
     set({
       items: [],
       discount: 0,
+      manualDiscount: 0,
+      promotionId: undefined,
       prescriptionUrl: undefined,
       subtotal: 0,
       total: 0,
@@ -187,6 +199,8 @@ export const useCartStore = create<CartState>()(
     set({
       items: snapshot.items.map((i) => ({ ...i })),
       discount: snapshot.discount ?? 0,
+      manualDiscount: snapshot.manualDiscount ?? 0,
+      promotionId: snapshot.promotionId,
       prescriptionUrl: snapshot.prescriptionUrl,
     });
     get().calculateTotals();
@@ -206,6 +220,8 @@ export const useCartStore = create<CartState>()(
       partialize: (state) => ({
         items: state.items,
         discount: state.discount,
+        manualDiscount: state.manualDiscount,
+        promotionId: state.promotionId,
         prescriptionUrl: state.prescriptionUrl,
         subtotal: state.subtotal,
         total: state.total,

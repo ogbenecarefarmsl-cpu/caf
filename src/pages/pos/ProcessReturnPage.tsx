@@ -13,6 +13,8 @@ import { queryKeys } from '../../lib/query-keys';
 import { formatDate } from '../../lib/date-format';
 
 interface SaleItem {
+  saleItemId?: string;
+  batchId?: string;
   productId: string;
   productName: string;
   quantity: number;
@@ -33,6 +35,9 @@ interface Sale {
 }
 
 interface ReturnItem {
+  lineKey: string;
+  saleItemId?: string;
+  batchId?: string;
   productId: string;
   productName: string;
   quantity: number;
@@ -83,7 +88,7 @@ export const ProcessReturnPage = () => {
   });
 
   const returnMutation = useMutation({
-    mutationFn: async (data: { saleId: string; items: Array<{ productId: string; quantity: number }>; reason: string }) => {
+    mutationFn: async (data: { saleId: string; items: Array<{ saleItemId?: string; batchId?: string; productId: string; quantity: number }>; reason: string }) => {
       const response = await apiClient.post(`/sales/${data.saleId}/return`, {
         items: data.items,
         reason: data.reason,
@@ -111,11 +116,14 @@ export const ProcessReturnPage = () => {
 
     setSelectedSale(sale);
     const items: ReturnItem[] = sale.items.map((item) => ({
+      lineKey: item.saleItemId || item.batchId || item.productId,
+      saleItemId: item.saleItemId,
+      batchId: item.batchId,
       productId: item.productId,
       productName: item.productName || item.productId,
       quantity: 1,
       maxQuantity: item.quantity - (item.returnedQuantity || 0),
-      unitPrice: item.unitPrice,
+      unitPrice: item.quantity > 0 ? item.subtotal / item.quantity : 0,
       selected: false,
     })).filter((item) => item.maxQuantity > 0);
 
@@ -123,18 +131,18 @@ export const ProcessReturnPage = () => {
     setShowReturnForm(true);
   };
 
-  const handleToggleItem = (productId: string) => {
+  const handleToggleItem = (lineKey: string) => {
     setReturnItems((prev) =>
       prev.map((item) =>
-        item.productId === productId ? { ...item, selected: !item.selected } : item
+        item.lineKey === lineKey ? { ...item, selected: !item.selected } : item
       )
     );
   };
 
-  const handleUpdateQuantity = (productId: string, quantity: number) => {
+  const handleUpdateQuantity = (lineKey: string, quantity: number) => {
     setReturnItems((prev) =>
       prev.map((item) =>
-        item.productId === productId
+        item.lineKey === lineKey
           ? { ...item, quantity: Math.max(1, Math.min(quantity, item.maxQuantity)) }
           : item
       )
@@ -147,6 +155,8 @@ export const ProcessReturnPage = () => {
     const itemsToReturn = returnItems
       .filter((item) => item.selected && item.quantity > 0)
       .map((item) => ({
+        saleItemId: item.saleItemId,
+        batchId: item.batchId,
         productId: item.productId,
         quantity: item.quantity,
       }));
@@ -168,7 +178,12 @@ export const ProcessReturnPage = () => {
   };
 
   const selectedItems = returnItems.filter((item) => item.selected);
-  const returnTotal = selectedItems.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
+  const grossSubtotal = selectedSale?.items.reduce((sum, item) => sum + item.subtotal, 0) || 0;
+  const netRatio = selectedSale && grossSubtotal > 0 ? selectedSale.total / grossSubtotal : 0;
+  const returnTotal = selectedItems.reduce(
+    (sum, item) => sum + item.quantity * item.unitPrice * netRatio,
+    0,
+  );
 
   if (showReturnForm && selectedSale) {
     return (
@@ -198,8 +213,8 @@ export const ProcessReturnPage = () => {
             <div className="space-y-3">
               {returnItems.map((item) => (
                 <div
-                  key={item.productId}
-                  onClick={() => handleToggleItem(item.productId)}
+                  key={item.lineKey}
+                  onClick={() => handleToggleItem(item.lineKey)}
                   className={`p-4 rounded-xl border cursor-pointer transition-colors ${
                     item.selected
                       ? 'bg-cyan-500/10 border-cyan-500'
@@ -225,14 +240,14 @@ export const ProcessReturnPage = () => {
                     <p className="text-gray-400 text-sm">Max: {item.maxQuantity} available for return</p>
                     <div className="flex items-center space-x-2">
                       <button
-                        onClick={(e) => { e.stopPropagation(); handleUpdateQuantity(item.productId, item.quantity - 1); }}
+                        onClick={(e) => { e.stopPropagation(); handleUpdateQuantity(item.lineKey, item.quantity - 1); }}
                         className="w-10 h-10 min-h-10 rounded-lg bg-gray-700 text-white flex items-center justify-center hover:bg-gray-600"
                       >
                         -
                       </button>
                       <span className="text-white font-semibold w-8 text-center">{item.quantity}</span>
                       <button
-                        onClick={(e) => { e.stopPropagation(); handleUpdateQuantity(item.productId, item.quantity + 1); }}
+                        onClick={(e) => { e.stopPropagation(); handleUpdateQuantity(item.lineKey, item.quantity + 1); }}
                         className="w-10 h-10 min-h-10 rounded-lg bg-gray-700 text-white flex items-center justify-center hover:bg-gray-600"
                       >
                         +

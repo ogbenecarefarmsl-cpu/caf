@@ -26,6 +26,15 @@ interface AuditLog {
   timestamp: string;
 }
 
+const getAuditEventLabel = (log: AuditLog) => {
+  if (log.metadata?.event === 'manual_discount_applied') {
+    const receipt = String(log.metadata.receiptNumber || 'sale');
+    const amount = Number(log.metadata.manualDiscount || 0);
+    return `Staff discount: ${amount.toFixed(2)} · ${receipt}`;
+  }
+  return log.action;
+};
+
 export const AuditTrailPage = () => {
   const {
     value: searchQuery,
@@ -86,7 +95,8 @@ export const AuditTrailPage = () => {
           log.userName.toLowerCase().includes(needle) ||
           log.entity.toLowerCase().includes(needle) ||
           log.entityId.toLowerCase().includes(needle) ||
-          log.action.toLowerCase().includes(needle),
+          log.action.toLowerCase().includes(needle) ||
+          getAuditEventLabel(log).toLowerCase().includes(needle),
       );
     },
   });
@@ -108,6 +118,7 @@ export const AuditTrailPage = () => {
       'action',
       'resource',
       'resourceId',
+      'event',
       'ipAddress',
       'userAgent',
     ];
@@ -118,6 +129,7 @@ export const AuditTrailPage = () => {
       log.action,
       log.entity,
       log.entityId,
+      getAuditEventLabel(log),
       log.ipAddress || '',
       log.userAgent || '',
     ]);
@@ -180,6 +192,15 @@ export const AuditTrailPage = () => {
       header: 'Entity ID',
       render: (log: AuditLog) => (
         <span className="text-xs text-gray-500">{log.entityId}</span>
+      ),
+    },
+    {
+      key: 'event',
+      header: 'Event',
+      render: (log: AuditLog) => (
+        <span className={log.metadata?.event === 'manual_discount_applied' ? 'font-semibold text-amber-300' : 'text-white/70'}>
+          {getAuditEventLabel(log)}
+        </span>
       ),
     },
     {

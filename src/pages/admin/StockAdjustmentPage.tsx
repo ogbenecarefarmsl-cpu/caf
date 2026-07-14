@@ -40,8 +40,16 @@ interface StockMovement {
 
 interface AdjustmentFormData {
   productId: string;
+  batchId: string;
   quantityChange: number;
   reason: string;
+}
+
+interface Batch {
+  _id: string;
+  lotNumber: string;
+  expiryDate: string;
+  quantityAvailable: number;
 }
 
 const formatDate = (value?: string) => value ? new Date(value).toLocaleDateString() : '-';
@@ -67,6 +75,17 @@ export default function StockAdjustmentPage() {
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<AdjustmentFormData>();
   const branchId = getBranchId(selectedBranch);
+
+  const { data: batches = [], isLoading: batchesLoading } = useQuery({
+    queryKey: ['batches', branchId, selectedProduct?._id],
+    queryFn: async () => {
+      const response = await apiClient.get(
+        `/batches/branch/${branchId}/product/${selectedProduct?._id}`,
+      );
+      return (response.data?.data ?? response.data ?? []) as Batch[];
+    },
+    enabled: Boolean(branchId && selectedProduct?._id && isModalOpen),
+  });
 
   // Products with pagination
   const { data: productsData, isLoading, error } = useQuery({
@@ -192,6 +211,27 @@ export default function StockAdjustmentPage() {
                 <p className="text-sm text-gray-300">Current Stock: <span className="font-semibold text-white">{selectedProduct.quantityAvailable}</span></p>
                 <p className="text-sm text-gray-300">Supplier: <span className="font-semibold text-white">{formatSupplier(selectedProduct.supplierId)}</span></p>
               </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-300">
+                  Batch <span className="text-red-500">*</span>
+                </label>
+                <select
+                  {...register('batchId', { required: 'Batch is required' })}
+                  disabled={batchesLoading}
+                  className="w-full rounded-xl border border-white/10 bg-gray-900 px-4 py-2.5 text-white focus:border-accent-green/50 focus:outline-none focus:ring-2 focus:ring-accent-green/20"
+                >
+                  <option value="">{batchesLoading ? 'Loading batches…' : 'Select a batch'}</option>
+                  {batches.map((batch) => (
+                    <option key={batch._id} value={batch._id}>
+                      {batch.lotNumber} · {batch.quantityAvailable} units · expires {formatDate(batch.expiryDate)}
+                    </option>
+                  ))}
+                </select>
+                {errors.batchId && <p className="mt-1 text-sm text-red-500">{errors.batchId.message}</p>}
+                {!batchesLoading && batches.length === 0 && (
+                  <p className="mt-1 text-sm text-amber-400">Create a batch before adjusting this product.</p>
+                )}
+              </div>
               <Input label="Quantity Change" type="number" placeholder="+ to add, - to remove" {...register('quantityChange', { required: 'Required', validate: (v) => Number(v) !== 0 || 'Cannot be zero' })} error={errors.quantityChange?.message} />
               <div>
                 <label className="mb-1 block text-sm font-medium text-gray-300">Reason <span className="text-red-500">*</span></label>
@@ -200,7 +240,7 @@ export default function StockAdjustmentPage() {
               </div>
               <div className="flex justify-end space-x-3 pt-4">
                 <Button type="button" variant="secondary" onClick={handleCloseModal}>Cancel</Button>
-                <Button type="submit" disabled={adjustmentMutation.isPending}>{adjustmentMutation.isPending ? 'Adjusting...' : 'Adjust Stock'}</Button>
+                <Button type="submit" disabled={adjustmentMutation.isPending || batches.length === 0}>{adjustmentMutation.isPending ? 'Adjusting...' : 'Adjust Stock'}</Button>
               </div>
               {adjustmentMutation.isError && <Error message="Failed to adjust stock. Please try again." />}
             </form>

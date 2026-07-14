@@ -62,6 +62,7 @@ export const ReceiptModal = ({ isOpen, onClose, saleData }: ReceiptModalProps) =
     })),
     subtotal: saleData.subtotal,
     discount: saleData.discount,
+    taxAmount: saleData.tax,
     total: saleData.total,
     paymentMethod: saleData.paymentMethodLabel || saleData.paymentMethod,
     createdAt: saleData.createdAt,

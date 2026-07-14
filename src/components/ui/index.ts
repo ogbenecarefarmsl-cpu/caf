@@ -4,6 +4,7 @@ export { Select } from './Select';
 export { Textarea } from './Textarea';
 export { Modal } from './Modal';
 export { ConfirmDialog } from './ConfirmDialog';
+export { ConfirmProvider } from './ConfirmProvider';
 export { Table } from './Table';
 export { Pagination } from './Pagination';
 export { Loading } from './Loading';

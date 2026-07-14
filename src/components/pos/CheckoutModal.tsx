@@ -43,13 +43,12 @@ export const CheckoutModal = ({
   shiftId,
   terminalId,
 }: CheckoutModalProps) => {
-  const { items, subtotal, discount, total, setDiscount } = useCartStore();
+  const { items, subtotal, discount, manualDiscount, promotionId, total } = useCartStore();
   const { alertError } = useAlertReplacement();
   const { format } = useCurrency();
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
   const [paymentReference, setPaymentReference] = useState('');
-  const [discountInput, setDiscountInput] = useState(discount.toString());
 
   const isMobileMoney = isMobileMoneyMethod(paymentMethod);
 
@@ -62,6 +61,7 @@ export const CheckoutModal = ({
     paymentMethod: PaymentMethod;
     paymentReference?: string;
     discount: number;
+    promotionId?: string;
     branchId: string;
     shiftId: string;
     terminalId: string;
@@ -84,12 +84,6 @@ export const CheckoutModal = ({
     },
   });
 
-  const handleDiscountChange = (value: string) => {
-    setDiscountInput(value);
-    const discountValue = parseFloat(value) || 0;
-    setDiscount(Math.max(0, Math.min(discountValue, subtotal)));
-  };
-
   const handleCheckout = async () => {
     if (items.length === 0 || total <= 0) {
       alertError('Cannot checkout with an empty cart or zero total.');
@@ -105,10 +99,11 @@ export const CheckoutModal = ({
         productId: item.productId,
         quantity: item.quantity,
         unitPrice: item.unitPrice,
-        packSize: item.packSize?.unit || undefined,
+        packSize: item.packSize,
         quantityInBaseUnits: item.quantityInBaseUnits,
       })),
-      discount,
+      discount: manualDiscount,
+      promotionId,
       paymentMethod,
       paymentReference: paymentReference.trim() || undefined, // Optional mobile money reference
     };
@@ -136,20 +131,6 @@ export const CheckoutModal = ({
               <span className="text-accent-green">{format(total)}</span>
             </div>
           </div>
-        </div>
-
-        {/* Discount Input */}
-        <div>
-          <Input
-            type="number"
-            label="Discount Amount"
-            placeholder="0.00"
-            value={discountInput}
-            onChange={(e) => handleDiscountChange(e.target.value)}
-            min="0"
-            max={subtotal}
-            step="0.01"
-          />
         </div>
 
         {/* Payment Method Selection */}

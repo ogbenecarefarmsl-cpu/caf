@@ -12,6 +12,7 @@ import { useAlertReplacement } from '../../hooks/useAlertReplacement';
 import { useBarcodeScanner } from '../../hooks/useBarcodeScanner';
 import { useDebounce } from '../../hooks/useDebounce';
 import { useToast } from '../../hooks/useToast';
+import { useConfirm } from '../../hooks/useConfirm';
 import { OfflineIndicator, POSLayout } from '../../components/pos';
 import { getProductImage, handleImageError } from '../../lib/product-images';
 import { UserProfileModal } from '../../components/pos/UserProfileModal';
@@ -89,6 +90,7 @@ export const POSPage = () => {
   const discardHeldSale = useHeldSalesStore((s) => s.discardSale);
   const restoreCart = useCartStore((s) => s.restoreCart);
   const { showSuccess, showError } = useToast();
+  const requestConfirmation = useConfirm();
   const { format, symbol } = useCurrency();
   
   // Helper to convert stock to readable units
@@ -714,17 +716,27 @@ export const POSPage = () => {
                 restoreCart({
                   items: sale.items,
                   discount: sale.discount,
+                  manualDiscount: sale.manualDiscount,
+                  promotionId: sale.promotionId,
                   prescriptionUrl: sale.prescriptionUrl,
                 });
                 showSuccess(`Recalled "${sale.label}"`);
               }
             }}
-            onDiscard={(id) => {
+            onDiscard={async (id) => {
               const sale = heldSales.find((s) => s.id === id);
-              if (sale && window.confirm(`Discard parked sale "${sale.label}"? This cannot be undone.`)) {
-                discardHeldSale(id);
-                showSuccess(`Discarded "${sale.label}"`);
-              }
+              if (!sale) return;
+
+              const confirmed = await requestConfirmation({
+                title: 'Discard parked sale?',
+                message: `"${sale.label}" will be permanently removed. This cannot be undone.`,
+                confirmLabel: 'Discard sale',
+                variant: 'danger',
+              });
+              if (!confirmed) return;
+
+              discardHeldSale(id);
+              showSuccess(`Discarded "${sale.label}"`);
             }}
             format={format}
           />

@@ -63,7 +63,7 @@ interface PaymentMethodDef {
 export const PaymentPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { items, total, discount, subtotal, prescriptionUrl, clearCart } = useCartStore();
+  const { items, total: cartTotal, discount, manualDiscount, promotionId, subtotal, prescriptionUrl, clearCart } = useCartStore();
   const holdSale = useHeldSalesStore((s) => s.holdSale);
   const heldSales = useHeldSalesStore((s) => s.heldSales);
   const selectedBranch = useBranchStore((state) => state.selectedBranch);
@@ -81,13 +81,40 @@ export const PaymentPage = () => {
   const terminalId = 'TERMINAL-01';
   
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
-  const [amountReceived, setAmountReceived] = useState(total.toFixed(2));
+  const [amountReceived, setAmountReceived] = useState(cartTotal.toFixed(2));
   const [creditCustomerName, setCreditCustomerName] = useState('');
   const [creditCustomerPhone, setCreditCustomerPhone] = useState('');
   const [creditDueDate, setCreditDueDate] = useState('');
   const [creditCustomerId, setCreditCustomerId] = useState<string | undefined>(undefined);
   const [linkedCustomer, setLinkedCustomer] = useState<CustomerOption | null>(null);
   const [creditAmountPaid, setCreditAmountPaid] = useState('0');
+
+  const { data: checkoutQuote, isLoading: quoteLoading } = useQuery({
+    queryKey: ['checkout-quote', branchId, promotionId, manualDiscount, items],
+    queryFn: async () => {
+      const response = await apiClient.post('/sales/quote', {
+        branchId,
+        promotionId,
+        discount: manualDiscount,
+        items: items.map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          packSize: item.packSize,
+          quantityInBaseUnits: item.quantityInBaseUnits,
+        })),
+      });
+      return response.data as { subtotal: number; discount: number; taxAmount: number; total: number };
+    },
+    enabled: Boolean(branchId && items.length),
+  });
+  const total = checkoutQuote?.total ?? cartTotal;
+
+  useEffect(() => {
+    if (checkoutQuote && paymentMethod === 'cash') {
+      setAmountReceived(checkoutQuote.total.toFixed(2));
+    }
+  }, [checkoutQuote, paymentMethod]);
   const [creditInitialMethod, setCreditInitialMethod] =
     useState<CreditCollectionMethod>('cash');
   const [showEmailModal, setShowEmailModal] = useState(false);
@@ -193,6 +220,8 @@ export const PaymentPage = () => {
       label: defaultLabel,
       items: items.map((i) => ({ ...i })),
       discount,
+      manualDiscount,
+      promotionId,
       prescriptionUrl,
       customerId: paymentMethod === 'credit' ? creditCustomerId : undefined,
       customerName,
@@ -243,6 +272,10 @@ export const PaymentPage = () => {
       
       if (items.length === 0) {
         throw new Error('No items in cart');
+      }
+
+      if (!checkoutQuote) {
+        throw new Error('Final totals are still being calculated. Please try again.');
       }
 
       if (!currentShift || currentShift.status !== 'open') {
@@ -300,7 +333,8 @@ export const PaymentPage = () => {
           } : null,
           quantityInBaseUnits: item.quantityInBaseUnits,
         })),
-        discount,
+        discount: manualDiscount,
+        promotionId,
         paymentMethod: paymentMethodMap[paymentMethod],
         paymentReference: ['orange_money', 'africell_money', 'qmoney'].includes(paymentMethod) && paymentReference.trim()
           ? paymentReference.trim()
@@ -499,12 +533,18 @@ export const PaymentPage = () => {
               total={total}
               format={format}
             />
+            {(checkoutQuote?.taxAmount ?? 0) > 0 && (
+              <div className="mx-4 mt-2 flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm">
+                <span className="text-gray-400">Tax</span>
+                <span className="font-medium text-white">{format(checkoutQuote?.taxAmount ?? 0)}</span>
+              </div>
+            )}
 
             {/* Amount Due Card - Enhanced with Glassmorphism */}
             <div className="mx-4 mt-4 rounded-2xl bg-gradient-to-br from-accent-green/20 via-accent-green/10 to-transparent border border-accent-green/20 p-6 text-center backdrop-blur-lg">
               <p className="text-accent-green/80 text-sm font-medium uppercase tracking-wider">Amount Due</p>
               <p className="text-5xl sm:text-6xl font-bold text-white mt-2 tracking-tight animate-in fade-in duration-500">
-                {format(total)}
+                {quoteLoading ? 'Calculating…' : format(total)}
               </p>
               {discount > 0 && (
                 <p className="text-sm text-gray-400 mt-3 animate-in slide-in-from-bottom duration-300">

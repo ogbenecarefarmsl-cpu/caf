@@ -7,6 +7,8 @@ export interface HeldSale {
   label: string;                 // "Sale 1", "Customer X", or custom
   items: CartItem[];
   discount: number;
+  manualDiscount?: number;
+  promotionId?: string;
   prescriptionUrl?: string;
   customerId?: string;
   customerName?: string;

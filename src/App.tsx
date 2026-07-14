@@ -3,6 +3,7 @@ import { RouterProvider } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { UpdatePrompt } from './components/UpdatePrompt';
 import { ToastProvider } from './components/ui/Toast';
+import { ConfirmProvider } from './components/ui/ConfirmProvider';
 import {
   checkForApkUpdate,
   openApkDownload,
@@ -104,8 +105,9 @@ function App() {
   return (
     <AuthProvider>
       <ToastProvider>
-        <RouterProvider router={router} />
-        <UpdatePrompt
+        <ConfirmProvider>
+          <RouterProvider router={router} />
+          <UpdatePrompt
           isOpen={!!availableUpdate}
           isApplying={isApplyingUpdate}
           title={isApkUpdate ? 'APK update available' : 'Update ready'}
@@ -125,7 +127,8 @@ function App() {
           canDismiss={!apkUpdate?.mandatory}
           onUpdate={handleApplyUpdate}
           onDismiss={() => setAvailableUpdate(null)}
-        />
+          />
+        </ConfirmProvider>
       </ToastProvider>
     </AuthProvider>
   );

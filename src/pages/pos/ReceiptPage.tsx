@@ -22,6 +22,7 @@ interface Sale {
   items: SaleItem[];
   subtotal: number;
   discount: number;
+  taxAmount?: number;
   total: number;
   paymentMethod: string;
   status: string;
@@ -193,6 +194,12 @@ export const ReceiptPage = () => {
               <div className="flex justify-between text-sm">
                 <span className="text-gray-400">Discount</span>
                 <span className="text-red-400">-{format(sale.discount)}</span>
+              </div>
+            )}
+            {(sale.taxAmount ?? 0) > 0 && (
+              <div className="flex justify-between">
+                <span className="text-gray-400">Tax</span>
+                <span className="text-white">{format(sale.taxAmount ?? 0)}</span>
               </div>
             )}
             <div className="flex justify-between text-lg font-bold pt-2 border-t border-gray-700">

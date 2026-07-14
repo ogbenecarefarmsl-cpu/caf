@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, type ReactNode } from 'react';
+import { AlertTriangle, CheckCircle2, Info, X, XCircle } from 'lucide-react';
 import { type Toast, ToastContext } from '../../contexts/ToastContext';
 
 interface ToastProviderProps {
@@ -21,9 +22,18 @@ export const ToastProvider = ({ children }: ToastProviderProps) => {
   const addToast = useCallback((toast: Omit<Toast, 'id'>) => {
     const id = crypto.randomUUID();
     const newToast = { ...toast, id };
-    setToasts((prev) => [...prev, newToast]);
+    setToasts((prev) => {
+      const next = [...prev, newToast];
+      const removed = next.length > 4 ? next.shift() : undefined;
+      if (removed) {
+        const removedTimeout = timeoutRefs.current.get(removed.id);
+        if (removedTimeout) clearTimeout(removedTimeout);
+        timeoutRefs.current.delete(removed.id);
+      }
+      return next;
+    });
 
-    const duration = toast.duration || 5000;
+    const duration = toast.duration ?? 5000;
     const timeout = setTimeout(() => {
       removeToast(id);
     }, duration);
@@ -78,7 +88,7 @@ const ToastContainer = ({ toasts, onRemove }: ToastContainerProps) => {
   if (toasts.length === 0) return null;
 
   return (
-    <div className="fixed top-[calc(1rem+env(safe-area-inset-top))] right-4 left-4 sm:left-auto z-50 space-y-2 sm:max-w-sm">
+    <div className="pointer-events-none fixed top-[calc(1rem+env(safe-area-inset-top))] right-4 left-4 z-[100] space-y-2 sm:left-auto sm:max-w-sm" aria-label="Notifications">
       {toasts.map((toast) => (
         <ToastItem key={toast.id} toast={toast} onRemove={onRemove} />
       ))}
@@ -104,27 +114,26 @@ const ToastItem = ({ toast, onRemove }: ToastItemProps) => {
 
   const handleRemove = () => {
     setIsVisible(false);
-    const timeout = setTimeout(() => onRemove(toast.id), 300);
-    return () => clearTimeout(timeout);
+    setTimeout(() => onRemove(toast.id), 200);
   };
 
   const getToastStyles = () => {
-    const baseStyles = "transform transition-all duration-300 ease-in-out";
+    const baseStyles = "pointer-events-auto transform border-l-4 bg-primary-dark/95 shadow-2xl shadow-black/30 backdrop-blur-xl transition-all duration-200 ease-out";
     const visibilityStyles = isVisible 
       ? "translate-x-0 opacity-100" 
       : "translate-x-full opacity-0";
     
     switch (toast.type) {
       case 'success':
-        return `${baseStyles} ${visibilityStyles} bg-green-600 border-green-500`;
+        return `${baseStyles} ${visibilityStyles} border-accent-green`;
       case 'error':
-        return `${baseStyles} ${visibilityStyles} bg-red-600 border-red-500`;
+        return `${baseStyles} ${visibilityStyles} border-red-400`;
       case 'warning':
-        return `${baseStyles} ${visibilityStyles} bg-yellow-600 border-yellow-500`;
+        return `${baseStyles} ${visibilityStyles} border-amber-300`;
       case 'info':
-        return `${baseStyles} ${visibilityStyles} bg-blue-600 border-blue-500`;
+        return `${baseStyles} ${visibilityStyles} border-sky-400`;
       default:
-        return `${baseStyles} ${visibilityStyles} bg-gray-600 border-gray-500`;
+        return `${baseStyles} ${visibilityStyles} border-gray-400`;
     }
   };
 
@@ -132,38 +141,35 @@ const ToastItem = ({ toast, onRemove }: ToastItemProps) => {
     switch (toast.type) {
       case 'success':
         return (
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
+          <CheckCircle2 className="h-5 w-5 text-accent-green" />
         );
       case 'error':
         return (
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
+          <XCircle className="h-5 w-5 text-red-400" />
         );
       case 'warning':
         return (
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-          </svg>
+          <AlertTriangle className="h-5 w-5 text-amber-300" />
         );
       case 'info':
         return (
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
+          <Info className="h-5 w-5 text-sky-400" />
         );
     }
   };
 
   return (
-    <div className={`${getToastStyles()} p-4 rounded-lg shadow-lg border text-white w-full max-w-[calc(100vw-2rem)]`} role="alert" aria-live="polite">
+    <div
+      className={`${getToastStyles()} w-full max-w-[calc(100vw-2rem)] rounded-xl border-y border-r border-white/10 p-4 text-white`}
+      role={toast.type === 'error' ? 'alert' : 'status'}
+      aria-live={toast.type === 'error' ? 'assertive' : 'polite'}
+      aria-atomic="true"
+    >
       <div className="flex items-start space-x-3">
         <div className="shrink-0" aria-hidden="true">
           {getIcon()}
         </div>
-        <div className="flex-1">
+        <div className="min-w-0 flex-1">
           <p className="font-semibold text-sm">{toast.title}</p>
           {toast.message && (
             <p className="text-sm opacity-90 mt-1">{toast.message}</p>
@@ -171,12 +177,10 @@ const ToastItem = ({ toast, onRemove }: ToastItemProps) => {
         </div>
         <button
           onClick={handleRemove}
-          className="shrink-0 hover:opacity-75 transition-opacity"
+          className="-mr-1 -mt-1 shrink-0 rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/30"
           aria-label="Dismiss notification"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
+          <X className="h-4 w-4" aria-hidden="true" />
         </button>
       </div>
     </div>
