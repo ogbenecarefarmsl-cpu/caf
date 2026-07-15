@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useState } from "react";
 import * as React from "react";
 import { type PaginationMeta } from "../../hooks/usePagination";
 import { Pagination } from "./Pagination";
@@ -63,9 +63,23 @@ export const Table = <T extends Record<string, any>>({
   if (isLoading) {
     return (
       <div className="bg-primary-dark rounded-xl border border-gray-700 overflow-hidden">
-        <div className="p-12 text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-accent-green"></div>
-          <p className="mt-4 text-gray-400">Loading...</p>
+        <div className="flex gap-4 border-b border-gray-700 bg-primary-darker px-4 py-3 sm:px-6" aria-hidden="true">
+          {columns.slice(0, 5).map((column) => (
+            <div key={column.key} className="h-3 min-w-16 flex-1 animate-pulse rounded bg-white/10" />
+          ))}
+        </div>
+        <div className="divide-y divide-gray-700" role="status" aria-live="polite" aria-busy="true">
+          {[0, 1, 2, 3, 4].map((row) => (
+            <div key={row} className="flex gap-4 px-4 py-4 sm:px-6">
+              {columns.slice(0, 5).map((column, index) => (
+                <div
+                  key={column.key}
+                  className={`h-4 flex-1 animate-pulse rounded ${index === 0 ? 'bg-white/10' : 'bg-white/5'}`}
+                />
+              ))}
+            </div>
+          ))}
+          <span className="sr-only">Loading table data…</span>
         </div>
       </div>
     );

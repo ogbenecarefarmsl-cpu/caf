@@ -832,11 +832,17 @@ export const POSPage = () => {
           {/* Product Grid */}
           <div className="flex-1 overflow-y-auto pr-2">
             {loadingProducts ? (
-              <div className="flex items-center justify-center h-full">
-                <div className="text-center">
-                  <div className="w-12 h-12 rounded-full border-2 border-accent-green border-t-transparent animate-spin mx-auto mb-3" />
-                  <p className="text-gray-400">Loading products...</p>
-                </div>
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 xl:grid-cols-3" role="status" aria-busy="true">
+                {[0, 1, 2, 3, 4, 5].map((item) => (
+                  <div key={item} className="overflow-hidden rounded-xl border border-white/5 bg-primary-dark">
+                    <div className="aspect-[4/3] animate-pulse bg-white/[0.06]" />
+                    <div className="space-y-2 p-3">
+                      <div className="h-4 w-3/4 animate-pulse rounded bg-white/10" />
+                      <div className="h-3 w-1/2 animate-pulse rounded bg-white/5" />
+                    </div>
+                  </div>
+                ))}
+                <span className="sr-only">Loading products…</span>
               </div>
             ) : products.length > 0 ? (
               <div className="space-y-4">

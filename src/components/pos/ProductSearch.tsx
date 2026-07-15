@@ -242,9 +242,17 @@ export const ProductSearch = ({ branchId }: ProductSearchProps) => {
       {showResults && searchQuery.length >= 2 && (
         <div className="absolute z-10 w-full mt-2 bg-primary-dark border border-gray-700 rounded-xl shadow-2xl shadow-black/40 max-h-96 overflow-y-auto">
           {isLoading ? (
-            <div className="p-6 text-center text-gray-400">
-              <div className="animate-spin inline-block w-6 h-6 border-2 border-accent-green border-t-transparent rounded-full mb-3" />
-              <p className="text-sm">Searching...</p>
+            <div className="space-y-3 p-4" role="status" aria-busy="true">
+              {[0, 1, 2].map((item) => (
+                <div key={item} className="flex items-center gap-3">
+                  <div className="h-10 w-10 animate-pulse rounded-lg bg-white/10" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3 w-2/3 animate-pulse rounded bg-white/10" />
+                    <div className="h-3 w-1/3 animate-pulse rounded bg-white/5" />
+                  </div>
+                </div>
+              ))}
+              <span className="sr-only">Searching products…</span>
             </div>
           ) : searchResults && searchResults.length > 0 ? (
             <ul>

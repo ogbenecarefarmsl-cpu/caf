@@ -1,5 +1,3 @@
-import { LoaderCircle } from 'lucide-react';
-
 interface LoadingProps {
   size?: 'sm' | 'md' | 'lg';
   text?: string;
@@ -7,57 +5,71 @@ interface LoadingProps {
   variant?: 'spinner' | 'text' | 'centered';
 }
 
-export const Loading = ({ 
-  size = 'md', 
-  text, 
+export const Loading = ({
+  size = 'md',
+  text,
   fullScreen = false,
-  variant = 'spinner'
+  variant = 'spinner',
 }: LoadingProps) => {
-  const sizeStyles = {
-    sm: 'h-4 w-4',
-    md: 'h-7 w-7',
-    lg: 'h-10 w-10',
-  };
-
   const label = text || 'Loading…';
 
-  // Text-only variant
   if (variant === 'text') {
     return (
       <div className="flex items-center justify-center gap-2 p-4 text-sm text-gray-300" role="status" aria-live="polite">
-        <LoaderCircle className="h-4 w-4 animate-spin text-accent-green" aria-hidden="true" />
+        <span className="h-2 w-2 animate-pulse rounded-full bg-accent-green" aria-hidden="true" />
         <span>{label}</span>
       </div>
     );
   }
 
-  // Centered variant (for full-page content areas)
   if (variant === 'centered') {
     return (
-      <div className="flex min-h-72 flex-col items-center justify-center gap-3 px-6 text-center" role="status" aria-live="polite">
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-3 shadow-lg shadow-black/10">
-          <LoaderCircle className={`animate-spin text-accent-green ${sizeStyles[size]}`} aria-hidden="true" />
+      <div className="min-h-72 space-y-5 px-1 py-4" role="status" aria-live="polite" aria-busy="true">
+        <div className="flex items-center justify-between gap-4">
+          <div className="space-y-2">
+            <div className="h-7 w-44 animate-pulse rounded-lg bg-white/10" />
+            <div className="h-3 w-64 max-w-[65vw] animate-pulse rounded bg-white/5" />
+          </div>
+          <div className="h-10 w-28 animate-pulse rounded-xl bg-white/10" />
         </div>
-        <p className="text-sm font-medium text-gray-300">{label}</p>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {[0, 1, 2, 3].map((item) => (
+            <div key={item} className="h-28 animate-pulse rounded-2xl border border-white/5 bg-white/[0.04]" />
+          ))}
+        </div>
+        <div className="space-y-3 rounded-2xl border border-white/5 bg-white/[0.03] p-4">
+          {[0, 1, 2, 3].map((item) => (
+            <div key={item} className="flex gap-4">
+              <div className="h-11 w-11 shrink-0 animate-pulse rounded-xl bg-white/10" />
+              <div className="flex-1 space-y-2 py-1">
+                <div className="h-3 w-2/5 animate-pulse rounded bg-white/10" />
+                <div className="h-3 w-3/4 animate-pulse rounded bg-white/5" />
+              </div>
+            </div>
+          ))}
+        </div>
+        <span className="sr-only">{label}</span>
       </div>
     );
   }
 
-  // Default spinner variant
-  const spinner = (
-    <div className="flex flex-col items-center justify-center gap-3" role="status" aria-live="polite">
-      <LoaderCircle className={`animate-spin text-accent-green ${sizeStyles[size]}`} aria-hidden="true" />
-      <span className={text ? 'text-sm text-gray-300' : 'sr-only'}>{label}</span>
+  const skeleton = (
+    <div className="w-full space-y-3" role="status" aria-live="polite" aria-busy="true">
+      <div className="h-5 w-1/3 animate-pulse rounded-md bg-white/10" />
+      <div className="h-3 w-4/5 animate-pulse rounded bg-white/5" />
+      <div className="h-3 w-2/3 animate-pulse rounded bg-white/5" />
+      <div className={`${size === 'sm' ? 'h-12' : size === 'lg' ? 'h-32' : 'h-20'} animate-pulse rounded-xl border border-white/5 bg-white/[0.04]`} />
+      <span className="sr-only">{label}</span>
     </div>
   );
 
   if (fullScreen) {
     return (
       <div className="fixed inset-0 z-[80] flex items-center justify-center bg-primary-darker/85 backdrop-blur-sm">
-        {spinner}
+        <div className="w-full max-w-3xl px-6">{skeleton}</div>
       </div>
     );
   }
 
-  return spinner;
+  return skeleton;
 };
