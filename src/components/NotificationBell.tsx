@@ -122,6 +122,7 @@ export const NotificationBell = () => {
   return (
     <div className="relative">
       <button
+        id="notification-bell-button"
         ref={buttonRef}
         onClick={() => {
           setOpen((o) => !o);

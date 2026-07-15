@@ -1,25 +1,29 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
-import apiClient from "../../lib/api-client";
-import { unwrapResponse } from "../../lib/unwrap-response";
-import { AdminLayout } from "../../components/AdminLayout";
-import { Button } from "../../components/ui/Button";
-import { Table } from "../../components/ui/Table";
-import { Loading } from "../../components/ui/Loading";
-import { Error } from "../../components/ui/Error";
-import { useCurrency } from "../../hooks/useCurrency";
-import { queryKeys } from "../../lib/query-keys";
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import {
-  Building2,
-  DollarSign,
-  Package,
   AlertTriangle,
-  TrendingUp,
-  ShoppingCart,
+  ArrowRight,
   ArrowRightLeft,
-  Calendar,
-} from "lucide-react";
+  Boxes,
+  Building2,
+  CalendarDays,
+  ChartNoAxesCombined,
+  CircleDollarSign,
+  ClipboardList,
+  Package,
+  ShoppingCart,
+  TrendingUp,
+} from 'lucide-react';
+import apiClient from '../../lib/api-client';
+import { unwrapResponse } from '../../lib/unwrap-response';
+import { AdminLayout } from '../../components/AdminLayout';
+import { Button } from '../../components/ui/Button';
+import { Table } from '../../components/ui/Table';
+import { Loading } from '../../components/ui/Loading';
+import { Error } from '../../components/ui/Error';
+import { useCurrency } from '../../hooks/useCurrency';
+import { queryKeys } from '../../lib/query-keys';
 
 interface BranchInventory {
   branchId: string;
@@ -92,110 +96,125 @@ interface HQDashboardData {
   expiryAlerts: ExpiryAlert[];
 }
 
-type TabKey = "overview" | "inventory" | "sales" | "alerts";
+type TabKey = 'overview' | 'inventory' | 'sales' | 'alerts';
 
-interface StatCardProps {
-  icon: React.ReactNode;
+const tabs: Array<{
+  key: TabKey;
   label: string;
-  value: string | number;
-  subtitle?: string;
-  color: string;
-  trend?: { value: string; isPositive: boolean };
-}
+  icon: typeof Building2;
+}> = [
+  { key: 'overview', label: 'Overview', icon: ChartNoAxesCombined },
+  { key: 'inventory', label: 'Inventory', icon: Package },
+  { key: 'sales', label: 'Sales', icon: ShoppingCart },
+  { key: 'alerts', label: 'Alerts', icon: AlertTriangle },
+];
 
-const StatCard = ({
-  icon,
+const Metric = ({
+  icon: Icon,
   label,
   value,
-  subtitle,
-  color,
-  trend,
-}: StatCardProps) => (
-  <div
-    className={`rounded-xl border p-5 ${color} transition-all hover:scale-[1.02]`}
-  >
-    <div className="flex items-start justify-between mb-3">
-      <div className="p-2 rounded-lg bg-white/10">{icon}</div>
-      {trend && (
-        <span
-          className={`text-xs font-semibold ${trend.isPositive ? "text-green-400" : "text-red-400"}`}
-        >
-          {trend.value}
-        </span>
-      )}
+}: {
+  icon: typeof Building2;
+  label: string;
+  value: string | number;
+}) => (
+  <div className="flex min-h-24 items-center gap-3 rounded-2xl border border-white/10 bg-primary-dark/55 p-3 sm:min-h-28 sm:p-4">
+    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-accent-green/25 bg-accent-green/5 text-accent-green">
+      <Icon className="h-5 w-5" aria-hidden="true" />
     </div>
-    <p className="text-sm text-gray-400 mb-1">{label}</p>
-    <p className="text-2xl font-bold text-white mb-1">{value}</p>
-    {subtitle && <p className="text-xs text-gray-400">{subtitle}</p>}
+    <div className="min-w-0">
+      <p className="text-xs leading-tight text-gray-400 sm:text-sm">{label}</p>
+      <p className="mt-1 truncate text-lg font-bold text-white sm:text-xl">{value}</p>
+    </div>
+  </div>
+);
+
+const SectionHeader = ({
+  title,
+  action,
+  onAction,
+}: {
+  title: string;
+  action?: string;
+  onAction?: () => void;
+}) => (
+  <div className="flex items-center justify-between gap-3">
+    <h2 className="text-lg font-bold text-white sm:text-xl">{title}</h2>
+    {action && onAction ? (
+      <button
+        type="button"
+        onClick={onAction}
+        className="flex min-h-11 items-center gap-1 rounded-lg px-2 text-sm font-semibold text-accent-green hover:bg-accent-green/5"
+      >
+        {action}
+        <ArrowRight className="h-4 w-4" aria-hidden="true" />
+      </button>
+    ) : null}
   </div>
 );
 
 export default function HQDashboardPage() {
   const { format } = useCurrency();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<TabKey>("overview");
+  const [activeTab, setActiveTab] = useState<TabKey>('overview');
 
-  const {
-    data: dashboard,
-    isLoading,
-    error,
-  } = useQuery<HQDashboardData>({
+  const { data: dashboard, isLoading, error, refetch } = useQuery<HQDashboardData>({
     queryKey: queryKeys.dashboard.hq(),
     queryFn: async () => {
-      const response = await apiClient.get("/reports/hq-summary");
+      const response = await apiClient.get('/reports/hq-summary');
       return unwrapResponse(response.data, {} as HQDashboardData);
     },
   });
 
-  const inventory = dashboard?.inventory || [];
-  const sales = dashboard?.sales || [];
-  const pendingTransfers = dashboard?.pendingTransfers || [];
-  const lowStockAlerts = dashboard?.lowStockAlerts || [];
-  const expiryAlerts = dashboard?.expiryAlerts || [];
-  const inventoryTotalsByCurrency = dashboard?.inventoryTotalsByCurrency || [];
-  const salesTotalsByCurrency = dashboard?.salesTotalsByCurrency || [];
+  if (isLoading) {
+    return (
+      <AdminLayout title="CAREFARM">
+        <Loading variant="centered" text="Loading company overview…" />
+      </AdminLayout>
+    );
+  }
 
-  // Calculate totals
-  const inventoryTotals = inventory?.reduce(
-    (acc, item) => ({
-      totalQuantity: acc.totalQuantity + item.totalQuantity,
-      lowStockItems: acc.lowStockItems + item.lowStockItems,
-    }),
-    { totalQuantity: 0, lowStockItems: 0 },
-  );
+  if (error) {
+    return (
+      <AdminLayout title="CAREFARM">
+        <Error
+          message="Failed to load HQ dashboard data. Please try again."
+          onRetry={() => refetch()}
+        />
+      </AdminLayout>
+    );
+  }
 
-  const salesTotals = sales?.reduce(
-    (acc, item) => ({
-      totalSales: acc.totalSales + item.totalSales,
-      totalRevenue: acc.totalRevenue + item.totalRevenue,
-    }),
-    { totalSales: 0, totalRevenue: 0 },
-  );
+  const inventory = dashboard?.inventory ?? [];
+  const sales = dashboard?.sales ?? [];
+  const pendingTransfers = dashboard?.pendingTransfers ?? [];
+  const lowStockAlerts = dashboard?.lowStockAlerts ?? [];
+  const expiryAlerts = dashboard?.expiryAlerts ?? [];
+  const inventoryTotalsByCurrency = dashboard?.inventoryTotalsByCurrency ?? [];
+  const salesTotalsByCurrency = dashboard?.salesTotalsByCurrency ?? [];
+  const alertCount = pendingTransfers.length + lowStockAlerts.length + expiryAlerts.length;
+  const totalStock = inventory.reduce((sum, item) => sum + item.totalQuantity, 0);
+  const totalProducts = inventory.reduce((sum, item) => sum + item.totalProducts, 0);
+  const totalSales = sales.reduce((sum, item) => sum + item.totalSales, 0);
+  const primaryRevenue = salesTotalsByCurrency[0];
+  const primaryInventoryValue = inventoryTotalsByCurrency[0];
 
-  // Table columns
   const inventoryColumns = [
-    { key: "branchName", header: "Branch", mobilePrimary: true },
-    { key: "totalProducts", header: "Products", mobileVisible: true },
-    { key: "totalQuantity", header: "Total Stock", mobileVisible: true },
+    { key: 'branchName', header: 'Branch', mobilePrimary: true },
+    { key: 'totalProducts', header: 'Products', mobileVisible: true },
+    { key: 'totalQuantity', header: 'Total Stock', mobileVisible: true },
     {
-      key: "totalValue",
-      header: "Total Value",
+      key: 'totalValue',
+      header: 'Total Value',
       mobileVisible: false,
-      render: (item: BranchInventory) =>
-        item.totalValueFormatted || format(item.totalValue),
+      render: (item: BranchInventory) => item.totalValueFormatted || format(item.totalValue),
     },
     {
-      key: "lowStockItems",
-      header: "Low Stock",
+      key: 'lowStockItems',
+      header: 'Low Stock',
       mobileVisible: true,
       render: (item: BranchInventory) => (
-        <span
-          className={
-            item.lowStockItems > 0
-              ? "text-red-400 font-semibold"
-              : "text-green-400"
-          }
-        >
+        <span className={item.lowStockItems > 0 ? 'font-semibold text-amber-300' : 'text-accent-green'}>
           {item.lowStockItems}
         </span>
       ),
@@ -203,11 +222,11 @@ export default function HQDashboardPage() {
   ];
 
   const salesColumns = [
-    { key: "branchName", header: "Branch", mobilePrimary: true },
-    { key: "totalSales", header: "Sales Count", mobileVisible: true },
+    { key: 'branchName', header: 'Branch', mobilePrimary: true },
+    { key: 'totalSales', header: 'Sales Count', mobileVisible: true },
     {
-      key: "totalRevenue",
-      header: "Revenue",
+      key: 'totalRevenue',
+      header: 'Revenue',
       mobileVisible: true,
       render: (item: BranchSales) => (
         <span className="font-semibold text-accent-green">
@@ -216,463 +235,297 @@ export default function HQDashboardPage() {
       ),
     },
     {
-      key: "averageOrderValue",
-      header: "Avg Order",
+      key: 'averageOrderValue',
+      header: 'Avg Order',
       mobileVisible: false,
-      render: (item: BranchSales) =>
-        item.averageOrderValueFormatted || format(item.averageOrderValue),
+      render: (item: BranchSales) => item.averageOrderValueFormatted || format(item.averageOrderValue),
     },
   ];
 
   const transferColumns = [
     {
-      key: "createdAt",
-      header: "Date",
+      key: 'createdAt',
+      header: 'Date',
       mobileVisible: false,
-      render: (transfer: PendingTransfer) =>
-        new Date(transfer.createdAt).toLocaleDateString(),
+      render: (item: PendingTransfer) => new Date(item.createdAt).toLocaleDateString(),
     },
-    { key: "sourceBranchName", header: "From", mobilePrimary: true },
-    { key: "destinationBranchName", header: "To", mobileVisible: true },
-    { key: "productName", header: "Product", mobileVisible: true },
-    {
-      key: "quantity",
-      header: "Qty",
-      mobileVisible: true,
-      render: (transfer: PendingTransfer) => (
-        <span className="font-semibold text-blue-400">{transfer.quantity}</span>
-      ),
-    },
-    {
-      key: "requestedByName",
-      header: "Requested By",
-      mobileVisible: false,
-      render: (transfer: PendingTransfer) =>
-        transfer.requestedByName || "Unknown",
-    },
+    { key: 'sourceBranchName', header: 'From', mobilePrimary: true },
+    { key: 'destinationBranchName', header: 'To', mobileVisible: true },
+    { key: 'productName', header: 'Product', mobileVisible: true },
+    { key: 'quantity', header: 'Qty', mobileVisible: true },
   ];
 
   const lowStockColumns = [
-    { key: "branchName", header: "Branch", mobilePrimary: true },
-    { key: "productName", header: "Product", mobileVisible: true },
-    { key: "sku", header: "SKU", mobileVisible: false },
+    { key: 'branchName', header: 'Branch', mobilePrimary: true },
+    { key: 'productName', header: 'Product', mobileVisible: true },
+    { key: 'sku', header: 'SKU', mobileVisible: false },
     {
-      key: "currentStock",
-      header: "Current",
+      key: 'currentStock',
+      header: 'Current',
       mobileVisible: true,
-      render: (item: LowStockAlert) => (
-        <span className="text-red-400 font-semibold">{item.currentStock}</span>
-      ),
+      render: (item: LowStockAlert) => <span className="font-semibold text-red-400">{item.currentStock}</span>,
     },
-    {
-      key: "reorderLevel",
-      header: "Reorder At",
-      mobileVisible: true,
-      render: (item: LowStockAlert) => (
-        <span className="text-amber-400">{item.reorderLevel}</span>
-      ),
-    },
+    { key: 'reorderLevel', header: 'Reorder At', mobileVisible: true },
   ];
 
   const expiryColumns = [
-    { key: "branchName", header: "Branch", mobileVisible: true },
-    { key: "productName", header: "Product", mobilePrimary: true },
-    { key: "lotNumber", header: "Lot", mobileVisible: false },
+    { key: 'branchName', header: 'Branch', mobileVisible: true },
+    { key: 'productName', header: 'Product', mobilePrimary: true },
+    { key: 'lotNumber', header: 'Lot', mobileVisible: false },
     {
-      key: "expiryDate",
-      header: "Expires",
+      key: 'expiryDate',
+      header: 'Expires',
       mobileVisible: true,
-      render: (item: ExpiryAlert) =>
-        new Date(item.expiryDate).toLocaleDateString(),
+      render: (item: ExpiryAlert) => new Date(item.expiryDate).toLocaleDateString(),
     },
     {
-      key: "daysUntilExpiry",
-      header: "Days Left",
+      key: 'daysUntilExpiry',
+      header: 'Days Left',
       mobileVisible: true,
       render: (item: ExpiryAlert) => (
-        <span
-          className={
-            item.daysUntilExpiry <= 7
-              ? "text-red-400 font-bold"
-              : "text-orange-400 font-semibold"
-          }
-        >
+        <span className={item.daysUntilExpiry <= 7 ? 'font-bold text-red-400' : 'font-semibold text-orange-300'}>
           {item.daysUntilExpiry}
         </span>
       ),
     },
-    {
-      key: "quantityAvailable",
-      header: "Qty",
-      mobileVisible: true,
-      render: (item: ExpiryAlert) => (
-        <span className="font-medium">{item.quantityAvailable}</span>
-      ),
-    },
+    { key: 'quantityAvailable', header: 'Qty', mobileVisible: true },
   ];
-
-  const tabs = [
-    {
-      key: "overview" as TabKey,
-      label: "Overview",
-      icon: <Building2 className="w-4 h-4" />,
-    },
-    {
-      key: "inventory" as TabKey,
-      label: "Inventory",
-      icon: <Package className="w-4 h-4" />,
-    },
-    {
-      key: "sales" as TabKey,
-      label: "Sales",
-      icon: <ShoppingCart className="w-4 h-4" />,
-    },
-    {
-      key: "alerts" as TabKey,
-      label: "Alerts",
-      icon: <AlertTriangle className="w-4 h-4" />,
-      badge:
-        lowStockAlerts.length + expiryAlerts.length + pendingTransfers.length ||
-        undefined,
-    },
-  ];
-
-  if (isLoading) {
-    return (
-      <AdminLayout>
-        <Loading />
-      </AdminLayout>
-    );
-  }
-
-  if (error) {
-    return (
-      <AdminLayout>
-        <div className="p-6">
-          <Error message="Failed to load HQ dashboard data. Please try again." />
-        </div>
-      </AdminLayout>
-    );
-  }
 
   return (
-    <AdminLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+    <AdminLayout title="CAREFARM">
+      <div className="space-y-6 pb-24 lg:pb-0">
+        <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="heading-2">Company Overview</h1>
-            <p className="body-sm mt-1">Multi-branch performance at a glance</p>
+            <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Company Overview</h1>
+            <p className="mt-1 text-sm text-gray-400">Multi-branch performance at a glance</p>
           </div>
-          <div className="flex items-center gap-2 text-xs text-gray-400">
-            <Calendar className="w-4 h-4" />
-            <span>Last 30 days</span>
+          <div className="flex min-h-11 items-center gap-2 rounded-xl border border-white/10 bg-primary-dark/50 px-3 text-sm text-gray-300">
+            <CalendarDays className="h-4 w-4 text-accent-green" aria-hidden="true" />
+            Last 30 days
           </div>
         </div>
 
-        {/* Key Metrics - Always visible */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard
-            icon={<Building2 className="w-5 h-5 text-blue-400" />}
-            label="Total Branches"
-            value={inventory?.length || 0}
-            subtitle="Active locations"
-            color="bg-blue-500/10 border-blue-500/20"
-          />
-          <StatCard
-            icon={<DollarSign className="w-5 h-5 text-accent-green" />}
-            label="Total Inventory Value"
-            value={
-              inventoryTotalsByCurrency.length > 0
-                ? inventoryTotalsByCurrency[0].totalValueFormatted ||
-                  format(inventoryTotalsByCurrency[0].totalValue || 0)
-                : format(0)
-            }
-            subtitle={
-              inventoryTotalsByCurrency.length > 1
-                ? `+${inventoryTotalsByCurrency.length - 1} currencies`
-                : undefined
-            }
-            color="bg-green-500/10 border-green-500/20"
-          />
-          <StatCard
-            icon={<ShoppingCart className="w-5 h-5 text-purple-400" />}
-            label="Sales (30 days)"
-            value={salesTotals?.totalSales || 0}
-            subtitle="Total transactions"
-            color="bg-purple-500/10 border-purple-500/20"
-          />
-          <StatCard
-            icon={<TrendingUp className="w-5 h-5 text-indigo-400" />}
-            label="Revenue (30 days)"
-            value={
-              salesTotalsByCurrency.length > 0
-                ? salesTotalsByCurrency[0].totalRevenueFormatted ||
-                  format(salesTotalsByCurrency[0].totalRevenue || 0)
-                : format(0)
-            }
-            subtitle={
-              salesTotalsByCurrency.length > 1
-                ? `+${salesTotalsByCurrency.length - 1} currencies`
-                : undefined
-            }
-            color="bg-indigo-500/10 border-indigo-500/20"
-          />
-        </div>
-
-        {/* Tab Navigation */}
-        <div className="flex items-center gap-2 border-b border-white/10 overflow-x-auto pb-px">
-          {tabs.map((tab) => (
+        <div className="hidden items-center gap-2 border-b border-white/10 lg:flex">
+          {tabs.map(({ key, label, icon: Icon }) => (
             <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`
-                flex items-center gap-2 px-4 py-3 font-medium text-sm whitespace-nowrap
-                border-b-2 transition-colors relative
-                ${
-                  activeTab === tab.key
-                    ? "border-accent-green text-white"
-                    : "border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-600"
-                }
-              `}
+              key={key}
+              type="button"
+              onClick={() => setActiveTab(key)}
+              className={`relative flex min-h-12 items-center gap-2 border-b-2 px-4 text-sm font-semibold transition-colors ${
+                activeTab === key
+                  ? 'border-accent-green text-white'
+                  : 'border-transparent text-gray-400 hover:text-white'
+              }`}
             >
-              {tab.icon}
-              <span>{tab.label}</span>
-              {tab.badge && tab.badge > 0 && (
-                <span className="ml-1 px-2 py-0.5 text-xs font-bold rounded-full bg-red-500/20 text-red-300">
-                  {tab.badge}
-                </span>
-              )}
+              <Icon className="h-4 w-4" aria-hidden="true" />
+              {label}
+              {key === 'alerts' && alertCount > 0 ? (
+                <span className="rounded-full bg-red-500 px-2 py-0.5 text-xs text-white">{alertCount}</span>
+              ) : null}
             </button>
           ))}
         </div>
 
-        {/* Tab Content */}
-        {activeTab === "overview" && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Quick Stats */}
-            <div className="card-compact space-y-4">
-              <h3 className="heading-4">Quick Stats</h3>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-white/5 rounded-lg p-3">
-                  <p className="body-sm mb-1">Total Products</p>
-                  <p className="text-xl font-bold text-blue-400">
-                    {inventory.reduce((sum, b) => sum + b.totalProducts, 0)}
-                  </p>
-                </div>
-                <div className="bg-white/5 rounded-lg p-3">
-                  <p className="body-sm mb-1">Total Stock Units</p>
-                  <p className="text-xl font-bold text-cyan-400">
-                    {inventoryTotals?.totalQuantity.toLocaleString() || 0}
-                  </p>
-                </div>
-                <div className="bg-white/5 rounded-lg p-3">
-                  <p className="body-sm mb-1">Low Stock Items</p>
-                  <p className="text-xl font-bold text-amber-400">
-                    {inventoryTotals?.lowStockItems || 0}
-                  </p>
-                </div>
-                <div className="bg-white/5 rounded-lg p-3">
-                  <p className="body-sm mb-1">Avg Order Value</p>
-                  <p className="text-xl font-bold text-green-400">
-                    {salesTotals?.totalSales > 0
-                      ? format(
-                          salesTotals.totalRevenue / salesTotals.totalSales,
-                        )
-                      : format(0)}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Multi-Currency Summary */}
-            <div className="card-compact space-y-4">
-              <h3 className="heading-4">Multi-Currency Summary</h3>
-              <div className="space-y-3">
-                {inventoryTotalsByCurrency.length > 0 && (
-                  <div>
-                    <p className="body-sm mb-2">Inventory by Currency</p>
-                    {inventoryTotalsByCurrency.map((total) => (
-                      <div
-                        key={total.currencyCode}
-                        className="flex justify-between items-center bg-white/5 rounded-lg p-2 mb-2"
-                      >
-                        <span className="text-sm font-semibold text-gray-300">
-                          {total.currencyCode}
-                        </span>
-                        <span className="text-sm font-bold text-accent-green">
-                          {total.totalValueFormatted ||
-                            format(total.totalValue || 0)}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {salesTotalsByCurrency.length > 0 && (
-                  <div>
-                    <p className="body-sm mb-2">Revenue by Currency</p>
-                    {salesTotalsByCurrency.map((total) => (
-                      <div
-                        key={total.currencyCode}
-                        className="flex justify-between items-center bg-white/5 rounded-lg p-2 mb-2"
-                      >
-                        <span className="text-sm font-semibold text-gray-300">
-                          {total.currencyCode}
-                        </span>
-                        <span className="text-sm font-bold text-indigo-400">
-                          {total.totalRevenueFormatted ||
-                            format(total.totalRevenue || 0)}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === "inventory" && (
+        {activeTab === 'overview' ? (
           <div className="space-y-6">
-            <div className="card-compact">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="heading-4">Inventory by Branch</h3>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => navigate("/admin/inventory")}
-                >
-                  Manage Inventory
-                </Button>
-              </div>
-              <Table
-                data={inventory}
-                columns={inventoryColumns}
-                rowKey={(item) => item.branchId}
-                emptyMessage="No inventory data available"
-              />
-            </div>
-          </div>
-        )}
-
-        {activeTab === "sales" && (
-          <div className="space-y-6">
-            <div className="card-compact">
-              <div className="flex justify-between items-center mb-4">
-                <div>
-                  <h3 className="heading-4">Sales by Branch</h3>
-                  <p className="body-sm mt-1">Last 30 days performance</p>
-                </div>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => navigate("/admin/reports")}
-                >
-                  View Reports
-                </Button>
-              </div>
-              <Table
-                data={sales}
-                columns={salesColumns}
-                rowKey={(item) => item.branchId}
-                emptyMessage="No sales data available"
-              />
-            </div>
-          </div>
-        )}
-
-        {activeTab === "alerts" && (
-          <div className="space-y-6">
-            {/* Pending Transfers */}
-            <div className="card-compact">
-              <div className="flex justify-between items-center mb-4">
-                <div className="flex items-center gap-2">
-                  <ArrowRightLeft className="w-5 h-5 text-yellow-400" />
+            <section className="grid gap-4 lg:grid-cols-[1.45fr_1fr]">
+              <div className="flex min-h-52 flex-col justify-between rounded-2xl border border-accent-green/20 bg-primary-dark/65 p-5 sm:p-6">
+                <div className="flex items-start justify-between gap-4">
                   <div>
-                    <h3 className="heading-4">Pending Transfer Approvals</h3>
-                    <p className="body-sm mt-1">Requires HQ approval</p>
-                  </div>
-                  {pendingTransfers.length > 0 && (
-                    <span className="ml-2 px-2 py-1 text-xs font-bold rounded-full bg-yellow-500/20 text-yellow-300">
-                      {pendingTransfers.length}
-                    </span>
-                  )}
-                </div>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => navigate("/admin/transfers")}
-                >
-                  Review All
-                </Button>
-              </div>
-              <Table
-                data={pendingTransfers}
-                columns={transferColumns}
-                rowKey={(item) => item._id}
-                emptyMessage="No pending transfers"
-              />
-            </div>
-
-            {/* Low Stock Alerts */}
-            <div className="card-compact">
-              <div className="flex justify-between items-center mb-4">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="w-5 h-5 text-red-400" />
-                  <div>
-                    <h3 className="heading-4">Low Stock Alerts</h3>
-                    <p className="body-sm mt-1">Products below reorder level</p>
-                  </div>
-                  {lowStockAlerts.length > 0 && (
-                    <span className="ml-2 px-2 py-1 text-xs font-bold rounded-full bg-red-500/20 text-red-300">
-                      {lowStockAlerts.length}
-                    </span>
-                  )}
-                </div>
-              </div>
-              <Table
-                data={lowStockAlerts.slice(0, 10)}
-                columns={lowStockColumns}
-                rowKey={(item) => item.id}
-                emptyMessage="No low stock alerts"
-              />
-            </div>
-
-            {/* Expiry Warnings */}
-            <div className="card-compact">
-              <div className="flex justify-between items-center mb-4">
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-orange-400" />
-                  <div>
-                    <h3 className="heading-4">Expiry Warnings</h3>
-                    <p className="body-sm mt-1">
-                      Products expiring within 30 days
+                    <p className="text-sm font-medium text-gray-400">Revenue</p>
+                    <p className="mt-3 break-words text-3xl font-bold tracking-tight text-white sm:text-4xl">
+                      {primaryRevenue?.totalRevenueFormatted || format(primaryRevenue?.totalRevenue || 0)}
+                    </p>
+                    <p className="mt-2 text-sm text-gray-400">
+                      {totalSales.toLocaleString()} transactions in the last 30 days
                     </p>
                   </div>
-                  {expiryAlerts.length > 0 && (
-                    <span className="ml-2 px-2 py-1 text-xs font-bold rounded-full bg-orange-500/20 text-orange-300">
-                      {expiryAlerts.length}
-                    </span>
-                  )}
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-accent-green/10 text-accent-green">
+                    <TrendingUp className="h-6 w-6" aria-hidden="true" />
+                  </div>
                 </div>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => navigate("/admin/reports/expiry")}
-                >
-                  View All
-                </Button>
+                <div className="mt-6 flex flex-wrap gap-2 text-xs text-gray-400">
+                  {salesTotalsByCurrency.map((total) => (
+                    <span key={total.currencyCode} className="rounded-full border border-white/10 px-3 py-1.5">
+                      {total.currencyCode}: {total.totalRevenueFormatted || format(total.totalRevenue || 0)}
+                    </span>
+                  ))}
+                </div>
               </div>
-              <Table
-                data={expiryAlerts.slice(0, 10)}
-                columns={expiryColumns}
-                rowKey={(item) => item.batchId}
-                emptyMessage="No expiry warnings"
-              />
-            </div>
+
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                <Metric icon={Building2} label="Total Branches" value={inventory.length} />
+                <Metric
+                  icon={CircleDollarSign}
+                  label="Inventory Value"
+                  value={primaryInventoryValue?.totalValueFormatted || format(primaryInventoryValue?.totalValue || 0)}
+                />
+                <Metric icon={ShoppingCart} label="Sales" value={totalSales.toLocaleString()} />
+                <Metric icon={Boxes} label="Stock Units" value={totalStock.toLocaleString()} />
+              </div>
+            </section>
+
+            <section className="grid gap-6 lg:grid-cols-2">
+              <div className="space-y-3">
+                <SectionHeader title="Attention needed" />
+                <div className="overflow-hidden rounded-2xl border border-white/10 bg-primary-dark/55">
+                  {[
+                    { label: 'Low stock items', count: lowStockAlerts.length, icon: AlertTriangle, tone: 'text-amber-300 bg-amber-500/10' },
+                    { label: 'Expiring batches', count: expiryAlerts.length, icon: CalendarDays, tone: 'text-red-300 bg-red-500/10' },
+                    { label: 'Transfer approvals', count: pendingTransfers.length, icon: ArrowRightLeft, tone: 'text-yellow-300 bg-yellow-500/10' },
+                  ].map(({ label, count, icon: Icon, tone }) => (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() => setActiveTab('alerts')}
+                      className="flex min-h-16 w-full items-center gap-3 border-b border-white/10 px-4 text-left last:border-b-0 hover:bg-white/[0.03]"
+                    >
+                      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${tone}`}>
+                        <Icon className="h-5 w-5" aria-hidden="true" />
+                      </span>
+                      <span className="flex-1 font-medium text-white">{label}</span>
+                      <span className="rounded-full bg-white/10 px-3 py-1 text-sm font-bold text-white">{count}</span>
+                      <ArrowRight className="h-4 w-4 text-gray-500" aria-hidden="true" />
+                    </button>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('alerts')}
+                  className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-accent-green/70 text-sm font-semibold text-accent-green hover:bg-accent-green/5"
+                >
+                  <ClipboardList className="h-5 w-5" aria-hidden="true" />
+                  Review alerts
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                <SectionHeader title="Branch performance" action="View all" onAction={() => setActiveTab('sales')} />
+                <div className="overflow-hidden rounded-2xl border border-white/10 bg-primary-dark/55">
+                  {sales.slice(0, 3).map((branch) => (
+                    <button
+                      key={branch.branchId}
+                      type="button"
+                      onClick={() => setActiveTab('sales')}
+                      className="flex min-h-20 w-full items-center gap-3 border-b border-white/10 px-4 text-left last:border-b-0 hover:bg-white/[0.03]"
+                    >
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent-green/10 text-accent-green">
+                        <Building2 className="h-5 w-5" aria-hidden="true" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-semibold text-white">{branch.branchName}</span>
+                        <span className="mt-1 block text-xs text-gray-400">{branch.totalSales.toLocaleString()} sales</span>
+                      </span>
+                      <span className="text-right text-sm font-semibold text-accent-green">
+                        {branch.totalRevenueFormatted || format(branch.totalRevenue)}
+                      </span>
+                    </button>
+                  ))}
+                  {sales.length === 0 ? <p className="p-6 text-center text-sm text-gray-400">No branch sales data available</p> : null}
+                </div>
+              </div>
+            </section>
+
+            <section className="rounded-2xl border border-white/10 bg-primary-dark/45 p-4 sm:p-5">
+              <SectionHeader title="Company totals by currency" />
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                {inventoryTotalsByCurrency.map((total) => (
+                  <div key={`inventory-${total.currencyCode}`} className="flex items-center justify-between gap-3 rounded-xl bg-white/[0.04] p-3">
+                    <span className="text-sm text-gray-400">Inventory · {total.currencyCode}</span>
+                    <span className="font-semibold text-white">{total.totalValueFormatted || format(total.totalValue || 0)}</span>
+                  </div>
+                ))}
+                <div className="flex items-center justify-between gap-3 rounded-xl bg-white/[0.04] p-3">
+                  <span className="text-sm text-gray-400">Products</span>
+                  <span className="font-semibold text-white">{totalProducts.toLocaleString()}</span>
+                </div>
+              </div>
+            </section>
           </div>
-        )}
+        ) : null}
+
+        {activeTab === 'inventory' ? (
+          <section className="space-y-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-white">Inventory by branch</h2>
+                <p className="mt-1 text-sm text-gray-400">Stock position and value across every location</p>
+              </div>
+              <Button variant="secondary" onClick={() => navigate('/admin/inventory')}>Manage Inventory</Button>
+            </div>
+            <Table data={inventory} columns={inventoryColumns} rowKey={(item) => item.branchId} emptyMessage="No inventory data available" />
+          </section>
+        ) : null}
+
+        {activeTab === 'sales' ? (
+          <section className="space-y-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-white">Sales by branch</h2>
+                <p className="mt-1 text-sm text-gray-400">Last 30 days performance</p>
+              </div>
+              <Button variant="secondary" onClick={() => navigate('/admin/reports')}>View Reports</Button>
+            </div>
+            <Table data={sales} columns={salesColumns} rowKey={(item) => item.branchId} emptyMessage="No sales data available" />
+          </section>
+        ) : null}
+
+        {activeTab === 'alerts' ? (
+          <div className="space-y-8">
+            <section className="space-y-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="flex items-center gap-2 text-xl font-bold text-white">
+                    <ArrowRightLeft className="h-5 w-5 text-yellow-300" aria-hidden="true" />
+                    Pending transfer approvals
+                  </h2>
+                  <p className="mt-1 text-sm text-gray-400">Requires HQ review</p>
+                </div>
+                <Button variant="secondary" onClick={() => navigate('/admin/transfers')}>Review All</Button>
+              </div>
+              <Table data={pendingTransfers} columns={transferColumns} rowKey={(item) => item._id} emptyMessage="No pending transfers" />
+            </section>
+
+            <section className="space-y-4">
+              <h2 className="flex items-center gap-2 text-xl font-bold text-white">
+                <AlertTriangle className="h-5 w-5 text-amber-300" aria-hidden="true" />
+                Low stock alerts
+              </h2>
+              <Table data={lowStockAlerts} columns={lowStockColumns} rowKey={(item) => item.id} emptyMessage="No low stock alerts" />
+            </section>
+
+            <section className="space-y-4">
+              <h2 className="flex items-center gap-2 text-xl font-bold text-white">
+                <CalendarDays className="h-5 w-5 text-red-300" aria-hidden="true" />
+                Expiry alerts
+              </h2>
+              <Table data={expiryAlerts} columns={expiryColumns} rowKey={(item) => item.batchId} emptyMessage="No expiry alerts" />
+            </section>
+          </div>
+        ) : null}
       </div>
+
+      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-white/10 bg-primary-darker/95 pb-safe-bottom backdrop-blur-xl lg:hidden" aria-label="Dashboard sections">
+        {tabs.map(({ key, label, icon: Icon }) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setActiveTab(key)}
+            className={`relative flex min-h-16 flex-col items-center justify-center gap-1 text-xs font-medium ${
+              activeTab === key ? 'text-accent-green' : 'text-gray-400'
+            }`}
+          >
+            {activeTab === key ? <span className="absolute inset-x-6 top-0 h-0.5 bg-accent-green" /> : null}
+            <Icon className="h-5 w-5" aria-hidden="true" />
+            <span>{label}</span>
+            {key === 'alerts' && alertCount > 0 ? (
+              <span className="absolute right-[24%] top-2 rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                {alertCount}
+              </span>
+            ) : null}
+          </button>
+        ))}
+      </nav>
     </AdminLayout>
   );
 }

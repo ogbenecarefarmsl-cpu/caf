@@ -14,6 +14,8 @@ import { useToast } from '../../hooks/useToast';
 import { queryKeys } from '../../lib/query-keys';
 import { buildApiUrl } from '../../lib/api-utils';
 import { getErrorMessage } from '../../lib/error-utils';
+import { CompactPagination } from '../../components/ui/Pagination';
+import { AdminMobileBottomNav } from '../../components/admin/AdminMobileBottomNav';
 
 interface Product {
   _id: string;
@@ -61,6 +63,7 @@ const formatSupplier = (supplier?: Product['supplierId']) => {
 export default function StockAdjustmentPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [mobileTab, setMobileTab] = useState<'products' | 'history'>('products');
   const { selectedBranch } = useBranchStore();
   const queryClient = useQueryClient();
   const { showSuccess, showError } = useToast();
@@ -117,6 +120,22 @@ export default function StockAdjustmentPage() {
   const adjStart = (adjPage - 1) * adjLimit;
   const paginatedAdjustments = adjustments.slice(adjStart, adjStart + adjLimit);
   const adjTotalPages = Math.ceil(adjTotal / adjLimit);
+  const productPaginationMeta = productPagination ? {
+    page: productPagination.page,
+    limit: productPagination.limit,
+    total: productPagination.total,
+    pages: productPagination.pages,
+    hasNext: productPagination.hasNext,
+    hasPrev: productPagination.hasPrev,
+  } : undefined;
+  const adjustmentPaginationMeta = {
+    page: adjPage,
+    limit: adjLimit,
+    total: adjTotal,
+    pages: adjTotalPages,
+    hasNext: adjPage < adjTotalPages,
+    hasPrev: adjPage > 1,
+  };
 
   // Reset to page 1 when limit changes
   const handleProductLimitChange = (limit: number) => { setProductLimit(limit); setProductPage(1); };
@@ -169,9 +188,101 @@ export default function StockAdjustmentPage() {
   ];
 
   return (
-    <AdminLayout>
-      <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-white">Stock Adjustments</h1>
+    <AdminLayout title="Stock Adjustments" showMobileBranchSelector={false}>
+      <div className="space-y-6 pb-24 lg:pb-0">
+        <div className="lg:hidden">
+          <header className="mb-5">
+            <h1 className="text-2xl font-bold tracking-tight text-white">Stock Action Ledger</h1>
+            <p className="mt-1 text-sm leading-5 text-gray-400">
+              Review current stock and keep every manual change traceable.
+            </p>
+          </header>
+
+          <div className="mb-4 grid grid-cols-2 rounded-xl border border-white/10 bg-primary-dark/70 p-1" role="tablist" aria-label="Stock adjustment views">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mobileTab === 'products'}
+              onClick={() => setMobileTab('products')}
+              className={`min-h-11 rounded-lg px-3 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-accent-green/60 ${mobileTab === 'products' ? 'bg-accent-green text-primary-darker shadow' : 'text-gray-400 hover:text-white'}`}
+            >
+              Product Stock
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mobileTab === 'history'}
+              onClick={() => setMobileTab('history')}
+              className={`min-h-11 rounded-lg px-3 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-accent-green/60 ${mobileTab === 'history' ? 'bg-accent-green text-primary-darker shadow' : 'text-gray-400 hover:text-white'}`}
+            >
+              Adjustment History
+            </button>
+          </div>
+
+          {mobileTab === 'products' ? (
+            <section aria-labelledby="mobile-product-stock-heading" className="overflow-hidden rounded-2xl border border-emerald-400/25 bg-primary-dark/65 shadow-xl shadow-black/10">
+              <div className="grid grid-cols-[minmax(0,1fr)_64px_74px] items-center gap-2 border-b border-white/10 bg-black/10 px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+                <h2 id="mobile-product-stock-heading">Product</h2>
+                <span className="text-center">Stock</span>
+                <span className="text-right">Action</span>
+              </div>
+              <div className="divide-y divide-white/10">
+                {products.map((product: Product) => (
+                  <article key={product._id} className="grid grid-cols-[minmax(0,1fr)_64px_74px] items-center gap-2 px-4 py-4">
+                    <div className="min-w-0">
+                      <h3 className="truncate text-sm font-bold text-white">{product.name}</h3>
+                      <p className="mt-1 truncate text-xs text-gray-400">{product.sku} · {product.brand || 'No brand'}</p>
+                      <p className="mt-1 truncate text-[11px] text-gray-500">{formatSupplier(product.supplierId)} · Exp {formatDate(product.expiryDate)}</p>
+                    </div>
+                    <div className="text-center">
+                      <span className="block text-xl font-bold text-white">{product.quantityAvailable}</span>
+                      <span className="text-[10px] uppercase tracking-wide text-gray-500">{product.unit || 'units'}</span>
+                    </div>
+                    <Button variant="secondary" size="sm" onClick={() => handleOpenModal(product)} className="!border-amber-400/70 !bg-amber-400/5 !px-2 !text-amber-300 hover:!bg-amber-400/15">
+                      Adjust
+                    </Button>
+                  </article>
+                ))}
+              </div>
+              {products.length === 0 ? <p className="px-4 py-10 text-center text-sm text-gray-400">No products found for this branch.</p> : null}
+              <CompactPagination meta={productPaginationMeta} onPageChange={setProductPage} />
+            </section>
+          ) : (
+            <section aria-labelledby="mobile-adjustment-history-heading" className="overflow-hidden rounded-2xl border border-emerald-400/25 bg-primary-dark/65 shadow-xl shadow-black/10">
+              <div className="border-b border-white/10 bg-black/10 px-4 py-3">
+                <h2 id="mobile-adjustment-history-heading" className="text-xs font-semibold uppercase tracking-wider text-gray-500">Recorded adjustments</h2>
+              </div>
+              {adjustmentsLoading ? (
+                <div className="p-6"><Loading /></div>
+              ) : (
+                <>
+                  <div className="divide-y divide-white/10">
+                    {paginatedAdjustments.map((adjustment) => (
+                      <article key={adjustment._id} className="px-4 py-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="min-w-0">
+                            <h3 className="truncate text-sm font-bold text-white">{adjustment.productId?.name || 'Unknown product'}</h3>
+                            <p className="mt-1 text-xs text-gray-400">{new Date(adjustment.timestamp).toLocaleString()}</p>
+                          </div>
+                          <span className={`shrink-0 text-lg font-bold ${adjustment.quantity > 0 ? 'text-emerald-300' : 'text-red-400'}`}>
+                            {adjustment.quantity > 0 ? '+' : ''}{adjustment.quantity}
+                          </span>
+                        </div>
+                        <p className="mt-3 text-sm leading-5 text-gray-300">{adjustment.reason || 'No reason supplied'}</p>
+                        <p className="mt-2 text-xs text-gray-500">By {adjustment.userId ? `${adjustment.userId.firstName || ''} ${adjustment.userId.lastName || ''}`.trim() || 'Unknown user' : 'Unknown user'}</p>
+                      </article>
+                    ))}
+                  </div>
+                  {paginatedAdjustments.length === 0 ? <p className="px-4 py-10 text-center text-sm text-gray-400">No stock adjustments have been recorded.</p> : null}
+                  <CompactPagination meta={adjustmentPaginationMeta} onPageChange={setAdjPage} />
+                </>
+              )}
+            </section>
+          )}
+        </div>
+
+        <div className="hidden space-y-6 lg:block">
+          <h1 className="text-2xl font-bold text-white">Stock Adjustments</h1>
 
         <div className="rounded-xl border border-white/10 bg-white/5 shadow-lg">
           <div className="border-b border-white/10 px-6 py-4">
@@ -180,7 +291,7 @@ export default function StockAdjustmentPage() {
           <Table
             data={products}
             columns={productColumns}
-            pagination={productPagination ? { page: productPagination.page, limit: productPagination.limit, total: productPagination.total, pages: productPagination.pages, hasNext: productPagination.hasNext, hasPrev: productPagination.hasPrev } : undefined}
+            pagination={productPaginationMeta}
             onPageChange={setProductPage}
             onLimitChange={handleProductLimitChange}
           />
@@ -196,11 +307,12 @@ export default function StockAdjustmentPage() {
             <Table
               data={paginatedAdjustments}
               columns={adjustmentColumns}
-              pagination={{ page: adjPage, limit: adjLimit, total: adjTotal, pages: adjTotalPages, hasNext: adjPage < adjTotalPages, hasPrev: adjPage > 1 }}
+              pagination={adjustmentPaginationMeta}
               onPageChange={setAdjPage}
               onLimitChange={handleAdjLimitChange}
             />
           )}
+        </div>
         </div>
 
         <Modal isOpen={isModalOpen} onClose={handleCloseModal} title="Adjust Product Stock">
@@ -247,6 +359,7 @@ export default function StockAdjustmentPage() {
           )}
         </Modal>
       </div>
+      <AdminMobileBottomNav active="inventory" />
     </AdminLayout>
   );
 }

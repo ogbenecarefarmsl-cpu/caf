@@ -15,6 +15,7 @@ import { ConfirmDialog } from './ui/ConfirmDialog';
 interface AdminLayoutProps {
   children: ReactNode;
   title?: string;
+  showMobileBranchSelector?: boolean;
 }
 
 interface NavItem {
@@ -26,7 +27,11 @@ interface NavItem {
   hqManagerOnly?: boolean;
 }
 
-export const AdminLayout = ({ children, title = 'Admin' }: AdminLayoutProps) => {
+export const AdminLayout = ({
+  children,
+  title = 'Admin',
+  showMobileBranchSelector = true,
+}: AdminLayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, clearAuth } = useAuthStore();
@@ -508,9 +513,11 @@ export const AdminLayout = ({ children, title = 'Admin' }: AdminLayoutProps) => 
               </div>
             </div>
           </div>
-          <div className="mt-3 sm:hidden">
-            <BranchSelector />
-          </div>
+          {showMobileBranchSelector ? (
+            <div className="mt-3 sm:hidden">
+              <BranchSelector />
+            </div>
+          ) : null}
         </header>
 
         <main className="flex-1 overflow-y-auto p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] sm:p-6 lg:p-8">
