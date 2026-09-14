@@ -5,6 +5,7 @@ import apiClient from '../../lib/api-client';
 import { unwrapArray } from '../../lib/unwrap-response';
 import { useCartStore } from '../../stores/cart-store';
 import { useBranchStore, getBranchId } from '../../stores/branch-store';
+import { useAuthStore } from '../../stores/auth-store';
 import { Error } from '../../components/ui/Error';
 import { queryKeys } from '../../lib/query-keys';
 import { useCurrency } from '../../hooks/useCurrency';
@@ -23,6 +24,7 @@ interface Promotion {
 
 export const DiscountsPage = () => {
   const navigate = useNavigate();
+  const user = useAuthStore((state) => state.user);
   const selectedBranch = useBranchStore((state) => state.selectedBranch);
   const { items, subtotal, manualDiscount: storedManualDiscount, promotionId, setPromotion } = useCartStore();
   const { format } = useCurrency();
@@ -51,21 +53,36 @@ export const DiscountsPage = () => {
     enabled: !!getBranchId(selectedBranch),
   });
 
+  const branchId = user?.role === 'super_admin'
+    ? (getBranchId(selectedBranch) || user?.branchId)
+    : (user?.branchId || getBranchId(selectedBranch));
+
   const { data: quote, isFetching: isCalculating } = useQuery({
-    queryKey: ['checkout-quote', getBranchId(selectedBranch), selectedPromotion, debouncedManualDiscount, items],
+    queryKey: ['checkout-quote', branchId, selectedPromotion, debouncedManualDiscount, items],
     queryFn: async () => {
-      const response = await apiClient.post('/sales/quote', {
-        branchId: getBranchId(selectedBranch),
-        promotionId: selectedPromotion,
-        discount: debouncedManualDiscount,
+      const payload: Record<string, unknown> = {
+        branchId,
+        discount: typeof debouncedManualDiscount === 'number' && debouncedManualDiscount >= 0 ? debouncedManualDiscount : 0,
         items: items.map((item) => ({
           productId: item.productId,
           quantity: item.quantity,
           unitPrice: item.unitPrice,
-          packSize: item.packSize,
+          ...(item.packSize ? {
+            packSize: {
+              code: item.packSize.code,
+              name: item.packSize.name,
+              unit: item.packSize.unit,
+              quantityPerPack: item.packSize.quantityPerPack,
+              barcode: item.packSize.barcode,
+            },
+          } : {}),
           quantityInBaseUnits: item.quantityInBaseUnits,
         })),
-      });
+      };
+      if (selectedPromotion && selectedPromotion.trim() && selectedPromotion !== 'null') {
+        payload.promotionId = selectedPromotion;
+      }
+      const response = await apiClient.post('/sales/quote', payload);
       return response.data as {
         subtotal: number;
         discount: number;
@@ -74,16 +91,12 @@ export const DiscountsPage = () => {
         total: number;
       };
     },
-    enabled: Boolean(
-      getBranchId(selectedBranch) &&
-      items.length &&
-      (selectedPromotion || debouncedManualDiscount > 0),
-    ),
+    enabled: Boolean(branchId && items.length),
+    retry: 1,
   });
 
   const totalDiscount = quote?.discount ?? 0;
   const newTotal = quote?.total ?? subtotal;
-
   const togglePromotion = (promoId: string) => {
     setSelectedPromotion((current) => current === promoId ? undefined : promoId);
   };

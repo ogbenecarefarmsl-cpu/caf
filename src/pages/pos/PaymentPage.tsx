@@ -69,8 +69,10 @@ export const PaymentPage = () => {
   const holdSale = useHeldSalesStore((s) => s.holdSale);
   const heldSales = useHeldSalesStore((s) => s.heldSales);
   const selectedBranch = useBranchStore((state) => state.selectedBranch);
-  const branchId = getBranchId(selectedBranch);
   const user = useAuthStore((state) => state.user);
+  const branchId = user?.role === 'super_admin'
+    ? (getBranchId(selectedBranch) || user?.branchId)
+    : (user?.branchId || getBranchId(selectedBranch));
   const { alertInfo } = useAlertReplacement();
   const { showSuccess, showError } = useToast();
   const { format, symbol } = useCurrency();
@@ -94,21 +96,34 @@ export const PaymentPage = () => {
   const { data: checkoutQuote, isLoading: quoteLoading } = useQuery({
     queryKey: ['checkout-quote', branchId, promotionId, manualDiscount, items],
     queryFn: async () => {
-      const response = await apiClient.post('/sales/quote', {
+      if (!branchId) throw new Error('Missing branch ID');
+      const payload: Record<string, unknown> = {
         branchId,
-        promotionId,
-        discount: manualDiscount,
+        discount: typeof manualDiscount === 'number' && manualDiscount >= 0 ? manualDiscount : 0,
         items: items.map((item) => ({
           productId: item.productId,
           quantity: item.quantity,
           unitPrice: item.unitPrice,
-          packSize: item.packSize,
+          ...(item.packSize ? {
+            packSize: {
+              code: item.packSize.code,
+              name: item.packSize.name,
+              unit: item.packSize.unit,
+              quantityPerPack: item.packSize.quantityPerPack,
+              barcode: item.packSize.barcode,
+            },
+          } : {}),
           quantityInBaseUnits: item.quantityInBaseUnits,
         })),
-      });
+      };
+      if (promotionId && promotionId.trim() && promotionId !== 'null') {
+        payload.promotionId = promotionId;
+      }
+      const response = await apiClient.post('/sales/quote', payload);
       return response.data as { subtotal: number; discount: number; taxAmount: number; total: number };
     },
     enabled: Boolean(branchId && items.length),
+    retry: 1,
   });
   const total = checkoutQuote?.total ?? cartTotal;
 
@@ -316,19 +331,17 @@ export const PaymentPage = () => {
 
   const checkoutMutation = useMutation({
     mutationFn: async () => {
-      const branchId = getBranchId(selectedBranch);
+      const effectiveBranchId = user?.role === 'super_admin'
+        ? (getBranchId(selectedBranch) || user?.branchId)
+        : (user?.branchId || getBranchId(selectedBranch));
       const parsedAmount = parseFloat(amountReceived);
       
-      if (!branchId) {
+      if (!effectiveBranchId) {
         throw new Error('Branch ID is required');
       }
       
       if (items.length === 0) {
         throw new Error('No items in cart');
-      }
-
-      if (!checkoutQuote) {
-        throw new Error('Final totals are still being calculated. Please try again.');
       }
 
       if (!currentShift || currentShift.status !== 'open') {
@@ -370,24 +383,26 @@ export const PaymentPage = () => {
       };
 
       const payload = {
-        branchId,
+        branchId: effectiveBranchId,
         shiftId: currentShift._id,
         terminalId,
         items: items.map((item) => ({
           productId: item.productId,
           quantity: item.quantity,
           unitPrice: item.unitPrice,
-          packSize: item.packSize ? {
-            code: item.packSize.code,
-            name: item.packSize.name,
-            unit: item.packSize.unit,
-            quantityPerPack: item.packSize.quantityPerPack,
-            barcode: item.packSize.barcode,
-          } : null,
+          ...(item.packSize ? {
+            packSize: {
+              code: item.packSize.code,
+              name: item.packSize.name,
+              unit: item.packSize.unit,
+              quantityPerPack: item.packSize.quantityPerPack,
+              barcode: item.packSize.barcode,
+            },
+          } : {}),
           quantityInBaseUnits: item.quantityInBaseUnits,
         })),
-        discount: manualDiscount,
-        promotionId,
+        discount: typeof manualDiscount === 'number' && manualDiscount >= 0 ? manualDiscount : 0,
+        promotionId: promotionId && promotionId.trim() && promotionId !== 'null' ? promotionId : undefined,
         paymentMethod: paymentMethodMap[paymentMethod],
         paymentReference: ['orange_money', 'africell_money', 'qmoney'].includes(paymentMethod) && paymentReference.trim()
           ? paymentReference.trim()
