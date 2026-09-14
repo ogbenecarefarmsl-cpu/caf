@@ -49,7 +49,11 @@ apiClient.interceptors.request.use(
     // 1. Add Auth Token
     const token = getStoredToken('accessToken');
     if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
+      if (typeof (config.headers as any).set === 'function') {
+        (config.headers as any).set('Authorization', `Bearer ${token}`);
+      } else {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
 
     // 1b. Attach step-up token (if a recent WebAuthn ceremony produced one)
@@ -122,7 +126,11 @@ apiClient.interceptors.response.use(
         try {
           const accessToken = await refreshPromise;
           if (originalRequest.headers) {
-            originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+            if (typeof (originalRequest.headers as any).set === 'function') {
+              (originalRequest.headers as any).set('Authorization', `Bearer ${accessToken}`);
+            } else {
+              originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+            }
           }
           return apiClient(originalRequest);
         } catch {
@@ -181,7 +189,11 @@ apiClient.interceptors.response.use(
       try {
         const accessToken = await refreshPromise;
         if (originalRequest.headers) {
-          originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+          if (typeof (originalRequest.headers as any).set === 'function') {
+            (originalRequest.headers as any).set('Authorization', `Bearer ${accessToken}`);
+          } else {
+            originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+          }
         }
         return apiClient(originalRequest);
       } catch (refreshError) {

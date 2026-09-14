@@ -12,12 +12,13 @@ interface ExpenseModalProps {
   isLoading?: boolean;
 }
 
-const expenseCategories = [
+export const expenseCategories = [
   { value: 'supplies', label: 'Store & Office Supplies' },
   { value: 'maintenance', label: 'Equipment & Maintenance' },
   { value: 'utilities', label: 'Utilities & Internet' },
+  { value: 'petty_cash', label: 'Petty Cash Disbursement' },
   { value: 'rent', label: 'Rent & Facility' },
-  { value: 'salaries', label: 'Wages & Shift Advance' },
+  { value: 'salaries', label: 'Wages & Staff Advance' },
   { value: 'other', label: 'Other Operational Expense' },
 ];
 

@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { AdminLayout } from '../../components/AdminLayout';
 import { useAuthStore } from '../../stores/auth-store';
 import { 
@@ -18,7 +18,16 @@ import {
 } from 'lucide-react';
 
 export function ReportsPage() {
+  const location = useLocation();
   const user = useAuthStore((state) => state.user);
+  const isPosContext = location.pathname.startsWith('/pos/') || user?.role === 'cashier';
+
+  const getReportUrl = (path: string) => {
+    if (isPosContext && path.startsWith('/admin/reports/')) {
+      return path.replace('/admin/reports/', '/pos/reports/');
+    }
+    return path;
+  };
   const reportModules = [
     {
       title: 'Sales Reports',
@@ -158,7 +167,7 @@ export function ReportsPage() {
             return (
               <Link
                 key={module.path}
-                to={module.path}
+                to={getReportUrl(module.path)}
                 className="block group"
               >
                 <div className="bg-primary-dark rounded-lg shadow-md border border-gray-700 p-6 hover:shadow-xl hover:border-accent-green transition-all">

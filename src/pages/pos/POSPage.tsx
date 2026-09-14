@@ -14,6 +14,10 @@ import { useDebounce } from '../../hooks/useDebounce';
 import { useToast } from '../../hooks/useToast';
 import { useConfirm } from '../../hooks/useConfirm';
 import { OfflineIndicator, POSLayout } from '../../components/pos';
+import { OpenShiftModal, CloseShiftModal } from '../../components/pos/ShiftModals';
+import { ExpenseModal } from '../../components/pos/ExpenseModal';
+import { Modal } from '../../components/ui/Modal';
+import { getErrorMessage } from '../../lib/error-utils';
 import { getProductImage, handleImageError } from '../../lib/product-images';
 import { UserProfileModal } from '../../components/pos/UserProfileModal';
 import { ParkedSalesBar } from '../../components/pos/ParkedSalesBar';
@@ -498,13 +502,10 @@ export const POSPage = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.expenses.all(), exact: false });
       setShowExpenseModal(false);
-      setExpenseAmount('');
-      setExpenseCategory('supplies');
-      setExpenseDescription('');
-      alertInfo('Expense recorded successfully');
+      showSuccess('Expense recorded successfully');
     },
     onError: (error: unknown) => {
-      alertWarning(error instanceof Error ? error.message : 'Failed to record expense. Please try again.');
+      showError(getErrorMessage(error, 'Failed to record expense. Please try again.'));
     },
   });
 
@@ -1296,247 +1297,127 @@ export const POSPage = () => {
       )}
 
       {/* Open Shift Modal */}
-      {showShiftModal && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-          <div className="absolute inset-0 bg-black/75" onClick={() => setShowShiftModal(false)} />
-          <div className="relative bg-primary-dark rounded-t-2xl sm:rounded-2xl p-6 pb-safe-bottom w-full max-w-md mx-0 sm:mx-4 border border-gray-700 max-h-[85vh] overflow-y-auto">
-            <h2 className="text-xl font-bold text-white mb-4">Open Shift</h2>
-            <p className="text-gray-400 mb-4">Enter the opening cash amount to start your shift.</p>
-            
-            <div className="mb-4">
-              <label className="block text-gray-400 text-sm mb-2">Opening Cash Amount</label>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-accent-green font-bold">{symbol}</span>
-                <input
-                  type="number"
-                  value={openingCash}
-                  onChange={(e) => setOpeningCash(e.target.value)}
-                  placeholder={`${symbol} 0.00`}
-                  className="w-full pl-10 pr-4 py-3 bg-primary-darker border border-gray-600 rounded-xl text-white focus:outline-none focus:border-accent-green"
-                />
-              </div>
-            </div>
-
-            <div className="flex space-x-3">
-              <button
-                onClick={() => setShowShiftModal(false)}
-                className="flex-1 py-3 bg-gray-700 text-white font-medium rounded-xl"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleOpenShift}
-                disabled={openShiftMutation.isPending}
-                className="flex-1 py-3 bg-accent-green text-primary-dark font-semibold rounded-xl disabled:opacity-50"
-              >
-                {openShiftMutation.isPending ? 'Opening...' : 'Open Shift'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <OpenShiftModal
+        isOpen={showShiftModal}
+        onClose={() => setShowShiftModal(false)}
+        onSubmit={(openingCash) => openShiftMutation.mutate({ openingCash })}
+        isLoading={openShiftMutation.isPending}
+      />
 
       {/* Close Shift Modal */}
-      {showCloseShiftModal && currentShift && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-          <div className="absolute inset-0 bg-black/75" onClick={() => setShowCloseShiftModal(false)} />
-          <div className="relative bg-primary-dark rounded-t-2xl sm:rounded-2xl p-6 pb-safe-bottom w-full max-w-md mx-0 sm:mx-4 border border-gray-700 max-h-[85vh] overflow-y-auto">
-            <h2 className="text-xl font-bold text-white mb-4">Close Shift</h2>
-            <p className="text-gray-400 mb-4">Count the cash in the register and confirm shift closure.</p>
-
-            <div className="bg-primary-darker rounded-xl p-4 mb-4 space-y-2 border border-gray-700">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Opening Cash</span>
-                <span className="text-white">{format(currentShift.openingCash)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Total Sales</span>
-                <span className="text-white">{format(totalSales)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Expenses</span>
-                <span className="text-red-300">- {format(totalExpenses)}</span>
-              </div>
-              <div className="flex justify-between text-base pt-2 border-t border-gray-700">
-                <span className="text-white font-medium">Expected Cash</span>
-                <span className="text-accent-green font-bold">{format(expectedCash)}</span>
-              </div>
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-gray-400 text-sm mb-2">Actual Closing Cash Amount</label>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-accent-green font-bold">{symbol}</span>
-                <input
-                  type="number"
-                  value={closingCash}
-                  onChange={(e) => setClosingCash(e.target.value)}
-                  placeholder={`${symbol} 0.00`}
-                  className="w-full pl-10 pr-4 py-3 bg-primary-darker border border-gray-600 rounded-xl text-white focus:outline-none focus:border-accent-green"
-                />
-              </div>
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-gray-400 text-sm mb-2">Notes (Optional)</label>
-              <textarea
-                value={closeShiftNotes}
-                onChange={(e) => setCloseShiftNotes(e.target.value)}
-                placeholder="Any discrepancy or handover note..."
-                rows={3}
-                className="w-full px-4 py-3 bg-primary-darker border border-gray-600 rounded-xl text-white resize-none focus:outline-none focus:border-accent-green"
-              />
-            </div>
-
-            <div className="flex space-x-3">
-              <button
-                onClick={() => setShowCloseShiftModal(false)}
-                className="flex-1 py-3 bg-gray-700 text-white font-medium rounded-xl"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleCloseShift}
-                disabled={closeShiftMutation.isPending || !closingCash.trim()}
-                className="flex-1 py-3 bg-red-600 text-white font-semibold rounded-xl disabled:opacity-50"
-              >
-                {closeShiftMutation.isPending ? 'Closing...' : 'Close Shift'}
-              </button>
-            </div>
-          </div>
-        </div>
+      {currentShift && (
+        <CloseShiftModal
+          isOpen={showCloseShiftModal}
+          onClose={() => setShowCloseShiftModal(false)}
+          onSubmit={(closingCash, notes) =>
+            closeShiftMutation.mutate({
+              shiftId: currentShift._id,
+              closingCash,
+              notes: notes || undefined,
+            })
+          }
+          isLoading={closeShiftMutation.isPending}
+          openingCash={currentShift.openingCash}
+          totalSales={totalSales}
+          totalExpenses={totalExpenses}
+          expectedCash={expectedCash}
+        />
       )}
 
       {/* Expense Modal */}
-      {showExpenseModal && currentShift && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-          <div className="absolute inset-0 bg-black/75" onClick={() => setShowExpenseModal(false)} />
-          <div className="relative bg-primary-dark rounded-t-2xl sm:rounded-2xl p-6 pb-safe-bottom w-full max-w-md mx-0 sm:mx-4 border border-gray-700 max-h-[85vh] overflow-y-auto">
-            <h2 className="text-xl font-bold text-white mb-4">Log Expense</h2>
-            <p className="text-gray-400 mb-4">Record a cash expense for this active shift.</p>
-
-            <div className="mb-4">
-              <label className="block text-gray-400 text-sm mb-2">Amount</label>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-accent-green font-bold">{symbol}</span>
-                <input
-                  type="number"
-                  value={expenseAmount}
-                  onChange={(e) => setExpenseAmount(e.target.value)}
-                  placeholder={`${symbol} 0.00`}
-                  className="w-full pl-10 pr-4 py-3 bg-primary-darker border border-gray-600 rounded-xl text-white focus:outline-none focus:border-accent-green"
-                />
-              </div>
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-gray-400 text-sm mb-2">Category</label>
-              <select
-                value={expenseCategory}
-                onChange={(e) => setExpenseCategory(e.target.value)}
-                className="w-full px-4 py-3 bg-primary-darker border border-gray-600 rounded-xl text-white focus:outline-none focus:border-accent-green"
-              >
-                {expenseCategories.map((cat) => (
-                  <option key={cat.value} value={cat.value}>{cat.label}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-gray-400 text-sm mb-2">Description</label>
-              <textarea
-                value={expenseDescription}
-                onChange={(e) => setExpenseDescription(e.target.value)}
-                placeholder="What was this expense for?"
-                rows={3}
-                className="w-full px-4 py-3 bg-primary-darker border border-gray-600 rounded-xl text-white resize-none focus:outline-none focus:border-accent-green"
-              />
-            </div>
-
-            <div className="flex space-x-3">
-              <button
-                onClick={() => setShowExpenseModal(false)}
-                className="flex-1 py-3 bg-gray-700 text-white font-medium rounded-xl"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleCreateExpense}
-                disabled={createExpenseMutation.isPending || !expenseAmount.trim() || !expenseDescription.trim()}
-                className="flex-1 py-3 bg-accent-green text-primary-dark font-semibold rounded-xl disabled:opacity-50"
-              >
-                {createExpenseMutation.isPending ? 'Logging...' : 'Log Expense'}
-              </button>
-            </div>
-</div>
-          </div>
+      {currentShift && (
+        <ExpenseModal
+          isOpen={showExpenseModal}
+          onClose={() => setShowExpenseModal(false)}
+          onSubmit={(data) => createExpenseMutation.mutate(data)}
+          isLoading={createExpenseMutation.isPending}
+        />
       )}
 
       {/* Pack Size Selector Modal */}
-      {showPackSizeModal && selectedProductForPack && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-          <div className="absolute inset-0 bg-black/75" onClick={() => setShowPackSizeModal(false)} />
-          <div className="relative bg-primary-dark rounded-t-2xl sm:rounded-2xl p-6 pb-safe-bottom w-full max-w-md mx-0 sm:mx-4 border border-gray-700 max-h-[85vh] overflow-y-auto">
-            <h2 className="text-xl font-bold text-white mb-1">Select Pack Size</h2>
-            <p className="text-gray-400 text-sm mb-4">{selectedProductForPack.name}</p>
+      <Modal
+        isOpen={showPackSizeModal && !!selectedProductForPack}
+        onClose={() => setShowPackSizeModal(false)}
+        title="Select Pack Size"
+        size="sm"
+      >
+        {selectedProductForPack && (
+          <div className="space-y-4">
+            <p className="text-xs text-slate-400 -mt-2">{selectedProductForPack.name}</p>
 
-            <div className="space-y-3 mb-6">
-              {/* Base unit option (default) */}
+            <div className="space-y-2.5 max-h-[60vh] overflow-y-auto pr-1">
+              {/* Base unit option */}
               <button
+                type="button"
                 onClick={() => {
                   handleAddToCart(selectedProductForPack, undefined);
                   setShowPackSizeModal(false);
                 }}
-                className="w-full p-4 bg-primary-darker border border-gray-600 rounded-xl text-left hover:border-accent-green transition-colors"
+                className="w-full p-3.5 bg-slate-950/60 border border-white/10 rounded-xl text-left hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all group"
               >
                 <div className="flex justify-between items-center">
                   <div>
-                    <p className="text-white font-semibold">{selectedProductForPack.unit || 'Unit'}</p>
-                    <p className="text-gray-400 text-sm">1 {selectedProductForPack.unit || 'unit'}</p>
+                    <p className="text-white font-medium text-sm group-hover:text-emerald-300 transition-colors">
+                      {selectedProductForPack.unit || 'Unit'}
+                    </p>
+                    <p className="text-slate-400 text-xs mt-0.5">1 {selectedProductForPack.unit || 'unit'}</p>
                   </div>
-                  <p className="text-accent-green font-bold">{format(selectedProductForPack.price)}</p>
+                  <p className="text-emerald-400 font-bold font-mono text-sm">{format(selectedProductForPack.price)}</p>
                 </div>
               </button>
 
               {/* Pack size options */}
-              {selectedProductForPack.packSizes?.map((pack) => (
-                <button
-                  key={pack.unit}
-                  onClick={() => {
-                    if (selectedProductForPack.stock < pack.quantityPerPack) return;
-                    handleAddToCart(selectedProductForPack, pack);
-                    setShowPackSizeModal(false);
-                  }}
-                  disabled={selectedProductForPack.stock < pack.quantityPerPack}
-                  className={`w-full p-4 bg-primary-darker border rounded-xl text-left transition-colors ${
-                    selectedProductForPack.stock < pack.quantityPerPack
-                      ? 'cursor-not-allowed border-red-500/30 opacity-60'
-                      : 'border-gray-600 hover:border-accent-green'
-                  }`}
-                >
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="text-white font-semibold">{pack.name}</p>
-                      <p className="text-gray-400 text-sm">{pack.quantityPerPack} {selectedProductForPack.unit}s per {pack.name.toLowerCase()}</p>
-                      {selectedProductForPack.stock < pack.quantityPerPack && (
-                        <p className="mt-1 text-xs text-red-400">Not enough stock for this pack</p>
-                      )}
+              {selectedProductForPack.packSizes?.map((pack) => {
+                const hasStock = selectedProductForPack.stock >= pack.quantityPerPack;
+                return (
+                  <button
+                    key={pack.unit}
+                    type="button"
+                    onClick={() => {
+                      if (!hasStock) return;
+                      handleAddToCart(selectedProductForPack, pack);
+                      setShowPackSizeModal(false);
+                    }}
+                    disabled={!hasStock}
+                    className={`w-full p-3.5 bg-slate-950/60 border rounded-xl text-left transition-all group ${
+                      !hasStock
+                        ? 'cursor-not-allowed border-rose-500/20 opacity-50'
+                        : 'border-white/10 hover:border-emerald-500/50 hover:bg-emerald-500/5'
+                    }`}
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className={`font-medium text-sm transition-colors ${hasStock ? 'text-white group-hover:text-emerald-300' : 'text-slate-400'}`}>
+                          {pack.name}
+                        </p>
+                        <p className="text-slate-400 text-xs mt-0.5">
+                          {pack.quantityPerPack} {selectedProductForPack.unit}s per {pack.name.toLowerCase()}
+                        </p>
+                        {!hasStock && (
+                          <p className="mt-1 text-[11px] text-rose-400 font-medium">Not enough stock for this pack</p>
+                        )}
+                      </div>
+                      <p className={`font-bold font-mono text-sm ${hasStock ? 'text-emerald-400' : 'text-slate-500'}`}>
+                        {format(pack.sellingPrice)}
+                      </p>
                     </div>
-                    <p className="text-accent-green font-bold">{format(pack.sellingPrice)}</p>
-                  </div>
-                </button>
-              ))}
+                  </button>
+                );
+              })}
             </div>
 
-            <button
-              onClick={() => setShowPackSizeModal(false)}
-              className="w-full py-3 bg-gray-700 text-white font-medium rounded-xl"
-            >
-              Cancel
-            </button>
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => setShowPackSizeModal(false)}
+                className="w-full py-2.5 bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 font-medium text-xs rounded-xl border border-white/[0.08] transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
 
       <UserProfileModal isOpen={showProfile} onClose={() => setShowProfile(false)} />
 

@@ -242,6 +242,86 @@ export const router = createBrowserRouter([
     ),
   },
   {
+    path: '/pos/credit-sales',
+    element: (
+      <ProtectedRoute allowedRoles={['cashier', 'branch_manager', 'super_admin', 'auditor']}>
+        <ErrorBoundary>
+          <CreditSalesPage />
+        </ErrorBoundary>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/pos/reports',
+    element: (
+      <ProtectedRoute allowedRoles={['cashier', 'branch_manager', 'super_admin', 'auditor']}>
+        <ErrorBoundary>
+          <ReportsPage />
+        </ErrorBoundary>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/pos/reports/sales',
+    element: (
+      <ProtectedRoute allowedRoles={['cashier', 'branch_manager', 'super_admin', 'auditor']}>
+        <ErrorBoundary>
+          <SalesReportsPage />
+        </ErrorBoundary>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/pos/reports/customers',
+    element: (
+      <ProtectedRoute allowedRoles={['cashier', 'branch_manager', 'super_admin', 'auditor']}>
+        <ErrorBoundary>
+          <CustomerReportsPage />
+        </ErrorBoundary>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/pos/reports/inventory',
+    element: (
+      <ProtectedRoute allowedRoles={['branch_manager', 'super_admin', 'auditor']}>
+        <ErrorBoundary>
+          <InventoryReportsPage />
+        </ErrorBoundary>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/pos/reports/expiry',
+    element: (
+      <ProtectedRoute allowedRoles={['branch_manager', 'super_admin', 'auditor']}>
+        <ErrorBoundary>
+          <ExpiryReportsPage />
+        </ErrorBoundary>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/pos/reports/purchases',
+    element: (
+      <ProtectedRoute allowedRoles={['branch_manager', 'super_admin', 'auditor']}>
+        <ErrorBoundary>
+          <PurchaseReportsPage />
+        </ErrorBoundary>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/pos/reports/transfers',
+    element: (
+      <ProtectedRoute allowedRoles={['branch_manager', 'super_admin', 'auditor']}>
+        <ErrorBoundary>
+          <TransferReportsPage />
+        </ErrorBoundary>
+      </ProtectedRoute>
+    ),
+  },
+  {
     path: '/admin/dashboard',
     element: (
       <ProtectedRoute allowedRoles={['branch_manager', 'super_admin', 'auditor']}>

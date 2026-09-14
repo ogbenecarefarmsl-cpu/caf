@@ -90,7 +90,7 @@ export const PaymentMethodCard = ({ method, isActive, onClick, disabled = false 
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`relative flex flex-col items-center gap-2 p-3 sm:p-4 rounded-xl border transition-all duration-200 min-h-[90px] active:scale-95 ${
+      className={`relative flex flex-col items-center justify-center gap-1.5 p-2.5 sm:p-3 rounded-xl border transition-all duration-200 min-h-[76px] active:scale-95 ${
         isActive ? styles.active : styles.inactive
       } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
       aria-pressed={isActive}
@@ -105,12 +105,12 @@ export const PaymentMethodCard = ({ method, isActive, onClick, disabled = false 
       )}
       
       {/* Icon */}
-      <div className={`transition-all duration-200 ${isActive ? styles.iconActive : styles.iconInactive}`}>
+      <div className={`transition-all duration-200 [&>svg]:w-5 [&>svg]:h-5 ${isActive ? styles.iconActive : styles.iconInactive}`}>
         {method.icon}
       </div>
       
       {/* Label */}
-      <span className={`text-xs font-semibold text-center leading-tight transition-colors duration-200 ${
+      <span className={`text-[11px] sm:text-xs font-semibold text-center leading-tight transition-colors duration-200 ${
         isActive ? styles.textActive : styles.textInactive
       }`}>
         {method.shortLabel}

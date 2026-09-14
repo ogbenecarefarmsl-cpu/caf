@@ -100,13 +100,13 @@ export const POSSidebar = () => {
       id: 'credit-sales',
       label: 'Credit Sales',
       icon: <CreditCard className="w-5 h-5" />,
-      path: '/admin/sales/credit',
+      path: '/pos/credit-sales',
     },
     {
       id: 'reports',
       label: 'Reports',
       icon: <BarChart3 className="w-5 h-5" />,
-      path: '/admin/reports',
+      path: '/pos/reports',
     },
     {
       id: 'catalog',
@@ -122,7 +122,8 @@ export const POSSidebar = () => {
     },
   ];
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) =>
+    location.pathname === path || (path !== '/pos' && location.pathname.startsWith(path));
 
   const cashierMenuItems = new Set([
     'pos',

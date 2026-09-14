@@ -8,10 +8,12 @@ import { Table } from '../../components/ui/Table';
 import { Modal } from '../../components/ui/Modal';
 import { Input } from '../../components/ui/Input';
 import { Loading } from '../../components/ui/Loading';
-import { Error } from '../../components/ui/Error';
+import { Error as ErrorDisplay } from '../../components/ui/Error';
 import { useBranchStore, getBranchId } from '../../stores/branch-store';
+import { useAuthStore } from '../../stores/auth-store';
 import { queryKeys } from '../../lib/query-keys';
 import { buildApiUrl } from '../../lib/api-utils';
+import { getErrorMessage } from '../../lib/error-utils';
 import { useToast } from '../../hooks/useToast';
 import { useCurrency } from '../../hooks/useCurrency';
 import { unwrapArray } from '../../lib/unwrap-response';
@@ -21,6 +23,8 @@ const CATEGORIES = [
   { value: 'maintenance', label: 'Maintenance' },
   { value: 'utilities', label: 'Utilities' },
   { value: 'petty_cash', label: 'Petty Cash' },
+  { value: 'rent', label: 'Rent' },
+  { value: 'salaries', label: 'Salaries' },
   { value: 'other', label: 'Other' },
 ];
 
@@ -29,6 +33,8 @@ const CATEGORY_BADGE: Record<string, string> = {
   maintenance: 'bg-orange-500/15 text-orange-300 border border-orange-500/20',
   utilities: 'bg-yellow-500/15 text-yellow-200 border border-yellow-500/20',
   petty_cash: 'bg-purple-500/15 text-purple-300 border border-purple-500/20',
+  rent: 'bg-indigo-500/15 text-indigo-300 border border-indigo-500/20',
+  salaries: 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/20',
   other: 'bg-white/10 text-gray-300 border border-white/10',
 };
 
@@ -63,11 +69,26 @@ interface ExpenseFormData {
 export function ExpensesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { selectedBranch } = useBranchStore();
+  const user = useAuthStore((state) => state.user);
   const queryClient = useQueryClient();
   const { showSuccess, showError } = useToast();
   const { format } = useCurrency();
 
   const branchId = getBranchId(selectedBranch);
+
+  const { data: currentShift } = useQuery({
+    queryKey: queryKeys.shifts.current({ branchId, cashierId: user?.id }),
+    queryFn: async () => {
+      if (!branchId || !user?.id) return null;
+      try {
+        const res = await apiClient.get('/shifts/current', { params: { branchId, cashierId: user.id } });
+        return res.data?.data ?? res.data;
+      } catch {
+        return null;
+      }
+    },
+    enabled: !!branchId && !!user?.id,
+  });
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<ExpenseFormData>();
 
@@ -91,9 +112,15 @@ export function ExpensesPage() {
 
   const createMutation = useMutation({
     mutationFn: async (data: ExpenseFormData) => {
+      const shiftId = data.shiftId || currentShift?._id;
+      if (!shiftId) {
+        throw new Error('An active shift is required to record a register expense.');
+      }
       const response = await apiClient.post('/expenses', {
         ...data,
+        shiftId,
         branchId,
+        recordedBy: user?.id,
       });
       return response.data;
     },
@@ -103,8 +130,8 @@ export function ExpensesPage() {
       setIsModalOpen(false);
       reset();
     },
-    onError: (err: any) => {
-      showError(err?.response?.data?.message ?? 'Failed to record expense');
+    onError: (err: unknown) => {
+      showError(getErrorMessage(err, 'Failed to record expense'));
     },
   });
 
@@ -158,7 +185,7 @@ export function ExpensesPage() {
         )}
 
         {isLoading && <Loading />}
-        {error && <Error message="Failed to load expenses" />}
+        {error && <ErrorDisplay message="Failed to load expenses" />}
 
         {expenses && expenses.length === 0 && (
           <div className="text-gray-400 text-sm text-center py-12">
@@ -234,12 +261,19 @@ export function ExpensesPage() {
           title="Record Expense"
         >
           <form onSubmit={handleSubmit((d) => createMutation.mutate(d))} className="space-y-4">
-            <Input
-              label="Shift ID"
-              {...register('shiftId', { required: 'Shift ID is required' })}
-              error={errors.shiftId?.message}
-              placeholder="MongoDB ID of the current shift"
-            />
+            {currentShift?._id ? (
+              <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-between text-xs text-emerald-300">
+                <span className="font-medium">Active Register Shift Linked</span>
+                <span className="font-mono text-[11px] opacity-75">{currentShift._id.slice(-8)}</span>
+              </div>
+            ) : (
+              <Input
+                label="Shift ID"
+                {...register('shiftId', { required: 'Shift ID is required when no register shift is open' })}
+                error={errors.shiftId?.message}
+                placeholder="MongoDB ID of the shift"
+              />
+            )}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1">Category</label>
               <select

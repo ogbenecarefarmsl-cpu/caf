@@ -8,6 +8,7 @@ import { useAuthStore } from '../../stores/auth-store';
 import { useCurrency } from '../../hooks/useCurrency';
 import { useToast } from '../../hooks/useToast';
 import { POSLayout } from '../../components/pos';
+import { ExpenseModal } from '../../components/pos/ExpenseModal';
 import { getErrorMessage } from '../../lib/error-utils';
 import { queryKeys } from '../../lib/query-keys';
 
@@ -53,9 +54,6 @@ export const ShiftManagementPage = () => {
   const [openingCash, setOpeningCash] = useState('');
   const [closingCash, setClosingCash] = useState('');
   const [closeNotes, setCloseNotes] = useState('');
-  const [expenseAmount, setExpenseAmount] = useState('');
-  const [expenseCategory, setExpenseCategory] = useState('supplies');
-  const [expenseDescription, setExpenseDescription] = useState('');
   const [activeTab, setActiveTab] = useState<'current' | 'history' | 'expenses'>('current');
 
   const terminalId = 'TERMINAL-01';
@@ -180,13 +178,15 @@ export const ShiftManagementPage = () => {
   // Create expense mutation
   const createExpenseMutation = useMutation({
     mutationFn: async (data: { amount: number; category: string; description: string; notes?: string; receiptNumber?: string }) => {
-      if (!currentShift || !selectedBranch || !user) {
+      const branchId = getBranchId(selectedBranch);
+      const recordedBy = user?.id;
+      if (!currentShift || !branchId || !recordedBy) {
         throw new Error('Missing required data');
       }
       const response = await apiClient.post('/expenses', {
-        branchId: selectedBranch._id,
+        branchId,
         shiftId: currentShift._id,
-        recordedBy: user.id,
+        recordedBy,
         amount: data.amount,
         category: data.category,
         description: data.description,
@@ -198,9 +198,6 @@ export const ShiftManagementPage = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.expenses.all(), exact: false });
       setShowExpenseModal(false);
-      setExpenseAmount('');
-      setExpenseCategory('supplies');
-      setExpenseDescription('');
       refetchExpenses();
       showSuccess('Expense recorded successfully');
     },
@@ -236,17 +233,6 @@ export const ShiftManagementPage = () => {
       shiftId: currentShift._id,
       closingCash: amount,
       notes: closeNotes || undefined,
-    });
-  };
-
-  const handleCreateExpense = () => {
-    const amount = parseFloat(expenseAmount);
-    if (isNaN(amount) || amount <= 0 || !expenseDescription.trim()) return;
-    
-    createExpenseMutation.mutate({
-      amount,
-      category: expenseCategory,
-      description: expenseDescription.trim(),
     });
   };
 
@@ -645,69 +631,13 @@ export const ShiftManagementPage = () => {
         )}
 
         {/* Add Expense Modal */}
-        {showExpenseModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/75" onClick={() => setShowExpenseModal(false)} />
-            <div className="relative bg-primary-dark rounded-2xl p-6 w-full max-w-md border border-gray-700">
-              <h2 className="text-2xl font-bold text-white mb-2">Log Expense</h2>
-              <p className="text-gray-400 mb-6">Record a cash expense for this shift</p>
-              
-              <div className="mb-4">
-                <label className="block text-white font-medium mb-2">Amount</label>
-                <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-accent-green font-bold text-lg">{symbol}</span>
-                  <input
-                    type="number"
-                    value={expenseAmount}
-                    onChange={(e) => setExpenseAmount(e.target.value)}
-                    placeholder="0.00"
-                    step="0.01"
-                    className="w-full pl-10 pr-4 py-4 bg-primary-darker border border-gray-600 rounded-xl text-white text-lg focus:outline-none focus:border-accent-green"
-                  />
-                </div>
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-white font-medium mb-2">Category</label>
-                <select
-                  value={expenseCategory}
-                  onChange={(e) => setExpenseCategory(e.target.value)}
-                  className="w-full px-4 py-3 bg-primary-darker border border-gray-600 rounded-xl text-white focus:outline-none focus:border-accent-green"
-                >
-                  {expenseCategories.map((cat) => (
-                    <option key={cat.value} value={cat.value}>{cat.label}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="mb-6">
-                <label className="block text-white font-medium mb-2">Description</label>
-                <textarea
-                  value={expenseDescription}
-                  onChange={(e) => setExpenseDescription(e.target.value)}
-                  placeholder="What was this expense for?"
-                  className="w-full px-4 py-3 bg-primary-darker border border-gray-600 rounded-xl text-white resize-none focus:outline-none focus:border-accent-green"
-                  rows={3}
-                />
-              </div>
-
-              <div className="flex space-x-3">
-                <button
-                  onClick={() => setShowExpenseModal(false)}
-                  className="flex-1 py-3 bg-gray-700 hover:bg-gray-600 text-white font-medium rounded-xl transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleCreateExpense}
-                  disabled={!expenseAmount || !expenseDescription || createExpenseMutation.isPending}
-                  className="flex-1 py-3 bg-accent-green hover:bg-emerald-500 text-primary-dark font-semibold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {createExpenseMutation.isPending ? 'Logging...' : 'Log Expense'}
-                </button>
-              </div>
-            </div>
-          </div>
+        {currentShift && (
+          <ExpenseModal
+            isOpen={showExpenseModal}
+            onClose={() => setShowExpenseModal(false)}
+            onSubmit={(data) => createExpenseMutation.mutate(data)}
+            isLoading={createExpenseMutation.isPending}
+          />
         )}
       </div>
     </POSLayout>

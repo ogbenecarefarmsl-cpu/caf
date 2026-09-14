@@ -36,6 +36,7 @@ import { ConnectionStatus } from './ui/ConnectionStatus';
 import { OfflineNotification } from './ui/OfflineNotification';
 import { PWAUpdatePrompt } from './ui/PWAUpdatePrompt';
 import { ConfirmDialog } from './ui/ConfirmDialog';
+import { POSLayout } from './pos/POSLayout';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -68,6 +69,21 @@ export const AdminLayout = ({
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
+
+  const isPosContext = location.pathname.startsWith('/pos/') || (user?.role === 'cashier' && !location.pathname.startsWith('/admin/dashboard'));
+
+  if (isPosContext) {
+    return (
+      <POSLayout>
+        <div className="flex-1 overflow-y-auto p-4 pt-16 lg:pt-6 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] sm:p-6 lg:p-8">
+          <div className="max-w-7xl mx-auto space-y-5">
+            <PasskeySetupBanner />
+            {children}
+          </div>
+        </div>
+      </POSLayout>
+    );
+  }
 
   const handleLogout = async () => {
     try {
