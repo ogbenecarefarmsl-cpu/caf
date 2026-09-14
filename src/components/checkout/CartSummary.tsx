@@ -13,28 +13,28 @@ export const CartSummary = ({ items, subtotal, discount, total, format }: CartSu
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <div className="mx-4 mt-4 rounded-2xl border border-gray-800/80 bg-primary-dark/50 backdrop-blur-md overflow-hidden transition-all duration-300">
+    <div className="rounded-2xl border border-white/10 bg-slate-900/80 backdrop-blur-md overflow-hidden transition-all duration-300 shadow-lg">
       {/* Header - Always visible */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full px-4 py-3 flex items-center justify-between hover:bg-white/5 transition-colors"
+        className="w-full px-4 py-3 flex items-center justify-between hover:bg-white/[0.04] transition-colors"
         aria-label={isExpanded ? 'Collapse cart summary' : 'Expand cart summary'}
       >
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-accent-green/10 border border-accent-green/20 flex items-center justify-center">
-            <svg className="w-5 h-5 text-accent-green" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shadow-sm">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
             </svg>
           </div>
           <div className="text-left">
             <p className="text-sm font-semibold text-white">{items.length} {items.length === 1 ? 'Item' : 'Items'}</p>
-            <p className="text-xs text-gray-400">Tap to {isExpanded ? 'collapse' : 'review'}</p>
+            <p className="text-xs text-slate-400">Tap to {isExpanded ? 'collapse' : 'review list'}</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-lg font-bold text-white">{format(total)}</span>
+          <span className="text-lg font-bold text-white font-mono">{format(total)}</span>
           <svg 
-            className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}
+            className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}
             fill="none" 
             stroke="currentColor" 
             strokeWidth={2} 
@@ -51,21 +51,21 @@ export const CartSummary = ({ items, subtotal, discount, total, format }: CartSu
           isExpanded ? 'max-h-[400px] opacity-100' : 'max-h-0 opacity-0'
         }`}
       >
-        <div className="border-t border-gray-800/50">
+        <div className="border-t border-white/[0.08]">
           {/* Items List */}
-          <div className="max-h-[200px] overflow-y-auto px-4 py-2">
+          <div className="max-h-[200px] overflow-y-auto px-4 py-2 divide-y divide-white/[0.04]">
             {items.map((item) => (
               <div 
                 key={`${item.productId}-${item.packSize?.code || 'default'}`}
-                className="flex items-center justify-between py-2 border-b border-gray-800/30 last:border-0"
+                className="flex items-center justify-between py-2.5"
               >
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-white truncate">{item.productName}</p>
-                  <p className="text-xs text-gray-400">
+                <div className="flex-1 min-w-0 pr-3">
+                  <p className="text-sm font-medium text-slate-100 truncate">{item.productName}</p>
+                  <p className="text-xs text-slate-400">
                     {item.quantity} × {format(item.unitPrice)}
                   </p>
                 </div>
-                <span className="text-sm font-semibold text-white ml-3">
+                <span className="text-sm font-semibold text-emerald-400 font-mono shrink-0">
                   {format(item.quantity * item.unitPrice)}
                 </span>
               </div>
@@ -73,20 +73,20 @@ export const CartSummary = ({ items, subtotal, discount, total, format }: CartSu
           </div>
 
           {/* Summary */}
-          <div className="px-4 py-3 bg-primary-darker/50 space-y-2">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-400">Subtotal</span>
-              <span className="text-white font-medium">{format(subtotal)}</span>
+          <div className="px-4 py-3 bg-slate-950/60 border-t border-white/[0.06] space-y-1.5 text-xs">
+            <div className="flex items-center justify-between text-slate-400">
+              <span>Subtotal</span>
+              <span className="text-slate-200 font-medium font-mono">{format(subtotal)}</span>
             </div>
             {discount > 0 && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-400">Discount</span>
-                <span className="text-red-400 font-medium">-{format(discount)}</span>
+              <div className="flex items-center justify-between text-rose-400">
+                <span>Discount</span>
+                <span className="font-semibold font-mono">-{format(discount)}</span>
               </div>
             )}
-            <div className="flex items-center justify-between pt-2 border-t border-gray-800/50">
-              <span className="text-base font-semibold text-white">Total</span>
-              <span className="text-xl font-bold text-accent-green">{format(total)}</span>
+            <div className="flex items-center justify-between pt-1.5 border-t border-white/[0.06]">
+              <span className="text-sm font-semibold text-white">Order Total</span>
+              <span className="text-base font-bold text-emerald-400 font-mono">{format(total)}</span>
             </div>
           </div>
         </div>

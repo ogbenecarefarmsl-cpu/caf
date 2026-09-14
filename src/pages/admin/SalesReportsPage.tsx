@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import apiClient from '../../lib/api-client';
 import { unwrapResponse } from '../../lib/unwrap-response';
 import { AdminLayout } from '../../components/AdminLayout';
+import { POSLayout } from '../../components/pos';
 import { Button } from '../../components/ui/Button';
 import { Table } from '../../components/ui/Table';
 import { Input } from '../../components/ui/Input';
@@ -90,11 +92,13 @@ const defaultFilters: SalesReportFilters = {
 };
 
 export default function SalesReportsPage() {
+  const location = useLocation();
   const { format } = useCurrency();
   const selectedBranch = useBranchStore((state) => state.selectedBranch);
   const user = useAuthStore((state) => state.user);
   const selectedBranchId = getBranchId(selectedBranch);
   const isSuperAdmin = user?.role === 'super_admin';
+  const isPosContext = location.pathname.startsWith('/pos') || user?.role === 'cashier';
   
   const [filters, setFilters] = useState<SalesReportFilters>(defaultFilters);
   const effectiveBranchId = filters.branchId ?? (isSuperAdmin ? undefined : selectedBranchId);
@@ -231,21 +235,23 @@ export default function SalesReportsPage() {
   ];
 
   if (!isSuperAdmin && !selectedBranchId) {
-    return (
-      <AdminLayout>
-        <div className="rounded-2xl border border-white/10 bg-primary-dark/60 p-8 text-center">
-          <h2 className="text-xl font-semibold text-white">Select a Branch First</h2>
-          <p className="mt-2 text-gray-400">
-            Sales reports use your assigned branch. Choose a branch to continue.
-          </p>
-        </div>
-      </AdminLayout>
+    const noBranchContent = (
+      <div className="rounded-2xl border border-white/10 bg-primary-dark/60 p-8 text-center">
+        <h2 className="text-xl font-semibold text-white">Select a Branch First</h2>
+        <p className="mt-2 text-gray-400">
+          Sales reports use your assigned branch. Choose a branch to continue.
+        </p>
+      </div>
+    );
+    return isPosContext ? (
+      <POSLayout>{noBranchContent}</POSLayout>
+    ) : (
+      <AdminLayout>{noBranchContent}</AdminLayout>
     );
   }
 
-  return (
-    <AdminLayout>
-      <div className="space-y-6">
+  const pageContent = (
+    <div className="space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold text-white">Sales Reports</h1>
           <SaveReportButton
@@ -435,6 +441,11 @@ export default function SalesReportsPage() {
           </div>
         )}
       </div>
-    </AdminLayout>
+  );
+
+  return isPosContext ? (
+    <POSLayout>{pageContent}</POSLayout>
+  ) : (
+    <AdminLayout>{pageContent}</AdminLayout>
   );
 }

@@ -265,9 +265,11 @@ export const LoginPage = () => {
             </button>
 
             {(webauthn.error || biometric.error) && (
-              <p className="mt-2.5 text-xs text-rose-400 text-center font-medium">
-                {webauthn.error || biometric.error}
-              </p>
+              <div className="mt-3 p-3 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-center">
+                <p className="text-xs text-rose-400 font-medium">
+                  {webauthn.error || biometric.error}
+                </p>
+              </div>
             )}
           </div>
         )}
@@ -386,7 +388,11 @@ const RecoveryCodeForm = ({ initialUsername, onSuccess }: RecoveryCodeFormProps)
         autoComplete="one-time-code"
         required
       />
-      {error && <p className="text-xs text-rose-400 font-medium">{error}</p>}
+      {error && (
+        <div className="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-center">
+          <p className="text-xs text-rose-400 font-medium">{error}</p>
+        </div>
+      )}
       <Button
         type="submit"
         variant="secondary"

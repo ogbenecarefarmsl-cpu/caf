@@ -159,12 +159,8 @@ export const PaymentPage = () => {
     },
   });
 
-  const { data: currentShift } = useQuery({
-    queryKey: queryKeys.shifts.current({
-      branchId: getBranchId(selectedBranch),
-      cashierId: user?.id,
-      terminalId,
-    }),
+  const { data: currentShift, refetch: refetchCurrentShift } = useQuery({
+    queryKey: ['pos-payment-current-shift', getBranchId(selectedBranch), user?.id],
     queryFn: async () => {
       const branchId = getBranchId(selectedBranch);
       const cashierId = user?.id;
@@ -173,12 +169,26 @@ export const PaymentPage = () => {
         throw new Error('Missing required parameters: branchId and cashierId');
       }
 
-      const response = await apiClient.get('/shifts/current', {
-        params: { branchId, cashierId, terminalId },
+      try {
+        const response = await apiClient.get('/shifts/current', {
+          params: { branchId, cashierId, terminalId },
+        });
+        const shiftData = response.data?.data ?? response.data;
+        if (shiftData && shiftData._id && shiftData.status === 'open') {
+          return shiftData as Shift;
+        }
+      } catch {
+        // Fall through to query without terminalId
+      }
+
+      const fallbackResponse = await apiClient.get('/shifts/current', {
+        params: { branchId, cashierId },
       });
-      return (response.data?.data ?? response.data) as Shift;
+      const fallbackData = fallbackResponse.data?.data ?? fallbackResponse.data;
+      return (fallbackData || null) as Shift | null;
     },
     enabled: !!getBranchId(selectedBranch) && !!user?.id,
+    refetchInterval: 15000,
     retry: false,
   });
 
@@ -568,10 +578,10 @@ export const PaymentPage = () => {
       {isInitialLoad ? (
         <CheckoutSkeleton />
       ) : (
-        <div className="min-h-screen bg-primary-darker flex flex-col pt-safe-top">
+        <div className="h-[100dvh] bg-slate-950 flex flex-col overflow-hidden pt-safe-top">
           {/* Header */}
-          <header className="sticky top-0 z-20 border-b border-white/[0.08] bg-slate-900/80 backdrop-blur-xl px-4 py-3">
-            <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <header className="shrink-0 border-b border-white/[0.08] bg-slate-900/80 backdrop-blur-xl px-4 sm:px-6 py-3">
+            <div className="max-w-7xl mx-auto flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <button 
                   onClick={() => navigate(-1)} 
@@ -592,9 +602,9 @@ export const PaymentPage = () => {
             </div>
           </header>
 
-          {/* Main 2-Column Responsive Layout */}
-          <div className="flex-1 max-w-6xl mx-auto w-full p-4 sm:p-6 pb-36 lg:pb-8">
-            <div className="lg:grid lg:grid-cols-12 lg:gap-8 items-start">
+          {/* Main 2-Column Responsive Layout - Scrollable */}
+          <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6">
+            <div className="max-w-7xl mx-auto lg:grid lg:grid-cols-12 lg:gap-8 items-start">
               
               {/* LEFT COLUMN: Order Summary & Totals */}
               <div className="lg:col-span-5 space-y-4">
@@ -906,90 +916,81 @@ export const PaymentPage = () => {
                   </div>
                 )}
 
-                {/* Desktop Complete CTA */}
-                <div className="hidden lg:block pt-3">
-                  {getDisabledReason() && (
-                    <div className="flex items-center gap-2 mb-2 px-3.5 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300 font-medium">
-                      <AlertTriangle className="w-4 h-4 shrink-0 text-amber-400" />
-                      <span>{getDisabledReason()}</span>
-                    </div>
-                  )}
-                  <button
-                    onClick={() => {
-                      haptic('medium');
-                      setShowConfirmModal(true);
-                    }}
-                    disabled={!canCompleteSale}
-                    className="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-bold rounded-xl hover:shadow-lg hover:shadow-emerald-500/25 active:scale-[0.99] transition-all disabled:opacity-40 disabled:cursor-not-allowed text-base flex items-center justify-center gap-2 shadow-md cursor-pointer"
-                    aria-label={paymentMethod === 'credit' ? 'Create credit sale' : 'Complete sale'}
-                  >
-                    {paymentMethod === 'credit' ? (
-                      <>
-                        <CreditCard className="w-5 h-5" />
-                        Create Credit Sale
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle2 className="w-5 h-5" />
-                        Complete Sale ({format(total)})
-                      </>
-                    )}
-                  </button>
-                </div>
               </div>
             </div>
           </div>
 
-          {/* Mobile Bottom Actions (Fixed at bottom only on mobile) */}
-          <div className="lg:hidden fixed bottom-0 left-0 right-0 border-t border-white/[0.08] bg-slate-900/95 backdrop-blur-xl px-4 py-3 pb-safe-bottom space-y-2 shadow-2xl z-30">
-            {getDisabledReason() && (
-              <div className="flex items-center gap-1.5 text-xs text-amber-300 font-medium">
-                <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-amber-400" />
-                <span className="truncate">{getDisabledReason()}</span>
+          {/* Pinned Action Footer - Always visible and accessible on all viewports */}
+          <footer className="shrink-0 border-t border-white/10 bg-slate-900/95 backdrop-blur-xl px-4 sm:px-6 py-3.5 pb-safe-bottom shadow-2xl z-30">
+            <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              {/* Left summary / status */}
+              <div className="flex items-center gap-3 min-w-0">
+                {getDisabledReason() ? (
+                  <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300 font-medium">
+                    <AlertTriangle className="w-4 h-4 shrink-0 text-amber-400" />
+                    <span className="truncate">{getDisabledReason()}</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-4 text-xs">
+                    <div>
+                      <span className="text-slate-400 block text-[11px]">Total Due</span>
+                      <span className="text-lg font-bold text-emerald-400 font-mono">{format(total)}</span>
+                    </div>
+                    {paymentMethod === 'cash' && changeDue > 0 && (
+                      <div className="border-l border-white/10 pl-4">
+                        <span className="text-slate-400 block text-[11px]">Change Due</span>
+                        <span className="text-lg font-bold text-teal-300 font-mono">{format(changeDue)}</span>
+                      </div>
+                    )}
+                    {paymentMethod === 'credit' && (
+                      <div className="border-l border-white/10 pl-4">
+                        <span className="text-slate-400 block text-[11px]">Unpaid Balance</span>
+                        <span className="text-lg font-bold text-amber-300 font-mono">
+                          {format(Math.max(0, total - (Number.isFinite(parsedCreditAmount) ? parsedCreditAmount : 0)))}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-            )}
-            <button
-              onClick={() => {
-                haptic('medium');
-                setShowConfirmModal(true);
-              }}
-              disabled={!canCompleteSale}
-              className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-bold rounded-xl hover:shadow-lg hover:shadow-emerald-500/25 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed text-base flex items-center justify-center gap-2 shadow-md cursor-pointer"
-              aria-label={paymentMethod === 'credit' ? 'Create credit sale' : 'Complete sale'}
-            >
-              {paymentMethod === 'credit' ? (
-                <>
-                  <CreditCard className="w-5 h-5" />
-                  Create Credit Sale
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="w-5 h-5" />
-                  Complete Sale
-                </>
-              )}
-            </button>
-            <div className="flex gap-2">
-              <button
-                onClick={handleHoldSale}
-                disabled={items.length === 0}
-                className="flex-1 py-2.5 bg-white/[0.04] text-slate-300 border border-white/[0.08] font-semibold rounded-xl hover:bg-white/[0.08] hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-xs active:scale-95"
-                aria-label={`Hold sale${heldSales.length > 0 ? ` (${heldSales.length} held)` : ''}`}
-              >
-                <Clock className="w-3.5 h-3.5 text-slate-400" />
-                Hold{heldSales.length > 0 ? ` (${heldSales.length})` : ''}
-              </button>
-              <button
-                onClick={() => lastSaleId && setShowEmailModal(true)}
-                disabled={!lastSaleId}
-                className="flex-1 py-2.5 bg-white/[0.04] text-slate-300 border border-white/[0.08] font-semibold rounded-xl hover:bg-white/[0.08] hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-xs active:scale-95"
-                aria-label="Email receipt"
-              >
-                <Receipt className="w-3.5 h-3.5 text-slate-400" />
-                Email
-              </button>
+
+              {/* Right action buttons */}
+              <div className="flex items-center gap-2.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleHoldSale}
+                  disabled={items.length === 0}
+                  className="px-4 py-3 bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 border border-white/[0.08] font-semibold rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-xs active:scale-95 cursor-pointer"
+                  aria-label={`Hold sale${heldSales.length > 0 ? ` (${heldSales.length} held)` : ''}`}
+                >
+                  <Clock className="w-4 h-4 text-slate-400" />
+                  <span>Hold{heldSales.length > 0 ? ` (${heldSales.length})` : ''}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    haptic('medium');
+                    setShowConfirmModal(true);
+                  }}
+                  disabled={!canCompleteSale}
+                  className="flex-1 sm:flex-none px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-bold rounded-xl hover:shadow-lg hover:shadow-emerald-500/25 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed text-sm flex items-center justify-center gap-2 shadow-md cursor-pointer min-w-[210px]"
+                  aria-label={paymentMethod === 'credit' ? 'Create credit sale' : 'Complete sale'}
+                >
+                  {paymentMethod === 'credit' ? (
+                    <>
+                      <CreditCard className="w-4 h-4" />
+                      <span>Create Credit Sale</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>Complete Sale ({format(total)})</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
-          </div>
+          </footer>
         </div>
       )}
 

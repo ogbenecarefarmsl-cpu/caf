@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { AdminLayout } from '../../components/AdminLayout';
+import { POSLayout } from '../../components/pos';
 import { useAuthStore } from '../../stores/auth-store';
 import { 
   TrendingUp, 
@@ -20,7 +21,7 @@ import {
 export function ReportsPage() {
   const location = useLocation();
   const user = useAuthStore((state) => state.user);
-  const isPosContext = location.pathname.startsWith('/pos/') || user?.role === 'cashier';
+  const isPosContext = location.pathname.startsWith('/pos') || user?.role === 'cashier';
 
   const getReportUrl = (path: string) => {
     if (isPosContext && path.startsWith('/admin/reports/')) {
@@ -34,7 +35,7 @@ export function ReportsPage() {
       description: 'Daily, weekly, and monthly sales analysis',
       icon: DollarSign,
       path: '/admin/reports/sales',
-      color: 'bg-green-500',
+      color: 'bg-emerald-500',
       stats: 'Revenue & Profit',
       roles: ['super_admin', 'branch_manager', 'auditor', 'cashier']
     },
@@ -52,7 +53,7 @@ export function ReportsPage() {
       description: 'Expiring and expired product monitoring',
       icon: AlertTriangle,
       path: '/admin/reports/expiry',
-      color: 'bg-red-500',
+      color: 'bg-rose-500',
       stats: 'Expiry Tracking',
       roles: ['super_admin', 'branch_manager', 'auditor']
     },
@@ -70,17 +71,17 @@ export function ReportsPage() {
       description: 'Supplier orders and purchase analysis',
       icon: ShoppingCart,
       path: '/admin/reports/purchases',
-      color: 'bg-orange-500',
-      stats: 'Purchase Analysis',
+      color: 'bg-indigo-500',
+      stats: 'Procurement Insights',
       roles: ['super_admin', 'branch_manager', 'auditor']
     },
     {
       title: 'Transfer Reports',
-      description: 'Inter-branch transfer tracking',
+      description: 'Inter-branch transfer history and status',
       icon: ArrowLeftRight,
       path: '/admin/reports/transfers',
       color: 'bg-teal-500',
-      stats: 'Transfer History',
+      stats: 'Branch Transfers',
       roles: ['super_admin', 'branch_manager', 'auditor']
     },
     {
@@ -129,6 +130,15 @@ export function ReportsPage() {
       roles: ['super_admin', 'branch_manager', 'auditor']
     },
     {
+      title: 'Shift Reports',
+      description: 'Cashier shift logs and cash reconciliations',
+      icon: Clock,
+      path: '/pos/shifts/logs',
+      color: 'bg-amber-500',
+      stats: 'Register Audits',
+      roles: ['super_admin', 'branch_manager', 'cashier', 'auditor']
+    },
+    {
       title: 'Stock Movements',
       description: 'Inbound and outbound stock history',
       icon: Activity,
@@ -151,72 +161,76 @@ export function ReportsPage() {
     module.roles.includes(user?.role || ''),
   );
 
-  return (
-    <AdminLayout>
-      <div className="max-w-7xl mx-auto p-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-white">Reports & Analytics</h1>
-          <p className="mt-2 text-gray-400">
-            Access comprehensive reports and analytics for all business operations
-          </p>
-        </div>
+  const pageContent = (
+    <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
+      <div className="mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">Reports & Analytics</h1>
+        <p className="mt-1.5 text-sm text-slate-400">
+          Access comprehensive reports and analytics for business operations
+        </p>
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {visibleReportModules.map((module) => {
-            const Icon = module.icon;
-            return (
-              <Link
-                key={module.path}
-                to={getReportUrl(module.path)}
-                className="block group"
-              >
-                <div className="bg-primary-dark rounded-lg shadow-md border border-gray-700 p-6 hover:shadow-xl hover:border-accent-green transition-all">
-                  <div className="flex flex-col space-y-4">
-                    <div className="flex items-start justify-between">
-                      <div className={`${module.color} rounded-lg p-3 text-white group-hover:scale-110 transition-transform`}>
-                        <Icon className="h-6 w-6" />
-                      </div>
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-white group-hover:text-accent-green transition-colors">
-                        {module.title}
-                      </h3>
-                      <p className="mt-1 text-sm text-gray-400">
-                        {module.description}
-                      </p>
-                      <p className="mt-2 text-xs text-gray-500 font-medium">
-                        {module.stats}
-                      </p>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
+        {visibleReportModules.map((module) => {
+          const Icon = module.icon;
+          return (
+            <Link
+              key={module.path}
+              to={getReportUrl(module.path)}
+              className="block group"
+            >
+              <div className="bg-slate-900/80 rounded-2xl shadow-xl border border-white/10 p-5 hover:border-emerald-500/50 hover:bg-slate-900 transition-all backdrop-blur-md group-hover:scale-[1.01]">
+                <div className="flex flex-col space-y-3.5">
+                  <div className="flex items-start justify-between">
+                    <div className={`${module.color} rounded-xl p-3 text-white group-hover:scale-110 transition-transform shadow-md`}>
+                      <Icon className="h-5 w-5" />
                     </div>
                   </div>
+                  <div>
+                    <h3 className="text-base font-semibold text-white group-hover:text-emerald-400 transition-colors">
+                      {module.title}
+                    </h3>
+                    <p className="mt-1 text-xs text-slate-400 leading-relaxed">
+                      {module.description}
+                    </p>
+                    <p className="mt-2 text-[11px] text-emerald-400/90 font-medium">
+                      {module.stats}
+                    </p>
+                  </div>
                 </div>
-              </Link>
-            );
-          })}
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 pt-2">
+        <div className="bg-slate-900/60 rounded-2xl p-5 border border-white/[0.08] backdrop-blur-md">
+          <h3 className="text-sm font-semibold text-slate-200 mb-2">Report Features</h3>
+          <ul className="space-y-1.5 text-xs text-slate-400">
+            <li>• Export reports to PDF and Excel formats</li>
+            <li>• Customize date ranges for detailed analysis</li>
+            <li>• Filter by branch, product, or category</li>
+            <li>• Schedule automated report delivery</li>
+          </ul>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-blue-900/20 rounded-lg p-6 border border-blue-700">
-            <h3 className="text-lg font-semibold text-blue-300 mb-2">Report Features</h3>
-            <ul className="space-y-2 text-sm text-blue-200">
-              <li>- Export reports to PDF and Excel formats</li>
-              <li>- Customize date ranges for detailed analysis</li>
-              <li>- Filter by branch, product, or category</li>
-              <li>- Schedule automated report delivery</li>
-            </ul>
-          </div>
-
-          <div className="bg-purple-900/20 rounded-lg p-6 border border-purple-700">
-            <h3 className="text-lg font-semibold text-purple-300 mb-2">Analytics Tips</h3>
-            <ul className="space-y-2 text-sm text-purple-200">
-              <li>- Review sales reports daily for insights</li>
-              <li>- Monitor expiry reports weekly</li>
-              <li>- Check inventory levels before ordering</li>
-              <li>- Analyze customer trends for targeted marketing</li>
-            </ul>
-          </div>
+        <div className="bg-slate-900/60 rounded-2xl p-5 border border-white/[0.08] backdrop-blur-md">
+          <h3 className="text-sm font-semibold text-slate-200 mb-2">Analytics Tips</h3>
+          <ul className="space-y-1.5 text-xs text-slate-400">
+            <li>• Review sales reports daily for real-time insights</li>
+            <li>• Monitor expiry reports weekly to reduce shrinkage</li>
+            <li>• Check inventory levels before placing orders</li>
+            <li>• Analyze customer purchase trends for repeat business</li>
+          </ul>
         </div>
       </div>
-    </AdminLayout>
+    </div>
+  );
+
+  return isPosContext ? (
+    <POSLayout>{pageContent}</POSLayout>
+  ) : (
+    <AdminLayout title="Reports">{pageContent}</AdminLayout>
   );
 }

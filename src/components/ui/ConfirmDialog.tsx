@@ -99,7 +99,7 @@ export const ConfirmDialog = ({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[90] flex items-end justify-center p-0 sm:items-center sm:p-4"
+      className="fixed inset-0 z-[80] flex items-end justify-center p-0 sm:items-center sm:p-4"
       role="alertdialog"
       aria-modal="true"
       aria-labelledby={titleId}

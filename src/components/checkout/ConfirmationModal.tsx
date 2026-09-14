@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { CheckCircle2, AlertTriangle, AlertCircle, Info, LoaderCircle } from 'lucide-react';
 import { Button } from '../ui/Button';
 
@@ -81,9 +82,9 @@ export const ConfirmationModal = ({
   const config = typeConfig[type] ?? typeConfig.info;
   const IconComponent = config.Icon;
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-150"
+      className="fixed inset-0 z-[80] flex items-center justify-center p-4 animate-in fade-in duration-150"
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
@@ -148,6 +149,7 @@ export const ConfirmationModal = ({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 };

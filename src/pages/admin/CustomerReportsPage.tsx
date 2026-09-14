@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import apiClient from '../../lib/api-client';
 import { unwrapResponse } from '../../lib/unwrap-response';
 import { AdminLayout } from '../../components/AdminLayout';
+import { POSLayout } from '../../components/pos';
 import { Button } from '../../components/ui/Button';
 import { Table } from '../../components/ui/Table';
 import { Select } from '../../components/ui/Select';
@@ -50,9 +52,11 @@ export const CustomerReportsPage = () => {
   const [dateTo, setDateTo] = useState(() => new Date().toISOString().split('T')[0]);
   const [groupBy, setGroupBy] = useState<'day' | 'week' | 'month'>('day');
   const { format } = useCurrency();
+  const location = useLocation();
   const user = useAuthStore((state) => state.user);
   const selectedBranch = useBranchStore((state) => state.selectedBranch);
   const isSuperAdmin = user?.role === 'super_admin';
+  const isPosContext = location.pathname.startsWith('/pos') || user?.role === 'cashier';
   const effectiveBranchId = isSuperAdmin ? undefined : getBranchId(selectedBranch) || user?.branchId;
 
   // Fetch customer reports
@@ -99,12 +103,11 @@ export const CustomerReportsPage = () => {
     }
   };
 
-  if (isLoading) return <AdminLayout><Loading /></AdminLayout>;
-  if (error) return <AdminLayout><Error message="Failed to load customer reports" /></AdminLayout>;
+  if (isLoading) return isPosContext ? <POSLayout><Loading /></POSLayout> : <AdminLayout><Loading /></AdminLayout>;
+  if (error) return isPosContext ? <POSLayout><Error message="Failed to load customer reports" /></POSLayout> : <AdminLayout><Error message="Failed to load customer reports" /></AdminLayout>;
 
-  return (
-    <AdminLayout>
-      <div className="space-y-6">
+  const pageContent = (
+    <div className="space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold text-white">Customer Reports</h1>
           <div className="flex items-center gap-2">
@@ -227,6 +230,11 @@ export const CustomerReportsPage = () => {
           </>
         )}
       </div>
-    </AdminLayout>
+  );
+
+  return isPosContext ? (
+    <POSLayout>{pageContent}</POSLayout>
+  ) : (
+    <AdminLayout>{pageContent}</AdminLayout>
   );
 };

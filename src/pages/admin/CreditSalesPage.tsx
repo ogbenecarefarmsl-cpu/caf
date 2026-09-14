@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CreditCard, ReceiptText, Wallet } from 'lucide-react';
 import { AdminLayout } from '../../components/AdminLayout';
+import { POSLayout } from '../../components/pos';
 import { Modal } from '../../components/ui/Modal';
 import { Button } from '../../components/ui/Button';
 import { Loading } from '../../components/ui/Loading';
@@ -56,6 +58,8 @@ export function CreditSalesPage() {
   const selectedBranch = useBranchStore((state) => state.selectedBranch);
   const branchId = getBranchId(selectedBranch);
   const user = useAuthStore((state) => state.user);
+  const location = useLocation();
+  const isPos = location.pathname.startsWith('/pos') || user?.role === 'cashier';
   const [statusFilter, setStatusFilter] = useState<'open' | 'paid' | 'all'>('open');
   const [selectedSale, setSelectedSale] = useState<CreditSale | null>(null);
   const [paymentAmount, setPaymentAmount] = useState('');
@@ -142,8 +146,8 @@ export function CreditSalesPage() {
     .filter((sale) => sale.paymentStatus !== 'paid')
     .reduce((sum, sale) => sum + (sale.balanceDue || 0), 0);
 
-  return (
-    <AdminLayout title="Credit Sales">
+  const pageContent = (
+    <>
       <div className="mx-auto max-w-7xl p-4 md:p-6 space-y-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
@@ -428,6 +432,12 @@ export function CreditSalesPage() {
           </div>
         ) : null}
       </Modal>
-    </AdminLayout>
+    </>
+  );
+
+  return isPos ? (
+    <POSLayout>{pageContent}</POSLayout>
+  ) : (
+    <AdminLayout title="Credit Sales">{pageContent}</AdminLayout>
   );
 }
