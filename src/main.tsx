@@ -5,19 +5,42 @@ import './index.css'
 import App from './App.tsx'
 import { queryClient } from './lib/query-client'
 
-// Global error handler for uncaught promises (like MetaMask connection errors)
+// Global error handler for uncaught promises (like MetaMask browser extension connection errors)
 window.addEventListener('unhandledrejection', (event) => {
-  // Suppress MetaMask connection errors as they are not critical to the app
-  if (event.reason?.message?.includes('MetaMask') || 
-      event.reason?.message?.includes('ethereum') ||
-      event.reason?.message?.includes('extension not found')) {
-    console.warn('MetaMask error suppressed:', event.reason.message);
+  const reasonStr = String(event.reason?.message || event.reason?.cause || event.reason || '');
+  if (
+    reasonStr.includes('MetaMask') || 
+    reasonStr.includes('ethereum') ||
+    reasonStr.includes('extension not found') ||
+    reasonStr.includes('Failed to connect to MetaMask') ||
+    reasonStr.includes('Error restoring session')
+  ) {
     event.preventDefault();
     return;
   }
   
   // Log other unhandled promise rejections
   console.error('Unhandled promise rejection:', event.reason);
+});
+
+// Auto-recover from dynamic import chunk failures during fresh deployments
+window.addEventListener('vite:preloadError', () => {
+  const reloadKey = 'caf_chunk_reload_ts';
+  const lastReload = sessionStorage.getItem(reloadKey);
+  const now = Date.now();
+  if (!lastReload || now - parseInt(lastReload, 10) > 8000) {
+    sessionStorage.setItem(reloadKey, now.toString());
+    const doReload = () => {
+      window.location.reload();
+    };
+    if (typeof caches !== 'undefined') {
+      caches.keys().then((names) => {
+        Promise.all(names.map((n) => caches.delete(n))).finally(doReload);
+      }).catch(doReload);
+    } else {
+      doReload();
+    }
+  }
 });
 
 const bootstrap = async () => {
